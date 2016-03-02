@@ -1,0 +1,7 @@
+TestID : int
+RFRID : int
+RFRType : str 
+LatLocationID : str
+LongLocationID : str
+VertLocationID : str
+Dmark : str
