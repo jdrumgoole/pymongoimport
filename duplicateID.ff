@@ -1,0 +1,12 @@
+# test that we detect duplicate ID fields
+[Foo]
+id : True
+
+[Bar]
+id : True
+
+[Glue]
+
+[True]
+
+[AAA]
