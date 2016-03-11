@@ -14,13 +14,38 @@ from collections import OrderedDict
 import csv
 import os
 import argparse
-import string
+import sys
 
 from fieldconfig import FieldConfig
 
 
-def makeFieldfilename( filename ):
-    ( x,y ) = os.path.splitext( filename )
+def skipLines( f, skipCount ):
+    '''
+    >>> f = open( "test_set_small.txt", "r" )
+    >>> skipLines( f , 20 )
+    20
+    '''
+    
+    lineCount = 0 
+    if ( skipCount > 0 ) :
+        #print( "Skipping")
+        dummy = f.readline()
+        while dummy :
+            lineCount = lineCount + 1
+            if ( lineCount == skipCount ) :
+                break ;
+            dummy = f.readline()
+            
+    return lineCount 
+
+def makeFieldFilename( filename ):
+    '''
+    >>> makeFieldFilename( "test.txt" ) 
+    'test.ff'
+    >>> makeFieldFilename( "test" )
+    'test.ff'
+    '''
+    ( x, _ ) = os.path.splitext( filename )
     return x + ".ff" 
 
 class CollectionWriter(object):
@@ -44,11 +69,6 @@ class CollectionWriter(object):
             for r in reader :
                 lineCount = lineCount + 1 
                 d = createDoc( self._fieldDict, r, lineCount )
-                #r["TestDate"] = datetime.strptime( r["TestDate"],"%Y-%m-%d")
-                #print( "Line")
-                #pprint( r )
-                #print( "Doc" )
-                #pprint( d ) 
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
@@ -63,34 +83,7 @@ class CollectionWriter(object):
             print( "Bulk write error : %s" % e )
             raise
         
-# def getFields( filename ):
-#     
-#     fields = FieldConfig()
-#     
-#     return fields.open( filename )
-#     
-#     for s in fields.sections() :
-#         fieldDict[ s ] = {}
-#         for o in s.options() :
-#             fieldDict[ s ][ o ] = o.
-#             if o == "id" :
-#                 fieldDict[ s ][ "id" ] = True
-#             elif o == "type" :
-#                 fieldDict[ s ]
-#             
-#     with open( filename, "r" ) as f :
-#         l = f.readline().strip()
-#         while l :
-#             if l.startswith('#' ) :
-#                 continue
-#             values = string.split( l, ":", maxsplit=2)
-#             if len( values ) > 2 :
-#                 fieldDict[ values[0].strip() ] = { "type" : values[ 1 ].strip(), "format" : values[ 2 ].strip() }
-#             else:
-#                 fieldDict[ values[0].strip() ] = { "type" : values[ 1 ].strip()  }
-#             l = f.readline().strip()
-#     return fieldDict 
-     
+
 def createDoc( fieldDict, line, lineCount):
 
     doc = OrderedDict()
@@ -111,8 +104,8 @@ def createDoc( fieldDict, line, lineCount):
                 else:
                     doc[ k ] = datetime.strptime( line[ k ], fieldDict[ k ][ "format"] )
         except ValueError as e :
-            print( "Value error parsing field : %s" % k )
-            print( "read value is: %s" % line[ k ] )
+            print( "Value error parsing field : [%s]" % k )
+            print( "read value is: '%s'" % line[ k ] )
             print( "line: %i, '%s'" % ( lineCount, line ))
             #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
             raise ;
@@ -133,7 +126,17 @@ def tracker(totalCount, result, filename ):
 #         print ( "   %s = %s, " %  ( name, rec[ name ] ), end=end)
 #     print( "}")
 #  
-if __name__ == '__main__':
+
+    
+def mainline( args ):
+    '''
+    >>> mainline( [  'test_set_small.txt' ] )
+    database: test, collection: test
+    files ['test_set_small.txt']
+    Processing : test_set_small.txt
+    Completed processing : test_set_small.txt, (100 records)
+    Processed test_set_small.txt
+    '''
     
     parser = argparse.ArgumentParser(description='loader for MOT data', prog = "pyfastloader")
     parser.add_argument('--database', default="test", help='specify the database name')
@@ -141,14 +144,21 @@ if __name__ == '__main__':
     parser.add_argument('--host', default="localhost", help='hostname')
     parser.add_argument('--port', default="27017", help='port name', type=int)
     parser.add_argument('--chunksize', default="5000", help='set chunk size for bulk inserts', type=int)
-    parser.add_argument('filenames', nargs="+", help='list of files')
+    parser.add_argument('filenames', nargs="*", help='list of files')
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading" )
     parser.add_argument( '--ordered', default=False, action="store_true", help="forced ordered inserts" )
     parser.add_argument( '--verbose', default=0, type=int, help="controls how noisy the app is" )
     parser.add_argument( "--fieldfile", default= None, type=str,  help="Field and type mappings")
-    args= parser.parse_args()
+    parser.add_argument( "--delimiter", default="|", type=str, help="The delimiter string used to split fields (default '|')")
+    parser.add_argument( "--testmode", default=False, action="store_true", help="Run in test mode, no updates")
+    args= parser.parse_args( args )
     
+    if args.testmode :
+        import doctest
+        doctest.testmod()
+        sys.exit( 0 )
+        
     mc = pymongo.MongoClient( host=args.host, port=args.port )
     db = mc[ args.database ]
     filenames = args.filenames
@@ -167,7 +177,7 @@ if __name__ == '__main__':
     
 
     fieldDict = OrderedDict()
-    
+    processedFiles = []
     if args.fieldfile is None :
         pass # process later in file processing loop
     elif os.path.isfile( args.fieldfile ):
@@ -184,58 +194,35 @@ if __name__ == '__main__':
         print ("Processing : %s" % i )
 
         if args.fieldfile is None :
-            fieldFilename = makeFieldfilename( i )
+            fieldFilename = makeFieldFilename( i )
             if os.path.isfile( fieldFilename ):
                 fieldDict = fc.read( fieldFilename )
             else:
-                raise ValueError( "No valid field file defined for %s" % i )
+                raise ValueError( "No valid field file defined for '%s'" % i )
             
         if ( os.path.exists( i ) and os.path.isfile( i )) :
-            with open( i, "r") as f :
-                colWriter = CollectionWriter( collection, args.ordered, fieldDict, bulkerSize )
-                lineCount = 0 
-                if ( args.skip > 0 ) :
-                    #print( "Skipping")
-                    dummy = f.readline()
-                    while dummy :
-                        lineCount = lineCount + 1
-                        if ( lineCount == args.skip ) :
-                            break ;
-                        dummy = f.readline()
-                #print( "arg.skips %i" % args.skip )
-                reader = csv.DictReader( f, fieldnames = fieldDict.keys(), delimiter = '|')
+            with open( i, "r" ) as f :
+
+                lineCount = skipLines( f, args.skip )
                 
+                reader = csv.DictReader( f, fieldnames = fieldDict.keys(), delimiter = args.delimiter )
+                colWriter = CollectionWriter( collection, args.ordered, fieldDict, bulkerSize )
                 while True :
                     result = colWriter.writeRecords( reader, lineCount )
                     lineCount = lineCount + result['nInserted']
-                    totalCount = tracker( totalCount, result, i )
+                    totalCount = totalCount + result[ "nInserted" ]
                     if result[ "nInserted" ] < bulkerSize :
                         break
                     
                 print( "Completed processing : %s, (%d records)" % ( i, totalCount ))
-            
-    for i in filenames :
-        print( "Processed %s" % i )
-#         result = writeChunk(reader, remainder )
-#         totalCount = tracker( totalCount, result )
-#         for row in reader:
-#             row[ "TestDate"] = datetime.strptime( row[ "TestDate"],"%Y-%m-%d")
-#             result = bulker.insert( row )
-#             totalCount = totalCount + result[ "nInserted" ]
-#             if ( InputRecordsize - totalCount ) 
-#             totalCount = totalCount + 1 
-#             bulkCount = bulkCount + 1 
-#             if (( inputRecordSize - remaintotalCount ) > remainder )
-#             else ( bulkCount == bulkerSize ) :
-#                 result = bulker.execute()
-#                 bulker = db.mot_results.initialize_ordered_bulk_op()
-#                 print( result )
-#                 bulkCount = 0 
-#                 totalCount = totalCount + result[ "nInserted" ]
-#                 print("Inserted %d records" % totalCount )
+                processedFiles.append( i )
                 
+        else:
+            print( "no such file : %s" % i ) 
             
- 
-            # printRecord( fieldNames, row )
-            #sys.exit( 1 )
-        
+    for i in processedFiles :
+        print( "Processed %s" % i )
+
+if __name__ == '__main__':
+    sys.argv.pop( 0 ) # remove script file name 
+    mainline( sys.argv )
