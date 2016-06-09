@@ -19,23 +19,32 @@ import signal
 
 from fieldconfig import FieldConfig
 import multiprocessing
-
-
-
     
 class MongoDB( object ):
     
-    def __init__(self, host, port, databaseName, collectionName ):
+    def __init__(self, host, port, databaseName, collectionName, 
+                 username=None, password=None, ssl=False ):
         self._host = host
         self._port = port
         self._databaseName = databaseName
         self._collectionName = collectionName
         self._database = None
         self._collection = None
+        self._username = username
+        self._password = password
+        self._ssl = ssl
     
     def connect(self):
-        self._client = pymongo.MongoClient( host=self._host, port=self._port )
+        self._client = pymongo.MongoClient( host=self._host, port=self._port, ssl=self._ssl)
         self._database = self._client[ self._databaseName]
+        
+        if self._username :
+            if self._database.authenticate( self._username, self._password, mechanism='SCRAM-SHA-1'):
+#            if self._database.authenticate( self._username, self._password, mechanism='MONGODB-CR'):
+                print( "successful login by %s (method SCRAM-SHA-1)" % self._username )
+            else:
+                print( "login failed for %s (method SCRAM-SHA-1)" % self._username )
+                
         self._collection = self._database[ self._collectionName ]
         
     def collection(self):
@@ -263,6 +272,9 @@ def mainline( args ):
     parser.add_argument('--collection', default="test", help='specify the collection name')
     parser.add_argument('--host', default="localhost", help='hostname')
     parser.add_argument('--port', default="27017", help='port name', type=int)
+    parser.add_argument('--username', default=None, help='username to login to database')
+    parser.add_argument('--password', default=None, help='password to login to database')
+    parser.add_argument('--ssl', default=False, action="store_true", help='use SSL for connections')
     parser.add_argument('--chunksize', default="5000", help='set chunk size for bulk inserts', type=int)
     parser.add_argument('filenames', nargs="*", help='list of files')
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
@@ -286,7 +298,7 @@ def mainline( args ):
     fc = FieldConfig()
     
     if args.drop :
-        m = MongoDB( args.host, args.port, args.database, args.collection )
+        m = MongoDB( args.host, args.port, args.database, args.collection, args.username, args.password, ssl=args.ssl )
         m.connect()
         m.collection().drop()
         print( "dropped collection: %s.%s" % ( args.database, args.collection ))
@@ -353,9 +365,14 @@ def mainline( args ):
                     
                 processedFiles.append( i )
             else:
-                mc = pymongo.MongoClient( host=args.host, port=args.port )
-                db = mc[ args.database ]
-                collection = db[ args.collection ]
+                mdb = MongoDB(host=args.host, port=args.port, 
+                              databaseName= args.database,
+                              collectionName = args.collection,
+                              username=args.username, 
+                              password=args.password, 
+                              ssl=args.ssl )
+                mdb.connect()
+                collection =mdb.collection()
                 with open( i, "r" ) as f :
     
                     lineCount = skipLines( f, args.skip )
