@@ -1,15 +1,15 @@
 [TestID]
-id : True
+name : _id
 type : int
 	
 [VehicleID]
-type :str
+type : int
 
 [TestDate]
 type : date
-date : \%Y-\%m-\%d
+format : %Y-%m-%d
  	
-[TestClassID ]
+[TestClassID]
 type : str
 
 [TestType]
@@ -41,4 +41,4 @@ type: int
 	
 [FirstUseDate]
 type : date 
-format: \%Y-\%m-\%d
+format: %Y-%m-%d
