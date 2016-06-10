@@ -39,7 +39,7 @@ class MongoDB( object ):
         self._database = self._client[ self._databaseName]
         
         if self._username :
-            if self._database.authenticate( self._username, self._password, mechanism='SCRAM-SHA-1'):
+            if self._database.authenticate( self._username, self._password ):
 #            if self._database.authenticate( self._username, self._password, mechanism='MONGODB-CR'):
                 print( "successful login by %s (method SCRAM-SHA-1)" % self._username )
             else:
