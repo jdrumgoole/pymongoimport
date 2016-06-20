@@ -8,6 +8,11 @@ from ConfigParser import RawConfigParser
 import textwrap
 from collections import OrderedDict
 
+class FieldConfigException(Exception):
+    def __init__(self, *args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)
+        
+        
 class FieldConfig(object):
     '''
       Each field is represented by a section in the config parser
@@ -15,7 +20,14 @@ class FieldConfig(object):
       
       type = the type of this field, int, float, str, date, 
       format = the way the content will be formatted for now really only used to date
-      _id = Will this be used as a ID field (column must be unique)
+      name = an optional name field. If not present the section name will be used.
+      
+      If the name field is "_id" then this will be used as the _id field in the collection.
+      Only one name =_id can be present in any fieldConfig file.
+      
+      The values in this column must be unique in the source data file otherwise loading will fail
+      with a duplicate key error.
+      
     '''
 
 
@@ -23,8 +35,12 @@ class FieldConfig(object):
         '''
         Constructor
         '''
+        self._idField = None # section on which name == _id
+        self._tags = [ "name", "type", "format" ]
         self._cfg = RawConfigParser()
-        self._fieldDict = OrderedDict() 
+        self._fieldDict = OrderedDict()
+        self._names = OrderedDict()
+        
         if filename :
             self._fieldDict = self.read( filename )
     
@@ -52,17 +68,21 @@ class FieldConfig(object):
             fieldDict[ s ] = {}
             for o in self._cfg.options( s ):
                 #print("option : '%s'" % o )
-                if o == "id" :
-                    #print( "id found")
-                    if idCount == 0 :
-                        idCount = idCount + 1 ;
-                        firstSection = s
-                    else :
-                        secondSection = s
-                        raise ValueError( self.duplicateIDMsg( firstSection, secondSection ))
+                if not o in self._tags :
+                    raise ValueError( "No such field type: %s in section: %s" % (o, s ))
+                if ( o == "name" ):
+                    if ( self._cfg.get( s, o ) == "_id" ) :
+                        if self._idField == None :
+                            self._idField = s
+                        else:
+                            raise ValueError( self.duplicateIDMsg( self._idField, s ))
                     
                 fieldDict[ s ][ o ] = self._cfg.get( s, o )
                 
+            if not "name" in fieldDict[ s ]: 
+                fieldDict[ s ]["name"] = s
+            
+        self._fieldDict = fieldDict
         return fieldDict 
             
     def fieldDict(self):
@@ -74,15 +94,20 @@ class FieldConfig(object):
     def fields(self):
         return self._cfg.sections()
     
+    def hasNewName(self, section ):
+        return section != self._fieldDict[ section ]['name']
+    
+    def names(self):
+        return self._names 
+
     def typeData(self, fieldName ):
         return self._cfg.get( fieldName, "type")
     
     def formatData(self, fieldName ):
         return self._cfg.get( fieldName, "format")
     
-    def idData(self , fieldName ):
-        return self._cfg.get( fieldName, "id" )
-        pass
+    def nameData(self , fieldName ):
+        return self._cfg.get( fieldName, "name" )
     
     
     
