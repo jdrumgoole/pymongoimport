@@ -63,7 +63,9 @@ class FieldConfig(object):
         if len( result ) == 0 :
             raise ValueError( "Couldn't open %s" % filename )
 
-        for s in self._cfg.sections() :
+        self._fields = self._cfg.sections()
+        
+        for s in self._fields :
             #print( "section: '%s'" % s )
             fieldDict[ s ] = {}
             for o in self._cfg.options( s ):
@@ -92,7 +94,7 @@ class FieldConfig(object):
             return self._fieldDict
         
     def fields(self):
-        return self._cfg.sections()
+        return self._fields
     
     def hasNewName(self, section ):
         return section != self._fieldDict[ section ]['name']

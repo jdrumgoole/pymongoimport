@@ -230,9 +230,18 @@ class BatchWriter(object):
                 bulker = self._collection.initialize_ordered_bulk_op()
             else:
                 bulker = self._collection.initialize_unordered_bulk_op()
-                 
+                
+            timeStart = time.time() 
             bulkerCount = 0
+            insertedThisQuantum = 0
             for dictEntry in reader :
+                timeNow = time.time()
+                if timeNow > timeStart + 1  :
+                    print( "Inserted %i records per second" % insertedThisQuantum )
+                    insertedThisQuantum = 0
+                    timeStart = timeNow
+        
+                
                 #print( "dict: %s" % dictEntry )
                 lineCount = lineCount + 1 
                 d = createDoc( self._fieldConfig, dictEntry, lineCount )
@@ -246,6 +255,7 @@ class BatchWriter(object):
                     else:
                         bulker = self._collection.initialize_unordered_bulk_op()
                         
+                    insertedThisQuantum = insertedThisQuantum + bulkerCount 
                     bulkerCount = 0
              
             if ( bulkerCount > 0 ) :
