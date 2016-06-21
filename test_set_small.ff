@@ -1,6 +1,6 @@
 [TestID]
-id : True
 type : int
+name : _id
 	
 [VehicleID]
 type :str
@@ -9,7 +9,7 @@ type :str
 type : date
 format : %Y-%m-%d
  	
-[TestClassID ]
+[TestClassID]
 type : str
 
 [TestType]

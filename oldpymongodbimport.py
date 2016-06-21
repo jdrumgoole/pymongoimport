@@ -1,7 +1,7 @@
 '''
 Created on 19 Feb 2016
 
-Need tests for skip larger than file size.
+Import data from a CSV file with type information.
 
 @author: jdrumgoole
 '''
@@ -15,9 +15,143 @@ import csv
 import os
 import argparse
 import sys
+import signal
 
 from fieldconfig import FieldConfig
+import multiprocessing
+    
+class MongoDB( object ):
+    
+    def __init__(self, host, port, databaseName, collectionName ):
+        self._host = host
+        self._port = port
+        self._databaseName = databaseName
+        self._collectionName = collectionName
+        self._database = None
+        self._collection = None
+    
+    def connect(self):
+        self._client = pymongo.MongoClient( host=self._host, port=self._port )
+        self._database = self._client[ self._databaseName]
+        self._collection = self._database[ self._collectionName ]
+        
+    def collection(self):
+        return self._collection
 
+    def database(self):
+        return self._database
+
+class Reader( object ):
+    '''
+    Open a file and read the contents one line at a time. Post each line to a list of queues in 
+    round robin order.
+    
+    '''
+    def __init__(self, fieldConfig, delimiter):
+        self._delimiter = delimiter
+        self._fieldConfig = fieldConfig 
+        
+    def read(self, filename, chunkSize, skip=0 ):
+        lines = []
+        with open( filename, "rb")  as f :
+            skipLines( f, skip )
+            reader = csv.DictReader( f, fieldnames = self._fieldConfig.fields(), delimiter = self._delimiter)
+            return self.buffer( reader, chunkSize )
+        
+    def buffer(self, reader, chunkSize  ):
+        i = 0
+        buf = []
+        for l in reader:
+            buf.append( l )
+            i = i + 1 
+            if ( i == chunkSize ):
+                break
+            
+        return LineBuffer( buf )
+            
+        
+    def qRead(self, qList, filename ):
+        '''
+        Round robin puts to queues in qList.
+        '''
+        #print( "read")
+        qIndex = 0 
+        for l in self.read( filename ):
+            #print( l )
+            qList[ qIndex ].put( l )
+            qIndex = qIndex + 1 
+            if  qIndex == len( qList ):
+                qIndex = 0
+            
+        for i in qList :    
+            i.put( None )
+                
+
+class LineBuffer( object ):
+    
+    def __init__(self, buf ):
+        self._buf = buf
+        
+    def buf(self):
+
+    
+class Writer( object ):
+    '''
+    Read each line from a queue, write using the bulk writer.
+    
+    '''
+    
+    def __init__(self, collection, fieldConfig, queue, orderedWrites=False, chunkSize=1000 ):
+        
+        self._collection = collection
+        self._chunkSize = chunkSize
+        self._fieldConfig = fieldConfig
+        self._orderedWrites = orderedWrites 
+        
+    def write(self, lineCount, lines ):
+        if self._orderedWrites :
+            bulker = self._collection.initialize_ordered_bulk_op()
+        else:
+            bulker = self._collection.initialize_unordered_bulk_op()
+                
+        bulkerCount = 0
+       
+        for i,j in lines :
+            lineCount = lineCount + 1 
+           
+            if i is None :
+                break 
+           
+            d = createDoc( self._fieldConfig, i, lineCount )
+
+            bulker.insert( d )
+            bulkerCount = bulkerCount + 1 
+           
+        try: 
+            bulker.execute()
+        except pymongo.errors.BulkWriteError as e :
+            print( "Bulk write error : %s" % e )
+            raise
+
+        return lineCount
+   
+    def qWrite(self, collection, lineCount, queue ):
+        
+        lines = []
+        itemCount = 0
+        while True:
+            item = queue.get()
+            
+            if item is None:
+                break
+            else:
+                itemCount = itemCount + 1 
+                lines.append( item )
+                if itemCount == self._chunkSize :
+                    lineCount = self.write( collection, lineCount, lines )
+                    itemCount = 0
+                    lines = []
+                
 
 def skipLines( f, skipCount ):
     '''
@@ -50,11 +184,11 @@ def makeFieldFilename( filename ):
 
 class CollectionWriter(object):
     
-    def __init__(self, collection, orderedWrites, fieldDict, chunkSize ):
+    def __init__(self, collection, orderedWrites, fieldConfig, chunkSize ):
         
         self._collection = collection
         self._orderedWrites = orderedWrites
-        self._fieldDict = fieldDict
+        self._fieldConfig = fieldConfig
         self._chunkSize = chunkSize
         
     def writeRecords(self, reader, lineCount ):
@@ -66,9 +200,10 @@ class CollectionWriter(object):
                 bulker = self._collection.initialize_unordered_bulk_op()
                 
             bulkerCount = 0
-            for r in reader :
+            for dictEntry in reader :
+                #print( "dict: %s" % dictEntry )
                 lineCount = lineCount + 1 
-                d = createDoc( self._fieldDict, r, lineCount )
+                d = createDoc( self._fieldDict, dictEntry, lineCount )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
@@ -82,31 +217,38 @@ class CollectionWriter(object):
         except pymongo.errors.BulkWriteError as e :
             print( "Bulk write error : %s" % e )
             raise
-        
 
-def createDoc( fieldDict, line, lineCount):
+def createDoc( fieldConfig, dictEntry, lineCount):
 
     doc = OrderedDict()
     
 
-    for k in fieldDict :
+    for k in fieldConfig.fields() :
+        print( k )
+        print( dictEntry )
         try :
             #print( "line: %s" % line )
-            if fieldDict[ k ]["type" ] == "_id" :
-                doc[ "_id" ] = int( line[ k ] )
-            elif fieldDict[ k ]["type" ] == "str" :
-                doc[ k ] = line[ k ]
-            elif fieldDict[ k ]["type"] == "int" :
-                doc[ k ] = int( line[ k ])
-            elif fieldDict[ k ]["type" ] == "date" :
-                if line[ k ] == "NULL" :
-                    doc[ k ] = "NULL"
+            
+            typeField = fieldConfig.typeData( k )
+            if typeField == "int" :
+                v = int( dictEntry[ k ])
+            elif typeField == "str" :
+                v = str( dictEntry[ k ])
+            elif typeField == "date":
+                if dictEntry[ k ] == "NULL" :
+                    v = 'NULL'
                 else:
-                    doc[ k ] = datetime.strptime( line[ k ], fieldDict[ k ][ "format"] )
-        except ValueError as e :
+                    v = datetime.strptime( dictEntry[ k ], fieldConfig.formatData( k ) )
+                    
+            if fieldConfig.hasNewName( k ):
+                doc[ fieldConfig.nameData( k )] = v
+            else:
+                doc[ k ] = v
+                    
+        except ValueError :
             print( "Value error parsing field : [%s]" % k )
-            print( "read value is: '%s'" % line[ k ] )
-            print( "line: %i, '%s'" % ( lineCount, line ))
+            print( "read value is: '%s'" % dictEntry[ k ] )
+            print( "line: %i, '%s'" % ( lineCount, dictEntry ))
             #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
             raise ;
     
@@ -127,10 +269,16 @@ def tracker(totalCount, result, filename ):
 #     print( "}")
 #  
 
+
+ProcessManager = multiprocessing.Manager()
     
 def mainline( args ):
+    
+    global ProcessManager
+    global stopEvent
+    
     '''
-    >>> mainline( [  'test_set_small.txt' ] )
+    >>> mainline( [ 'test_set_small.txt' ] )
     database: test, collection: test
     files ['test_set_small.txt']
     Processing : test_set_small.txt
@@ -138,20 +286,21 @@ def mainline( args ):
     Processed test_set_small.txt
     '''
     
-    parser = argparse.ArgumentParser(description='loader for MOT data', prog = "pyfastloader")
+    parser = argparse.ArgumentParser(description='loader for MOT data', prog = "pymongodbimport")
     parser.add_argument('--database', default="test", help='specify the database name')
     parser.add_argument('--collection', default="test", help='specify the collection name')
     parser.add_argument('--host', default="localhost", help='hostname')
     parser.add_argument('--port', default="27017", help='port name', type=int)
     parser.add_argument('--chunksize', default="5000", help='set chunk size for bulk inserts', type=int)
-    parser.add_argument('filenames', nargs="*", help='list of files')
+    parser.add_argument('filenames', nargs="+", help='list of files')
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading" )
     parser.add_argument( '--ordered', default=False, action="store_true", help="forced ordered inserts" )
     parser.add_argument( '--verbose', default=0, type=int, help="controls how noisy the app is" )
-    parser.add_argument( "--fieldfile", default= None, type=str,  help="Field and type mappings")
+    parser.add_argument( "--fieldfile", default="fieldfile.ff", type=str,  help="Field and type mappings")
     parser.add_argument( "--delimiter", default="|", type=str, help="The delimiter string used to split fields (default '|')")
     parser.add_argument( "--testmode", default=False, action="store_true", help="Run in test mode, no updates")
+    parser.add_argument( "--multi", default=0, type=int, help="Run in multiprocessing mode")
     args= parser.parse_args( args )
     
     if args.testmode :
@@ -159,14 +308,15 @@ def mainline( args ):
         doctest.testmod()
         sys.exit( 0 )
         
-    mc = pymongo.MongoClient( host=args.host, port=args.port )
-    db = mc[ args.database ]
+
     filenames = args.filenames
-    collection = db[ args.collection ]
+
     fc = FieldConfig()
     
     if args.drop :
-        collection.drop()
+        m = MongoDB( args.host, args.port, args.database, args.collection )
+        m.connect()
+        m.collection().drop()
         print( "dropped collection: %s.%s" % ( args.database, args.collection ))
     
     print(  "database: %s, collection: %s" % ( args.database, args.collection ))
@@ -176,12 +326,12 @@ def mainline( args ):
 #                   "Make", "Model", "Colour","FuelType", "CylinderCapacity", "FirstUseDate" ]
     
 
-    fieldDict = OrderedDict()
+    fieldConfig = None
     processedFiles = []
     if args.fieldfile is None :
         pass # process later in file processing loop
     elif os.path.isfile( args.fieldfile ):
-        fieldDict = fc.read( args.fieldfile )
+        fieldConfig = FieldConfig( args.fieldfile )
         
     #print( "FieldDict : %s " % fieldDict )
     totalCount = 0
@@ -193,36 +343,79 @@ def mainline( args ):
     for i in filenames:
         print ("Processing : %s" % i )
 
-        if args.fieldfile is None :
+        if fieldConfig is None :
             fieldFilename = makeFieldFilename( i )
             if os.path.isfile( fieldFilename ):
-                fieldDict = fc.read( fieldFilename )
+                fieldConfig = FieldConfig( fieldFilename )
             else:
-                raise ValueError( "No valid field file defined for '%s'" % i )
+                print( "No valid field file defined for '%s'" % i )
+                fieldConfig = None # reset for next iteration of loop
+                continue
             
         if ( os.path.exists( i ) and os.path.isfile( i )) :
-            with open( i, "r" ) as f :
+            
+            if args.multi > 0  :
+            
 
-                lineCount = skipLines( f, args.skip )
-                
-                reader = csv.DictReader( f, fieldnames = fieldDict.keys(), delimiter = args.delimiter )
-                colWriter = CollectionWriter( collection, args.ordered, fieldDict, bulkerSize )
-                while True :
-                    result = colWriter.writeRecords( reader, lineCount )
-                    lineCount = lineCount + result['nInserted']
-                    totalCount = totalCount + result[ "nInserted" ]
-                    if result[ "nInserted" ] < bulkerSize :
-                        break
                     
-                print( "Completed processing : %s, (%d records)" % ( i, totalCount ))
-                processedFiles.append( i )
                 
+                    
+                for 
+                qList = []
+
+                for  j in range( args.multi ):
+                    q = multiprocessing.Queue( 10000 )
+                    qList.append( q )
+                    
+                r = Reader( qList, fieldConfig, args.delimiter )
+                readProc = multiprocessing.Process( target= r.read, args=( i, ))
+                readProc.start()
+                
+                writePool = []
+                for j in range( args.multi ):
+                    m = MongoDB( args.host, args.port, args.database, args.collection )
+                    w = Writer( m , qList[ j ], stopEvent, fieldConfig, args.ordered,  args.chunksize )
+                    writeProc = multiprocessing.Process( target= w.write, args=())
+                    writePool.append( writeProc )
+                    writeProc.start()
+                    
+                    
+                readProc.join()
+                for j in range( args.multi ):
+                    writePool[ j ].join()
+                    
+                processedFiles.append( i )
+                fieldConfig = None
+            else:
+                
+                mdb = MongoDB( host=args.host, port=args.port, databaseName=args.database, collectionName=args.collection)
+                mdb.connect()
+                reader = Reader( fieldConfig, args.delimiter )
+                
+                for linesBuffer in reader.read( i, args.chunksize, args.skip ) :
+                    lineCount = args.skip
+                    writer = Writer( mdb.collection(), fieldConfig, args.ordered, bulkerSize )
+                    while True :
+                        result = writer.write( lineCount, linesBuffer )
+                        lineCount = lineCount + result['nInserted']
+                        totalCount = totalCount + result[ "nInserted" ]
+                        if result[ "nInserted" ] < bulkerSize :
+                            break
+                        
+                    print( "Completed processing : %s, (%d records)" % ( i, totalCount ))
+                    processedFiles.append( i )
+                    
         else:
             print( "no such file : %s" % i ) 
-            
-    for i in processedFiles :
-        print( "Processed %s" % i )
+                
+        for i in processedFiles :
+            print( "Processed %s" % i )
 
+    
+    
 if __name__ == '__main__':
+
     sys.argv.pop( 0 ) # remove script file name 
     mainline( sys.argv )
+
+        

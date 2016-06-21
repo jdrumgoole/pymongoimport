@@ -18,6 +18,7 @@ import sys
 import logging
 import time
 
+import cProfile
 
 from fieldconfig import FieldConfig, FieldConfigException
 import multiprocessing
@@ -25,7 +26,7 @@ import multiprocessing
 class MongoDB( object ):
     
     def __init__(self, host, port, databaseName, collectionName, 
-                 username=None, password=None, ssl=False ):
+                 username=None, password=None, ssl=False, admindb="admin"):
         self._host = host
         self._port = port
         self._databaseName = databaseName
@@ -35,13 +36,19 @@ class MongoDB( object ):
         self._username = username
         self._password = password
         self._ssl = ssl
+        self._admindb = admindb
     
-    def connect(self):
+    def connect(self, source=None):
+        
+        admindb = self._admindb
+        if source:
+            admindb = source
+            
         self._client = pymongo.MongoClient( host=self._host, port=self._port, ssl=self._ssl)
         self._database = self._client[ self._databaseName]
         
         if self._username :
-            if self._database.authenticate( self._username, self._password ):
+            if self._database.authenticate( name=self._username, password=self._password, source=admindb):
 #            if self._database.authenticate( self._username, self._password, mechanism='MONGODB-CR'):
                 print( "successful login by %s (method SCRAM-SHA-1)" % self._username )
             else:
@@ -178,10 +185,10 @@ def makeFieldFilename( filename ):
     >>> makeFieldFilename( "test" )
     'test.ff'
     '''
-    ( x, _ ) = os.path.splitext( filename )
+    ( x, _ ) = os.path.splitext( os.path.basename( filename ))
     return x + ".ff" 
 
-class CollectionWriter(object):
+class BatchWriter(object):
      
     def __init__(self, collection, orderedWrites, fieldConfig, chunkSize ):
          
@@ -190,8 +197,34 @@ class CollectionWriter(object):
         self._fieldConfig = fieldConfig
         self._chunkSize = chunkSize
          
-    def writeRecords(self, reader, lineCount ):
+    def insertWrite(self, reader, lineCount):
+        
+        lineBuffer = []
+        bufferSize = 0
+        for line in reader :
+            d = createDoc( self._fieldConfig, line, lineCount )
+            lineBuffer.insert( bufferSize, d )
+            #print( buffer )
+            bufferSize = bufferSize + 1
+            if bufferSize == self._chunkSize :
+                self._collection.insert_many( lineBuffer[0:bufferSize] )
+                lineCount = lineCount + bufferSize
+                bufferSize = 0
+                   
+        if bufferSize > 0 :
+            self._collection.insert_many( lineBuffer[ 0:bufferSize ])
+            lineCount = lineCount + bufferSize
+            bufferSize = 0
+    
+        return lineCount
+
+ 
+        
+    def bulkWrite(self, reader, lineCount ):
         bulker = None
+        
+        insertList = []
+        
         try : 
             if self._orderedWrites :
                 bulker = self._collection.initialize_ordered_bulk_op()
@@ -203,19 +236,27 @@ class CollectionWriter(object):
                 #print( "dict: %s" % dictEntry )
                 lineCount = lineCount + 1 
                 d = createDoc( self._fieldConfig, dictEntry, lineCount )
+                insertList.append( d )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
-                    break
+                    bulker.execute()
+                    if self._orderedWrites :
+                        bulker = self._collection.initialize_ordered_bulk_op()
+                    else:
+                        bulker = self._collection.initialize_unordered_bulk_op()
+                        
+                    bulkerCount = 0
              
             if ( bulkerCount > 0 ) :
-                return bulker.execute()
-            else:
-                return { "nInserted" : 0 }
+                bulker.execute()
+
  
         except pymongo.errors.BulkWriteError as e :
-            print( "Bulk write error : %s" % e )
+            print( "Bulk write error : %s" % e.details )
             raise
+        
+        return  lineCount 
 
 def createDoc( fieldConfig, dictEntry, lineCount):
 
@@ -266,7 +307,7 @@ def tracker(totalCount, result, filename ):
 
 def multiProcessFiles( fieldConfig, args ):
     
-    readers = []
+    importerProcs = []
     writers = []
     queue = multiprocessing.JoinableQueue( 10000 )
     stopEvent = multiprocessing.Event()
@@ -274,98 +315,93 @@ def multiProcessFiles( fieldConfig, args ):
     
     try: 
         for i in args.filenames :
-            try:
-                r = Reader( queue, fieldConfig, args, i )
-                readProc = multiprocessing.Process( name="reader : %s" % i, target= r.read, args=( args, i, ))
-                readers.append( readProc )
-                readProc.start()
-            except FieldConfigException, e :
-                print( "Field file issue processing: '%s'" % i )
-                print( e )
-            
-        for i in range( args.multi ):
-            w = Writer( queue )
-            writeProc = multiprocessing.Process( name="writer: %i" % i, target= w.write, args=( args, ))
-            writers.append( writeProc )
-            writeProc.start()
+            importerProc = multiprocessing.Process( name="reader : %s" % i, target= processOneFile, args=( fieldConfig, args, i, ))
+            importerProcs.append( importerProc )
+            importerProc.start()
                 
-        for i in readers:
-            i.join()
-            queue.put( None )
-            
-        for i in writers:
-            i.join()
-
-
+        for p in importerProcs :
+            p.join()
         
     except KeyboardInterrupt :
-        for i in readers:
-            i.terminate()
-            i.join()
-                
-                
-            for i in writers:
-                i.terminate()
-                i.join()
+        for p in importerProcs :
+            p.terminate()
+            p.join()
+
+class InputFileException(Exception):
+    def __init__(self, *args,**kwargs):
+        Exception.__init__(self,*args,**kwargs)
+
+def processOneFile( fieldConfig, args, filename ):
+
+    try :
+        mdb = MongoDB(host=args.host, port=args.port, 
+                      databaseName= args.database,
+                      collectionName = args.collection,
+                      username=args.username, 
+                      password=args.password, 
+                      ssl=args.ssl )
+        mdb.connect()
+        collection =mdb.collection()
+    except pymongo.errors.OperationFailure, e :
+        print( "Exception: Operations Failure: %s" % e )
+    
+    if args.fieldfile is None :
+        fieldFilename = makeFieldFilename( filename )
+        try : 
+            fieldConfig= FieldConfig( fieldFilename )
+        except OSError, e:
+            raise FieldConfigException( "no valid field file for :%s"  % filename )
+
+    print ("Processing : %s" % filename )
+    lineCount = 0 
+    try :
+        with open( filename, "r") as f :
+            lineCount = skipLines( f, args.skip )
             
-    pass
 
+            #print( "field names: %s" % fieldDict.keys() )
+            reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
+            
+            bw = BatchWriter( collection, False, fieldConfig, args.chunksize )
+            if args.insertmany:
+                lineCount = bw.insertWrite( reader, lineCount)
+            else:
+                lineCount = bw.bulkWrite(reader, lineCount)
+            return ( filename, lineCount )
+            
+    except OSError, e :
+        raise InputFileException( "Can't open '%s' : %s" % ( filename, e ))
+    
+    except KeyboardInterrupt:
+        print( "Keyboard Interrupt exiting...")
+        sys.exit( 2 )
+        
 
+    
 def processFiles( fieldConfig, args ):
-
-    mdb = MongoDB(host=args.host, port=args.port, 
-                  databaseName= args.database,
-                  collectionName = args.collection,
-                  username=args.username, 
-                  password=args.password, 
-                  ssl=args.ssl )
-    mdb.connect()
-    collection =mdb.collection()
     
     totalCount = 0
+    lineCount = 0
     results=[]
     failures=[]
     
     for i in args.filenames :
-        if args.fieldfile is None :
-            fieldFilename = makeFieldFilename( i )
-            try : 
-                fieldConfig= FieldConfig( fieldFilename )
-            except OSError, e:
-                print( "Field file : '%s' for '%s' cannot be opened : %s" % ( fieldFilename, i, e  ))
-                print( "Ignoring : %s" % i )
-                failures.append( i )
-                continue
-
-        print ("Processing : %s" % i )
-        lineCount = 0 
-        try :
-            with open( i, "r") as f :
-                lineCount = skipLines( f, args.skip )
-                
-                #print( "field names: %s" % fieldDict.keys() )
-                reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
-                colWriter = CollectionWriter( collection, args.ordered, fieldConfig, args.chunksize )
-                while True :
-                    result = colWriter.writeRecords( reader, lineCount )
-                    lineCount = lineCount + result['nInserted']
-                    totalCount = totalCount + result[ "nInserted" ]
-                    if result[ "nInserted" ] < args.chunksize :
-                        break
-                    
-                results.append( i )
-                
-        except OSError, e :
-            print( "Can't open '%s' : %s" % ( i, e ))
+        try:
+            ( filename, lineCount ) = processOneFile( fieldConfig, args, i )
+            totalCount = lineCount + totalCount
+            results.append( i )
+        except FieldConfigException, e :
+            print( "Field file error for %s : %s" % ( i, e ))
             failures.append( i )
-        except KeyboardInterrupt:
-            print( "exiting...(ctrl-C ? )")
-            sys.exit( 2 )
+        except InputFileException, e :
+            print( "Input file error for %s : %s" % ( i, e ))
+            failures.append( i )
             
-        print( "Processed: %s" % results )
-        if len( failures ) > 0 :
-            print( "Failed to process: %s" % failures )
-            
+    if len( results ) > 0 :
+        print( "Processed         : %s" % results )
+    if len( failures ) > 0 :
+        print( "Failed to process : %s" % failures )
+        
 
 def mainline( args ):
     
@@ -379,16 +415,19 @@ def mainline( args ):
     Processed test_set_small.txt
     '''
     
-    parser = argparse.ArgumentParser(description='loader for MOT data', prog = "pyfastloader")
+    parser = argparse.ArgumentParser(description='loader for MongoDB data', prog = "pymongodbimport")
     parser.add_argument( '--database', default="test", help='specify the database name')
     parser.add_argument( '--collection', default="test", help='specify the collection name')
     parser.add_argument( '--host', default="localhost", help='hostname')
     parser.add_argument( '--port', default="27017", help='port name', type=int)
     parser.add_argument( '--username', default=None, help='username to login to database')
     parser.add_argument( '--password', default=None, help='password to login to database')
+    parser.add_argument( '--admindb', default="admin", help="Admin database used for authentication" )
     parser.add_argument( '--ssl', default=False, action="store_true", help='use SSL for connections')
     parser.add_argument( '--chunksize', type=int, default=1000, help='set chunk size for bulk inserts' )
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
+    parser.add_argument( '--insertmany', default=False, action="store_true", help="use insert_many")
+    parser.add_argument( '--testlogin', default=False, action="store_true", help="test database login")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading" )
     parser.add_argument( '--ordered', default=False, action="store_true", help="forced ordered inserts" )
     parser.add_argument( '--verbose', default=0, type=int, help="controls how noisy the app is" )
@@ -396,7 +435,7 @@ def mainline( args ):
     parser.add_argument( "--delimiter", default="|", type=str, help="The delimiter string used to split fields (default '|')")
     parser.add_argument( "--testmode", default=False, action="store_true", help="Run in test mode, no updates")
     parser.add_argument( "--multi", default=0, type=int, help="Run in multiprocessing mode")
-    parser.add_argument( 'filenames', nargs="+", help='list of files')
+    parser.add_argument( 'filenames', nargs="*", help='list of files')
     
     args= parser.parse_args( args )
     
@@ -410,6 +449,18 @@ def mainline( args ):
     fieldConfig = None
     processedFiles = []
     
+    if args.testlogin:
+        try: 
+            m = MongoDB( args.host, args.port, args.database, args.collection, args.username, args.password, ssl=args.ssl, admindb=args.admindb )
+            m.connect(source=args.admindb )
+            print( "login works")
+            m.collection().insert_one( { "hello" : "world" } )
+            m.collection().delete_one( { "hello" : "world" } )
+            print( "Insert and delete work")
+        except pymongo.errors.OperationFailure, e :
+            print( "Exception : Operations Failure: %s" % e.details )
+
+        sys.exit( 0 )
     if args.fieldfile:
         try :
             fieldConfig = FieldConfig( args.fieldfile )
@@ -436,81 +487,7 @@ def mainline( args ):
     else:
         processFiles( fieldConfig, args )
         sys.exit(0)
-        
-#     for i in filenames:
-#         print ("Processing : %s" % i )
-# 
-#         if args.fieldfile is None :
-#             fieldFilename = makeFieldFilename( i )
-#             try : 
-#                 fieldConfig= FieldConfig( fieldFilename )
-#             except OSError, e:
-#                 print( "Field file : '%s' for '%s' cannot be opened : %s" % (args.fieldfile, i, e  ))
-#                 print( "Ignoring : %s" % i )
-#                 continue
-#             
-#             if args.multi > 0  :
-#                 qList = []
-# 
-#                 for  j in range( args.multi ):
-#                     q = multiprocessing.Queue( 10000 )
-#                     qList.append( q )
-#                     
-#                 r = Reader( qList, fieldConfig, args.delimiter )
-#                 readProc = multiprocessing.Process( target= r.read, args=( i, ))
-#                 readProc.start()
-#                 
-#                 writePool = []
-#                 for j in range( args.multi ):
-#                     m = MongoDB( args.host, args.port, args.database, args.collection )
-#                     w = Writer( m , qList[ j ], fieldConfig, args.ordered,  args.chunksize )
-#                     writeProc = multiprocessing.Process( target= w.write, args=())
-#                     writePool.append( writeProc )
-#                     writeProc.start()
-#                     
-#                     
-#                 readProc.join()
-#                 for j in range( args.multi ):
-#                     writePool[ j ].join()
-#                     
-#                 processedFiles.append( i )
-#             else:
-#                 processFiles( fieldConfig, args )
-#                 mdb = MongoDB(host=args.host, port=args.port, 
-#                               databaseName= args.database,
-#                               collectionName = args.collection,
-#                               username=args.username, 
-#                               password=args.password, 
-#                               ssl=args.ssl )
-#                 mdb.connect()
-#                 collection =mdb.collection()
-#                 
-#                 try:
-#                     with open( i, "r" ) as f :
-#         
-#                         lineCount = skipLines( f, args.skip )
-#                         
-#                         #print( "field names: %s" % fieldDict.keys() )
-#                         reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
-#                         colWriter = CollectionWriter( collection, args.ordered, fieldConfig, args.chunksize )
-#                         while True :
-#                             result = colWriter.writeRecords( reader, lineCount )
-#                             lineCount = lineCount + result['nInserted']
-#                             totalCount = totalCount + result[ "nInserted" ]
-#                             if result[ "nInserted" ] < args.chunksize :
-#                                 break
-#                             
-#                         print( "Completed processing : %s, (%d records)" % ( i, totalCount ))
-#                         processedFiles.append( i )
-#                 except OSError, e :
-#                     print( "Cannot process '%s' : %s" % ( i, e ))
-#                     continue 
-#         else:
-#             print( "no such file : %s" % i ) 
-#                 
-#         for i in processedFiles :
-#             print( "Processed %s" % i )
-    
+            
     
 if __name__ == '__main__':
     

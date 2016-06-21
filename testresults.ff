@@ -1,5 +1,4 @@
 [TestID]
-name : _id
 type : int
 	
 [VehicleID]
