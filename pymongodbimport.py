@@ -18,49 +18,11 @@ import sys
 import logging
 import time
 
-import cProfile
 
 from fieldconfig import FieldConfig, FieldConfigException
 import multiprocessing
-    
-class MongoDB( object ):
-    
-    def __init__(self, host, port, databaseName, collectionName, 
-                 username=None, password=None, ssl=False, admindb="admin"):
-        self._host = host
-        self._port = port
-        self._databaseName = databaseName
-        self._collectionName = collectionName
-        self._database = None
-        self._collection = None
-        self._username = username
-        self._password = password
-        self._ssl = ssl
-        self._admindb = admindb
-    
-    def connect(self, source=None):
-        
-        admindb = self._admindb
-        if source:
-            admindb = source
-            
-        self._client = pymongo.MongoClient( host=self._host, port=self._port, ssl=self._ssl)
-        self._database = self._client[ self._databaseName]
-        
-        if self._username :
-            if self._database.authenticate( name=self._username, password=self._password, source=admindb):
-#            if self._database.authenticate( self._username, self._password, mechanism='MONGODB-CR'):
-                print( "successful login by %s (method SCRAM-SHA-1)" % self._username )
-            else:
-                print( "login failed for %s (method SCRAM-SHA-1)" % self._username )
-                
-        self._collection = self._database[ self._collectionName ]
-        
-    def collection(self):
-        return self._collection
+from mongodb import MongoDB
 
-    def database(self):
-        return self._database
 
 
 class Reader( object ):
@@ -227,8 +189,6 @@ class BatchWriter(object):
     def bulkWrite(self, reader, lineCount ):
         bulker = None
         
-        insertList = []
-        
         try : 
             if self._orderedWrites :
                 bulker = self._collection.initialize_ordered_bulk_op()
@@ -249,7 +209,6 @@ class BatchWriter(object):
                 #print( "dict: %s" % dictEntry )
                 lineCount = lineCount + 1 
                 d = createDoc( self._fieldConfig, dictEntry, lineCount )
-                insertList.append( d )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
@@ -470,6 +429,8 @@ def mainline( args ):
     filenames = args.filenames
     fieldConfig = None
     processedFiles = []
+    
+    logger = logging.getLogger( args.database )
     
     if args.testlogin:
         try: 
