@@ -113,7 +113,11 @@ class Writer( object ):
                       password=args.password, 
                       ssl=args.ssl )
         
-        mdb.connect()
+        try :
+            mdb.connect()
+        except pymongo.errors.ServerSelectionTimeoutError, e :
+            print( "server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
+            sys.exit( 2 )
         collection =mdb.collection()
         
         processing = True 
@@ -350,11 +354,19 @@ def processOneFile( fieldConfig, args, filename ):
                       username=args.username, 
                       password=args.password, 
                       ssl=args.ssl )
+
         mdb.connect()
         collection =mdb.collection()
+        
+    except pymongo.errors.ServerSelectionTimeoutError, e :
+            print( "Exception: server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
+            sys.exit( 2 )
+            
+
     except pymongo.errors.OperationFailure, e :
-        print( "Exception: Operations Failure: %s" % e )
-    
+        print( "Exception: Operations Failure: %s" % e.details )
+        sys.exit( 2 )
+        
     if args.fieldfile is None :
         fieldFilename = makeFieldFilename( filename )
         try : 
