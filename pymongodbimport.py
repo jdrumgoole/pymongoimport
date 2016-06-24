@@ -201,7 +201,7 @@ class BatchWriter(object):
             for dictEntry in reader :
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
-                    print( "Inserted %i records per second" % insertedThisQuantum )
+                    print( "Inserted %i records per second, record number: %i" % ( insertedThisQuantum, lineCount ))
                     insertedThisQuantum = 0
                     timeStart = timeNow
         
@@ -321,7 +321,6 @@ def processOneFile( fieldConfig, args, filename ):
             print( "Exception: server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
             sys.exit( 2 )
             
-
     except pymongo.errors.OperationFailure, e :
         print( "Exception: Operations Failure: %s" % e.details )
         sys.exit( 2 )
@@ -333,11 +332,17 @@ def processOneFile( fieldConfig, args, filename ):
         except OSError, e:
             raise FieldConfigException( "no valid field file for :%s"  % filename )
 
+
+    if args.restart:
+        skip = collection.count()
+    else:
+        skip = args.skip
+        
     print ("Processing : %s" % filename )
     lineCount = 0 
     try :
         with open( filename, "r") as f :
-            lineCount = skipLines( f, args.skip )
+            lineCount = skipLines( f, skip )
             
 
             #print( "field names: %s" % fieldDict.keys() )
@@ -407,6 +412,7 @@ def mainline( args ):
     parser.add_argument( '--ssl', default=False, action="store_true", help='use SSL for connections')
     parser.add_argument( '--chunksize', type=int, default=1000, help='set chunk size for bulk inserts' )
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
+    parser.add_argument( '--restart', default=False, action="store_true", help="use record count to skip")
     parser.add_argument( '--insertmany', default=False, action="store_true", help="use insert_many")
     parser.add_argument( '--testlogin', default=False, action="store_true", help="test database login")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading" )
