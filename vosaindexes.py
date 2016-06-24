@@ -10,7 +10,7 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='loader for MOT data', prog = "vosaindexes")
     parser.add_argument('--database', default="vosa", help='specify the database name')
-    parser.add_argument('--collection', default="results_2013", help='specify the collection name')
+    parser.add_argument('--collection', default="results2013", help='specify the collection name')
     parser.add_argument('--host', default="localhost", help='hostname')
     parser.add_argument('--port', default="27017", help='port name', type=int)
     parser.add_argument('--username', default=None, help='username to login to database')
