@@ -201,7 +201,7 @@ class BatchWriter(object):
             for dictEntry in reader :
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
-                    print( "Inserted %i records per second" % insertedThisQuantum )
+                    print( "Inserted %i records per second (total inserts: %i)" % ( insertedThisQuantum, lineCount ))
                     insertedThisQuantum = 0
                     timeStart = timeNow
         
