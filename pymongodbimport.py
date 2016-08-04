@@ -456,10 +456,12 @@ def mainline( args ):
             fieldConfig = FieldConfig( args.fieldfile )
         except OSError, e:
             print( "Field file : '%s' cannot be opened : %s" % (args.fieldfile, e  ))
+            sys.exit( 1 )
     
     if args.drop :
         m = MongoDB( args.host, args.port, args.database, args.collection, args.username, args.password, ssl=args.ssl )
         m.connect()
+        
         m.collection().drop()
         print( "dropped collection: %s.%s" % ( args.database, args.collection ))
     
