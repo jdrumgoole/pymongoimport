@@ -424,6 +424,7 @@ def mainline( args ):
     parser.add_argument( "--testmode", default=False, action="store_true", help="Run in test mode, no updates")
     parser.add_argument( "--multi", default=0, type=int, help="Run in multiprocessing mode")
     parser.add_argument( 'filenames', nargs="*", help='list of files')
+    parser.add_argument('--version', action='version', version='%(prog)s version:' + __VERSION__ )
     
     args= parser.parse_args( args )
     
