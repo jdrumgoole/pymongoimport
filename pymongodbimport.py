@@ -26,7 +26,8 @@ from mongodb import MongoDB
 
 
 
-class Reader( object ):
+
+class xReader( object ):
     
     def __init__(self, queue, fieldConfig, args, filename ):
         self._queue = queue
@@ -402,7 +403,22 @@ def mainline( args ):
     Processed test_set_small.txt
     '''
     
-    parser = argparse.ArgumentParser(description='loader for MongoDB data', prog = "pymongodbimport")
+    usage_message = '''
+    
+    pymongodbimport is a python program that will import data into a mongodb
+    database (default 'test' ) and a mongodb collection (default 'test' ).
+    
+    The input files must be named using the --filenames parameter.
+    
+    Each file in the input list must correspond to a fieldfile format that is
+    common across all the files. The fieldfile is specified by the 
+    --fieldfile parameter.
+    
+    An example run:
+    
+    python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
+    '''
+    parser = argparse.ArgumentParser( prog = "pymongodbimport", usage=usage_message )
     parser.add_argument( '--database', default="test", help='specify the database name')
     parser.add_argument( '--collection', default="test", help='specify the collection name')
     parser.add_argument( '--host', default="localhost", help='hostname')
