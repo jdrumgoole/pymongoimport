@@ -392,7 +392,7 @@ def processFiles( fieldConfig, args ):
 
 def mainline( args ):
     
-    
+    __VERSION__ = "1.1"
     '''
     >>> mainline( [ 'test_set_small.txt' ] )
     database: test, collection: test
