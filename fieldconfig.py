@@ -111,5 +111,14 @@ class FieldConfig(object):
     def nameData(self , fieldName ):
         return self._cfg.get( fieldName, "name" )
     
+    @staticmethod
+    def generateFieldFile( csvfile, delimiter=',' ):
+        
+        with open( csvfile ) as inputfile :
+            header = inputfile.readline()
+            
+        for field in header.split(  delimiter ):
+            print( field )
+    
     
     

@@ -29,6 +29,8 @@ class MongoDB( object ):
         if source:
             admindb = source
             
+        print( "Hello")
+        
         self._client = pymongo.MongoClient( host=self._host, port=self._port, ssl=self._ssl)
         self._database = self._client[ self._databaseName]
         

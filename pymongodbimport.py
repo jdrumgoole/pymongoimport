@@ -188,7 +188,7 @@ class BatchWriter(object):
 
  
         
-    def bulkWrite(self, reader, lineCount ):
+    def bulkWrite(self, reader, lineCount, thread_name="single-writer"):
         bulker = None
         
         try : 
@@ -203,7 +203,7 @@ class BatchWriter(object):
             for dictEntry in reader :
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
-                    print( "Inserted %i records per second, record number: %i" % ( insertedThisQuantum, lineCount ))
+                    print( "Thread '%s' Inserted %i records per second, record number: %i" % ( thread_name, insertedThisQuantum, lineCount ))
                     insertedThisQuantum = 0
                     timeStart = timeNow
         
@@ -214,17 +214,17 @@ class BatchWriter(object):
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
-                    bulker.execute()
+                    result = bulker.execute()
+                    insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()
                     else:
                         bulker = self._collection.initialize_unordered_bulk_op()
-                        
-                    insertedThisQuantum = insertedThisQuantum + bulkerCount 
+                 
                     bulkerCount = 0
              
             if ( bulkerCount > 0 ) :
-                bulker.execute()
+                result = bulker.execute()
 
  
         except pymongo.errors.BulkWriteError as e :
@@ -283,14 +283,11 @@ def tracker(totalCount, result, filename ):
 def multiProcessFiles( fieldConfig, args ):
     
     importerProcs = []
-    writers = []
-    queue = multiprocessing.JoinableQueue( 10000 )
-    stopEvent = multiprocessing.Event()
-
     
     try: 
         for i in args.filenames :
-            importerProc = multiprocessing.Process( name="reader : %s" % i, target= processOneFile, args=( fieldConfig, args, i, ))
+            name="reader: %s" % i
+            importerProc = multiprocessing.Process( name=name, target= processOneFile, args=( fieldConfig, args, i, name ))
             importerProcs.append( importerProc )
             importerProc.start()
                 
@@ -306,7 +303,7 @@ class InputFileException(Exception):
     def __init__(self, *args,**kwargs):
         Exception.__init__(self,*args,**kwargs)
 
-def processOneFile( fieldConfig, args, filename ):
+def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
 
     try :
         mdb = MongoDB(host=args.host, port=args.port, 
@@ -340,7 +337,7 @@ def processOneFile( fieldConfig, args, filename ):
     else:
         skip = args.skip
         
-    print ("Processing : %s" % filename )
+
     lineCount = 0 
     try :
         with open( filename, "r") as f :
@@ -354,7 +351,7 @@ def processOneFile( fieldConfig, args, filename ):
             if args.insertmany:
                 lineCount = bw.insertWrite( reader, lineCount)
             else:
-                lineCount = bw.bulkWrite(reader, lineCount)
+                lineCount = bw.bulkWrite(reader, lineCount, thread_name )
             return ( filename, lineCount )
             
     except OSError, e :
@@ -375,9 +372,10 @@ def processFiles( fieldConfig, args ):
     
     for i in args.filenames :
         try:
+            print ("Processing : %s" % i )
             ( filename, lineCount ) = processOneFile( fieldConfig, args, i )
             totalCount = lineCount + totalCount
-            results.append( i )
+            results.append( filename )
         except FieldConfigException, e :
             print( "Field file error for %s : %s" % ( i, e ))
             failures.append( i )
@@ -386,7 +384,7 @@ def processFiles( fieldConfig, args ):
             failures.append( i )
             
     if len( results ) > 0 :
-        print( "Processed         : %s" % results )
+        print( "Processed  : %s" % results )
     if len( failures ) > 0 :
         print( "Failed to process : %s" % failures )
         
@@ -436,7 +434,7 @@ def mainline( args ):
     parser.add_argument( '--ordered', default=False, action="store_true", help="forced ordered inserts" )
     parser.add_argument( '--verbose', default=0, type=int, help="controls how noisy the app is" )
     parser.add_argument( "--fieldfile", default= None, type=str,  help="Field and type mappings")
-    parser.add_argument( "--delimiter", default="|", type=str, help="The delimiter string used to split fields (default '|')")
+    parser.add_argument( "--delimiter", default=",", type=str, help="The delimiter string used to split fields (default '|')")
     parser.add_argument( "--testmode", default=False, action="store_true", help="Run in test mode, no updates")
     parser.add_argument( "--multi", default=0, type=int, help="Run in multiprocessing mode")
     parser.add_argument( 'filenames', nargs="*", help='list of files')
@@ -448,13 +446,8 @@ def mainline( args ):
         import doctest
         doctest.testmod()
         sys.exit( 0 )
-        
 
-    filenames = args.filenames
     fieldConfig = None
-    processedFiles = []
-    
-    logger = logging.getLogger( args.database )
     
     if args.testlogin:
         try: 
@@ -483,14 +476,14 @@ def mainline( args ):
         print( "dropped collection: %s.%s" % ( args.database, args.collection ))
     
     print(  "database: %s, collection: %s" % ( args.database, args.collection ))
-    print( "files %s" % args.filenames )
+    print( "files      : %s" % args.filenames )
 
-    totalCount = 0
     if args.chunksize < 1 :
         print( "Chunksize must be 1 or more. Chunksize : %i" % args.chunksize )
         sys.exit( 1 )
     
     if args.multi :
+        print( "Running %i sub processes" % args.multi )
         multiprocessing.log_to_stderr(logging.DEBUG )
         multiProcessFiles( fieldConfig, args )
     else:
