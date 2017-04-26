@@ -5,14 +5,15 @@ Created on 2 Mar 2016
 '''
 
 from ConfigParser import RawConfigParser
+
 import textwrap
 from collections import OrderedDict
 
 class FieldConfigException(Exception):
     def __init__(self, *args,**kwargs):
         Exception.__init__(self,*args,**kwargs)
-        
-        
+          
+
 class FieldConfig(object):
     '''
       Each field is represented by a section in the config parser
@@ -55,9 +56,6 @@ class FieldConfig(object):
 
     def read(self, filename):
         
-        idCount = 0
-        firstSection = None
-        secondSection = None
         fieldDict = OrderedDict()
         result = self._cfg.read( filename )
         if len( result ) == 0 :
@@ -92,7 +90,7 @@ class FieldConfig(object):
             raise ValueError( "trying retrieve a fieldDict which has a 'None' value" )
         else:
             return self._fieldDict
-        
+
     def fields(self):
         return self._fields
     

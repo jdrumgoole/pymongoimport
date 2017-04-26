@@ -352,6 +352,7 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
                 lineCount = bw.insertWrite( reader, lineCount)
             else:
                 lineCount = bw.bulkWrite(reader, lineCount, thread_name )
+                
             return ( filename, lineCount )
             
     except OSError, e :
