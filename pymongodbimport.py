@@ -149,12 +149,11 @@ class BatchWriter(object):
     
         return lineCount
 
- 
         
     def bulkWrite(self, reader, lineCount, thread_name="single-writer"):
         bulker = None
         totalWritten = 0
-        totalRead = 0
+        totalRead = lineCount
         try : 
             if self._orderedWrites :
                 bulker = self._collection.initialize_ordered_bulk_op()
@@ -193,7 +192,7 @@ class BatchWriter(object):
                 totalWritten = totalWritten + result[ 'nInserted' ]
 
             if insertedThisQuantum > 0 :
-                 print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
+                print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
             print( "Total records read: %i, totalWritten: %i" % ( totalRead, totalWritten ))
         
         except pymongo.errors.BulkWriteError as e :
@@ -286,8 +285,8 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
         collection =mdb.collection()
         
     except pymongo.errors.ServerSelectionTimeoutError, e :
-            print( "Exception: server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
-            sys.exit( 2 )
+        print( "Exception: server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
+        sys.exit( 2 )
             
     except pymongo.errors.OperationFailure, e :
         print( "Exception: Operations Failure: %s" % e.details )
@@ -321,6 +320,7 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
                 lineCount = bw.insertWrite( reader, lineCount)
             else:
                 lineCount = bw.bulkWrite(reader, lineCount, thread_name + " input: " + filename  )
+
             return ( filename, lineCount )
             
     except OSError, e :
