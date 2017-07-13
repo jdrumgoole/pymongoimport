@@ -25,43 +25,6 @@ import multiprocessing
 from mongodb import MongoDB
 
 
-
-
-class xReader( object ):
-    
-    def __init__(self, queue, fieldConfig, args, filename ):
-        self._queue = queue
-        self._fieldConfig = fieldConfig
-        
-        if self._fieldConfig is None :
-            fieldFilename = makeFieldFilename( filename )
-            try : 
-                self._fieldConfig = FieldConfig( fieldFilename )
-            except OSError, e:
-                print( "Field file : '%s' for '%s' cannot be opened : %s" % ( fieldFilename, filename, e  ))
-                print( "Ignoring : %s" % filename )
-                raise FieldConfigException( "No field config file for %s" % filename )
-        
-    def fieldConfig(self):
-        return self._fieldConfig
-    
-    def read(self, args, filename ):
-        #print( "read")
-            
-        lineCount = 0
-        with open( filename, "rb")  as f :
-            reader = csv.DictReader( f, fieldnames = self._fieldConfig.fields(), delimiter = args.delimiter)
-            for l in reader :
-                lineCount = lineCount + 1 
-                
-                '''
-                We send the fieldConfig with every line as the clients don't know which records are associated with which
-                files. This is wasteful. We can fix up later TODO.
-                '''
-                self._queue.put(( l, self._fieldConfig ))
-                
-        return lineCount 
-
 class Writer( object ):
     
     def __init__(self, queue ):
@@ -141,7 +104,7 @@ def skipLines( f, skipCount ):
         while dummy :
             lineCount = lineCount + 1
             if ( lineCount == skipCount ) :
-                break ;
+                break
             dummy = f.readline()
             
     return lineCount 
@@ -190,7 +153,8 @@ class BatchWriter(object):
         
     def bulkWrite(self, reader, lineCount, thread_name="single-writer"):
         bulker = None
-        
+        totalWritten = 0
+        totalRead = 0
         try : 
             if self._orderedWrites :
                 bulker = self._collection.initialize_ordered_bulk_op()
@@ -201,20 +165,14 @@ class BatchWriter(object):
             bulkerCount = 0
             insertedThisQuantum = 0
             for dictEntry in reader :
-                timeNow = time.time()
-                if timeNow > timeStart + 1  :
-                    print( "Thread '%s' Inserted %i records per second, record number: %i" % ( thread_name, insertedThisQuantum, lineCount ))
-                    insertedThisQuantum = 0
-                    timeStart = timeNow
-        
-                
                 #print( "dict: %s" % dictEntry )
-                lineCount = lineCount + 1 
-                d = createDoc( self._fieldConfig, dictEntry, lineCount )
+                totalRead = totalRead + 1 
+                d = createDoc( self._fieldConfig, dictEntry, totalRead )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
                     result = bulker.execute()
+                    totalWritten = totalWritten + result[ 'nInserted' ]
                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()
@@ -222,16 +180,27 @@ class BatchWriter(object):
                         bulker = self._collection.initialize_unordered_bulk_op()
                  
                     bulkerCount = 0
+
+                timeNow = time.time()
+                if timeNow > timeStart + 1  :
+                    print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
+                    insertedThisQuantum = 0
+                    timeStart = timeNow
              
             if ( bulkerCount > 0 ) :
                 result = bulker.execute()
+                print( "'%s' : Inserted last %i records" % ( thread_name, result[ 'nInserted'] ))
+                totalWritten = totalWritten + result[ 'nInserted' ]
 
- 
+            if insertedThisQuantum > 0 :
+                 print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
+            print( "Total records read: %i, totalWritten: %i" % ( totalRead, totalWritten ))
+        
         except pymongo.errors.BulkWriteError as e :
             print( "Bulk write error : %s" % e.details )
             raise
         
-        return  lineCount 
+        return  totalRead 
 
 def createDoc( fieldConfig, dictEntry, lineCount):
 
@@ -266,10 +235,10 @@ def createDoc( fieldConfig, dictEntry, lineCount):
     
     return doc
         
-def tracker(totalCount, result, filename ):
-    totalCount = totalCount + result[ "nInserted" ]
-    #print("Inserted %d records from %s" % ( totalCount, filename ))
-    return totalCount 
+# def tracker(totalCount, result, filename ):
+#     totalCount = totalCount + result[ "nInserted" ]
+#     #print("Inserted %d records from %s" % ( totalCount, filename ))
+#     return totalCount 
 
 
        
@@ -351,7 +320,7 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
             if args.insertmany:
                 lineCount = bw.insertWrite( reader, lineCount)
             else:
-                lineCount = bw.bulkWrite(reader, lineCount, thread_name )
+                lineCount = bw.bulkWrite(reader, lineCount, thread_name + " input: " + filename  )
             return ( filename, lineCount )
             
     except OSError, e :
@@ -425,7 +394,7 @@ def mainline( args ):
     parser.add_argument( '--password', default=None, help='password to login to database')
     parser.add_argument( '--admindb', default="admin", help="Admin database used for authentication" )
     parser.add_argument( '--ssl', default=False, action="store_true", help='use SSL for connections')
-    parser.add_argument( '--chunksize', type=int, default=1000, help='set chunk size for bulk inserts' )
+    parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts' )
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
     parser.add_argument( '--restart', default=False, action="store_true", help="use record count to skip")
     parser.add_argument( '--insertmany', default=False, action="store_true", help="use insert_many")
