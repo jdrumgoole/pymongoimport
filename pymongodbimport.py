@@ -19,7 +19,6 @@ import sys
 import logging
 import time
 
-
 from fieldconfig import FieldConfig, FieldConfigException
 import multiprocessing
 from mongodb import MongoDB
@@ -128,32 +127,33 @@ class BatchWriter(object):
         self._fieldConfig = fieldConfig
         self._chunkSize = chunkSize
          
-    def insertWrite(self, reader, lineCount):
+    def insertWrite(self, reader, totalRead, totalWritten ):
         
         lineBuffer = []
         bufferSize = 0
         for line in reader :
-            d = createDoc( self._fieldConfig, line, lineCount )
+            d = createDoc( self._fieldConfig, line, totalRead )
+            totalRead = totalRead + 1
             lineBuffer.insert( bufferSize, d )
             #print( buffer )
             bufferSize = bufferSize + 1
             if bufferSize == self._chunkSize :
                 self._collection.insert_many( lineBuffer[0:bufferSize] )
-                lineCount = lineCount + bufferSize
+                totalWritten = totalWritten + bufferSize
                 bufferSize = 0
                    
         if bufferSize > 0 :
             self._collection.insert_many( lineBuffer[ 0:bufferSize ])
-            lineCount = lineCount + bufferSize
+            totalWritten = totalWritten + bufferSize
             bufferSize = 0
     
-        return lineCount
+        return totalWritten
 
         
-    def bulkWrite(self, reader, lineCount, thread_name="single-writer"):
+    def bulkWrite(self, reader, totalRead, totalWritten, thread_name="single-writer"):
         bulker = None
-        totalWritten = 0
-        totalRead = lineCount
+        totalWritten = totalWritten
+        totalRead    = totalRead
         try : 
             if self._orderedWrites :
                 bulker = self._collection.initialize_ordered_bulk_op()
@@ -186,13 +186,14 @@ class BatchWriter(object):
                     insertedThisQuantum = 0
                     timeStart = timeNow
              
+            if insertedThisQuantum > 0 :
+                print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
+
             if ( bulkerCount > 0 ) :
                 result = bulker.execute()
                 print( "'%s' : Inserted last %i records" % ( thread_name, result[ 'nInserted'] ))
                 totalWritten = totalWritten + result[ 'nInserted' ]
 
-            if insertedThisQuantum > 0 :
-                print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
             print( "Total records read: %i, totalWritten: %i" % ( totalRead, totalWritten ))
         
         except pymongo.errors.BulkWriteError as e :
@@ -301,25 +302,24 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
 
 
     if args.restart:
-        skip = collection.count()
+        totalWritten = collection.count()
     else:
-        skip = args.skip
+        totalWritten = args.skip
         
 
-    lineCount = 0 
+    totalRead = totalWritten
     try :
         with open( filename, "r") as f :
-            lineCount = skipLines( f, skip )
-            
+            totalRead = skipLines( f, totalWritten )
 
             #print( "field names: %s" % fieldDict.keys() )
             reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
             
             bw = BatchWriter( collection, False, fieldConfig, args.chunksize )
             if args.insertmany:
-                lineCount = bw.insertWrite( reader, lineCount)
+                lineCount = bw.insertWrite( reader, totalRead, totalWritten )
             else:
-                lineCount = bw.bulkWrite(reader, lineCount, thread_name + " input: " + filename  )
+                lineCount = bw.bulkWrite(reader,totalRead, totalWritten, thread_name + " input: " + filename  )
 
             return ( filename, lineCount )
             
@@ -360,7 +360,7 @@ def processFiles( fieldConfig, args ):
 
 def mainline( args ):
     
-    __VERSION__ = "1.1"
+    __VERSION__ = "1.2"
     '''
     >>> mainline( [ 'test_set_small.txt' ] )
     database: test, collection: test
@@ -396,7 +396,7 @@ def mainline( args ):
     parser.add_argument( '--ssl', default=False, action="store_true", help='use SSL for connections')
     parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts' )
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
-    parser.add_argument( '--restart', default=False, action="store_true", help="use record count to skip")
+    parser.add_argument( '--restart', default=False, action="store_true", help="use record count insert to restart at last write")
     parser.add_argument( '--insertmany', default=False, action="store_true", help="use insert_many")
     parser.add_argument( '--testlogin', default=False, action="store_true", help="test database login")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading" )
