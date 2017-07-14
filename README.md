@@ -4,7 +4,7 @@ A program to import data in CSV format. The program allows types for fields to b
 
 Arguments:
 
-`
+```
 optional arguments:
   -h, --help            show this help message and exit
   --database DATABASE   specify the database name
@@ -33,4 +33,4 @@ optional arguments:
   --testmode            Run in test mode, no updates
   --multi MULTI         Run in multiprocessing mode (experimental)
   --version             show program's version number and exit
-  `
+  ```
