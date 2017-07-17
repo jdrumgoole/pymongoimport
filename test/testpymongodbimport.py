@@ -4,7 +4,8 @@ Created on 3 Mar 2016
 @author: jdrumgoole
 '''
 import unittest
-from fieldconfig import FieldConfig
+
+from pymongodbimport.fieldconfig import FieldConfig
 
 class Test(unittest.TestCase):
 

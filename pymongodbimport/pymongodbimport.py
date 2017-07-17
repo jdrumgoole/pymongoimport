@@ -1,4 +1,4 @@
-# noinspection PyUnresolvedReferences
+#!/usr/bin/env python
 '''
 Created on 19 Feb 2016
 
@@ -11,6 +11,7 @@ from __future__ import print_function
 import pymongo
 from datetime import datetime
 from collections import OrderedDict
+from dateutil.parser import parse
 
 import csv
 import os
@@ -20,74 +21,7 @@ import logging
 import time
 
 from fieldconfig import FieldConfig, FieldConfigException
-import multiprocessing
-from mongodb import MongoDB
-
-
-class Writer( object ):
-    
-    def __init__(self, queue ):
-        
-        self._queue = queue
-        
-    def write(self, args ):
-
-        mdb = MongoDB(host=args.host, port=args.port, 
-                      databaseName= args.database,
-                      collectionName = args.collection,
-                      username=args.username, 
-                      password=args.password, 
-                      ssl=args.ssl )
-        
-        try :
-            mdb.connect()
-        except pymongo.errors.ServerSelectionTimeoutError, e :
-            print( "server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
-            sys.exit( 2 )
-        collection =mdb.collection()
-        
-        processing = True 
-        bulker = None
-        lineCount = 0 
-        
-        while  processing :
-            
-            if args.ordered :
-                bulker = collection.initialize_ordered_bulk_op()
-            else:
-                bulker = collection.initialize_unordered_bulk_op()
-                
-            bulkerCount = 0
-            
-            for _ in range( args.chunksize ) :
-                
-                lineCount = lineCount + 1 
-                
-                #start = time.time()
-                x = self._queue.get()
-                #end = time.time()
-                #print( "Queue waited : %f" % ( end - start ))
-                
-                if x is None :
-                    processing = False
-                    break 
-                
-                ( l, fieldConfig ) = x
-                
-                d = createDoc( fieldConfig, l, lineCount )
-
-                bulker.insert( d )
-                self._queue.task_done()
-                bulkerCount = bulkerCount + 1 
-                
-            if ( bulkerCount > 0 ) :
-                try: 
-                    bulker.execute()
-                except pymongo.errors.BulkWriteError as e :
-                    print( "Bulk write error : %s" % e )
-                    raise
-        
-                
+from mongodb_utils.mongodb import MongoDB
 
 def skipLines( f, skipCount ):
     '''
@@ -108,49 +42,28 @@ def skipLines( f, skipCount ):
             
     return lineCount 
 
-def makeFieldFilename( filename ):
+def makeFieldFilename( path ):
     '''
     >>> makeFieldFilename( "test.txt" ) 
     'test.ff'
     >>> makeFieldFilename( "test" )
     'test.ff'
     '''
-    ( x, _ ) = os.path.splitext( os.path.basename( filename ))
+    ( x, _ ) = os.path.splitext( os.path.basename( path ))
     return x + ".ff" 
 
 class BatchWriter(object):
      
-    def __init__(self, collection, orderedWrites, fieldConfig, chunkSize ):
+    def __init__(self, collection, path, fieldConfig, args, orderedWrites=None ):
          
         self._collection = collection
         self._orderedWrites = orderedWrites
         self._fieldConfig = fieldConfig
-        self._chunkSize = chunkSize
-         
-    def insertWrite(self, reader, totalRead, totalWritten ):
+        self._chunkSize = args.chunksize
+        self._args = args
+        self._filename = path
         
-        lineBuffer = []
-        bufferSize = 0
-        for line in reader :
-            d = createDoc( self._fieldConfig, line, totalRead )
-            totalRead = totalRead + 1
-            lineBuffer.insert( bufferSize, d )
-            #print( buffer )
-            bufferSize = bufferSize + 1
-            if bufferSize == self._chunkSize :
-                self._collection.insert_many( lineBuffer[0:bufferSize] )
-                totalWritten = totalWritten + bufferSize
-                bufferSize = 0
-                   
-        if bufferSize > 0 :
-            self._collection.insert_many( lineBuffer[ 0:bufferSize ])
-            totalWritten = totalWritten + bufferSize
-            bufferSize = 0
-    
-        return totalWritten
-
-        
-    def bulkWrite(self, reader, totalRead, totalWritten, thread_name="single-writer"):
+    def bulkWrite(self, reader, file_timestamp, totalRead, totalWritten, thread_name="single-writer"):
         bulker = None
         totalWritten = totalWritten
         totalRead    = totalRead
@@ -163,10 +76,18 @@ class BatchWriter(object):
             timeStart = time.time() 
             bulkerCount = 0
             insertedThisQuantum = 0
+            header = True
             for dictEntry in reader :
+                if header :
+                    header=False
+                    continue #hack
                 #print( "dict: %s" % dictEntry )
                 totalRead = totalRead + 1 
-                d = createDoc( self._fieldConfig, dictEntry, totalRead )
+                if self._args.addfilename :
+                    path = self._filename
+                else:
+                    path =  None
+                d = createDoc( self._fieldConfig, file_timestamp, dictEntry, totalRead, path )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
@@ -202,25 +123,45 @@ class BatchWriter(object):
         
         return  totalRead 
 
-def createDoc( fieldConfig, dictEntry, lineCount):
+def createDoc( fieldConfig, file_timestamp, dictEntry, lineCount, path ):
 
     doc = OrderedDict()
     
+    if file_timestamp :
+        if file_timestamp is None:
+            pass
+        elif file_timestamp == "generate" :
+            doc[ "timestamp" ] = datetime.utcnow()
+        else:
+            doc[ "timestamp" ] = file_timestamp
+    
+    if path :
+        doc[ 'filename'] = path
+        
     for k in fieldConfig.fields() :
         try :
-            #print( "line: %s" % line )
+            #print( "line: %s" % dictEntry )
             
             typeField = fieldConfig.typeData( k )
-            if typeField == "int" :
-                v = int( dictEntry[ k ])
-            elif typeField == "str" :
+            try: 
+                if typeField == "ignore" :
+                    continue
+                if typeField == "int" :
+                    v = int( dictEntry[ k ])
+                elif typeField == "float" :
+                    v = float( dictEntry[ k ])
+                elif typeField == "str" :
+                    v = str( dictEntry[ k ])
+                elif typeField == "date":
+                    if dictEntry[ k ] == "NULL" :
+                        v = 'NULL'
+                    else:
+                        v = datetime.strptime( dictEntry[ k ], fieldConfig.formatData( k ) )
+            except ValueError:
+                print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
+                print( "Using string type instead")
                 v = str( dictEntry[ k ])
-            elif typeField == "date":
-                if dictEntry[ k ] == "NULL" :
-                    v = 'NULL'
-                else:
-                    v = datetime.strptime( dictEntry[ k ], fieldConfig.formatData( k ) )
-                    
+                
             if fieldConfig.hasNewName( k ):
                 doc[ fieldConfig.nameData( k )] = v
             else:
@@ -232,7 +173,7 @@ def createDoc( fieldConfig, dictEntry, lineCount):
             print( "line: %i, '%s'" % ( lineCount, dictEntry ))
             #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
             raise   
-    
+
     return doc
         
 # def tracker(totalCount, result, filename ):
@@ -249,56 +190,37 @@ def createDoc( fieldConfig, dictEntry, lineCount):
 #     print( "}")
 #  
 
-def multiProcessFiles( fieldConfig, args ):
-    
-    importerProcs = []
-    
-    try: 
-        for i in args.filenames :
-            name="reader: %s" % i
-            importerProc = multiprocessing.Process( name=name, target= processOneFile, args=( fieldConfig, args, i, name ))
-            importerProcs.append( importerProc )
-            importerProc.start()
-                
-        for p in importerProcs :
-            p.join()
-        
-    except KeyboardInterrupt :
-        for p in importerProcs :
-            p.terminate()
-            p.join()
+# def multiProcessFiles( fieldConfig, args ):
+#     
+#     importerProcs = []
+#     
+#     try: 
+#         for i in args.filenames :
+#             name="reader: %s" % i
+#             importerProc = multiprocessing.Process( name=name, target= processOneFile, args=( fieldConfig, args, i, name ))
+#             importerProcs.append( importerProc )
+#             importerProc.start()
+#                 
+#         for p in importerProcs :
+#             p.join()
+#         
+#     except KeyboardInterrupt :
+#         for p in importerProcs :
+#             p.terminate()
+#             p.join()
 
 class InputFileException(Exception):
     def __init__(self, *args,**kwargs):
         Exception.__init__(self,*args,**kwargs)
 
-def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
-
-    try :
-        mdb = MongoDB(host=args.host, port=args.port, 
-                      databaseName= args.database,
-                      collectionName = args.collection,
-                      username=args.username, 
-                      password=args.password, 
-                      ssl=args.ssl )
-
-        mdb.connect()
-        collection =mdb.collection()
-        
-    except pymongo.errors.ServerSelectionTimeoutError, e :
-        print( "Exception: server %s on port %i timed out during connection: %s" % ( args.host, args.port, e.details ))
-        sys.exit( 2 )
-            
-    except pymongo.errors.OperationFailure, e :
-        print( "Exception: Operations Failure: %s" % e.details )
-        sys.exit( 2 )
+def processOneFile( collection, fieldConfig, file_timestamp, args, path ):
         
     if args.fieldfile is None :
-        fieldFilename = makeFieldFilename( filename )
+        fieldFilename = makeFieldFilename( path )
         try : 
             fieldConfig= FieldConfig( fieldFilename )
         except OSError, e:
-            raise FieldConfigException( "no valid field file for :%s"  % filename )
+            raise FieldConfigException( "no valid field file for :%s"  % fieldFilename )
 
 
     if args.restart:
@@ -309,22 +231,19 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
 
     totalRead = totalWritten
     try :
-        with open( filename, "r") as f :
+        with open( path, "rU") as f :
             totalRead = skipLines( f, totalWritten )
 
             #print( "field names: %s" % fieldDict.keys() )
             reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
-            
-            bw = BatchWriter( collection, False, fieldConfig, args.chunksize )
-            if args.insertmany:
-                lineCount = bw.insertWrite( reader, totalRead, totalWritten )
-            else:
-                lineCount = bw.bulkWrite(reader,totalRead, totalWritten, thread_name + " input: " + filename  )
+            reader.next() # skip header line for NHS data (hack)
+            bw = BatchWriter( collection, path, fieldConfig, args )
+            lineCount = bw.bulkWrite(reader, file_timestamp, totalRead, totalWritten, "input: " + path  )
 
-            return ( filename, lineCount )
+            return ( path, lineCount )
             
     except OSError, e :
-        raise InputFileException( "Can't open '%s' : %s" % ( filename, e ))
+        raise InputFileException( "Can't open '%s' : %s" % ( path, e ))
     
     except KeyboardInterrupt:
         print( "Keyboard Interrupt exiting...")
@@ -332,7 +251,7 @@ def processOneFile( fieldConfig, args, filename, thread_name="single-writer"):
         
 
     
-def processFiles( fieldConfig, args ):
+def processFiles( collection, fieldConfig, file_timestamp, args ):
     
     totalCount = 0
     lineCount = 0
@@ -340,9 +259,10 @@ def processFiles( fieldConfig, args ):
     failures=[]
     
     for i in args.filenames :
+            
         try:
             print ("Processing : %s" % i )
-            ( filename, lineCount ) = processOneFile( fieldConfig, args, i )
+            ( filename, lineCount ) = processOneFile( collection, fieldConfig, file_timestamp, args, i  )
             totalCount = lineCount + totalCount
             results.append( filename )
         except FieldConfigException, e :
@@ -353,15 +273,20 @@ def processFiles( fieldConfig, args ):
             failures.append( i )
             
     if len( results ) > 0 :
-        print( "Processed  : %s" % results )
+        print( "Processed  : %i files" % len( results ))
     if len( failures ) > 0 :
         print( "Failed to process : %s" % failures )
         
 
 def mainline( args ):
     
-    __VERSION__ = "1.2"
+    __VERSION__ = "1.3"
+    
     '''
+    
+    1.3 : Added lots of support for the NHS Public Data sets project. --addfilename and --addtimestamp.
+    Also we now fail back to string when type conversions fail.
+    
     >>> mainline( [ 'test_set_small.txt' ] )
     database: test, collection: test
     files ['test_set_small.txt']
@@ -388,12 +313,7 @@ def mainline( args ):
     parser = argparse.ArgumentParser( prog = "pymongodbimport", usage=usage_message )
     parser.add_argument( '--database', default="test", help='specify the database name')
     parser.add_argument( '--collection', default="test", help='specify the collection name')
-    parser.add_argument( '--host', default="localhost", help='hostname')
-    parser.add_argument( '--port', default="27017", help='port name', type=int)
-    parser.add_argument( '--username', default=None, help='username to login to database')
-    parser.add_argument( '--password', default=None, help='password to login to database')
-    parser.add_argument( '--admindb', default="admin", help="Admin database used for authentication" )
-    parser.add_argument( '--ssl', default=False, action="store_true", help='use SSL for connections')
+    parser.add_argument( '--host', default="mongodb://localhost:27017", help='mongodb://localhost:270017 : std URI arguments apply')
     parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts' )
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
     parser.add_argument( '--restart', default=False, action="store_true", help="use record count insert to restart at last write")
@@ -403,11 +323,11 @@ def mainline( args ):
     parser.add_argument( '--ordered', default=False, action="store_true", help="forced ordered inserts" )
     parser.add_argument( '--verbose', default=0, type=int, help="controls how noisy the app is" )
     parser.add_argument( "--fieldfile", default= None, type=str,  help="Field and type mappings")
-    parser.add_argument( "--delimiter", default=",", type=str, help="The delimiter string used to split fields (default '|')")
-    parser.add_argument( "--testmode", default=False, action="store_true", help="Run in test mode, no updates")
-    parser.add_argument( "--multi", default=0, type=int, help="Run in multiprocessing mode")
+    parser.add_argument( "--delimiter", default=",", type=str, help="The delimiter string used to split fields (default ',')")
     parser.add_argument( 'filenames', nargs="*", help='list of files')
     parser.add_argument('--version', action='version', version='%(prog)s version:' + __VERSION__ )
+    parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry" )
+    parser.add_argument('--addtimestamp', default="none", help="Add a timestamp to each record" )
     
     args= parser.parse_args( args )
     
@@ -417,19 +337,22 @@ def mainline( args ):
         sys.exit( 0 )
 
     fieldConfig = None
-    
+        
+    client = MongoDB( args.host).client()
+    database = client[ args.database ]
+    collection = database[ args.collection ]
+        
     if args.testlogin:
         try: 
-            m = MongoDB( args.host, args.port, args.database, args.collection, args.username, args.password, ssl=args.ssl, admindb=args.admindb )
-            m.connect(source=args.admindb )
             print( "login works")
-            m.collection().insert_one( { "hello" : "world" } )
-            m.collection().delete_one( { "hello" : "world" } )
+            collection.insert_one( { "hello" : "world" } )
+            collection.delete_one( { "hello" : "world" } )
             print( "Insert and delete work")
         except pymongo.errors.OperationFailure, e :
             print( "Exception : Operations Failure: %s" % e.details )
 
         sys.exit( 0 )
+        
     if args.fieldfile:
         try :
             fieldConfig = FieldConfig( args.fieldfile )
@@ -437,13 +360,23 @@ def mainline( args ):
             print( "Field file : '%s' cannot be opened : %s" % (args.fieldfile, e  ))
             sys.exit( 1 )
     
+
     if args.drop :
-        m = MongoDB( args.host, args.port, args.database, args.collection, args.username, args.password, ssl=args.ssl )
-        m.connect()
-        
-        m.collection().drop()
+        database.drop_collection( args.collection )
         print( "dropped collection: %s.%s" % ( args.database, args.collection ))
     
+    file_timestamp = None
+    
+    if args.addtimestamp :
+        if args.addtimestamp == "generate" :
+            file_timestamp  = args.addtimestamp
+        elif args.addtimestamp == "none" :
+            file_timestamp = None
+        elif args.addtimestamp == "now" :
+            file_timestamp = datetime.utcnow()
+        else:
+            file_timestamp  = parse( args.addtimestamp )
+            
     print(  "database: %s, collection: %s" % ( args.database, args.collection ))
     print( "files      : %s" % args.filenames )
 
@@ -451,13 +384,8 @@ def mainline( args ):
         print( "Chunksize must be 1 or more. Chunksize : %i" % args.chunksize )
         sys.exit( 1 )
     
-    if args.multi :
-        print( "Running %i sub processes" % args.multi )
-        multiprocessing.log_to_stderr(logging.DEBUG )
-        multiProcessFiles( fieldConfig, args )
-    else:
-        processFiles( fieldConfig, args )
-        sys.exit(0)
+    processFiles( collection, fieldConfig,file_timestamp, args )
+    
             
     
 if __name__ == '__main__':
