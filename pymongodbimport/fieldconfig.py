@@ -5,6 +5,8 @@ Created on 2 Mar 2016
 '''
 
 from ConfigParser import RawConfigParser
+from datetime import datetime
+import csv
 
 import textwrap
 from collections import OrderedDict
@@ -32,11 +34,12 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, filename = None ):
+    def __init__(self, filename = None, hasheader=None ):
         '''
         Constructor
         '''
         self._idField = None # section on which name == _id
+        self._hasheader = hasheader
         self._tags = [ "name", "type", "format" ]
         self._cfg = RawConfigParser()
         self._fieldDict = OrderedDict()
@@ -54,6 +57,9 @@ class FieldConfig(object):
         return msg % (firstSection, secondSection )
         
 
+    def hasheader(self ):
+        return self._hasheader
+    
     def read(self, filename):
         
         fieldDict = OrderedDict()
@@ -117,6 +123,59 @@ class FieldConfig(object):
             
         for field in header.split(  delimiter ):
             print( field )
+            
     
+    def createDoc( self, file_timestamp, dictEntry, lineCount, path ):
     
+        doc = OrderedDict()
+        
+        if file_timestamp :
+            if file_timestamp is None:
+                pass
+            elif file_timestamp == "generate" :
+                doc[ "timestamp" ] = datetime.utcnow()
+            else:
+                doc[ "timestamp" ] = file_timestamp
+        
+        if path :
+            doc[ 'filename'] = path
+            
+        for k in self.fields() :
+            if k == "" or k == "blank":
+                # blank column, ignore
+                continue
+            try:
+                typeField = self.typeData( k )
+                try: 
+                    if typeField == "int" :
+                        v = int( dictEntry[ k ])
+                    elif typeField == "float" :
+                        v = float( dictEntry[ k ])
+                    elif typeField == "str" :
+                        v = str( dictEntry[ k ])
+                    elif typeField == "date":
+                        if dictEntry[ k ] == "NULL" :
+                            v = 'NULL'
+                        else:
+                            v = datetime.strptime( dictEntry[ k ], self.formatData( k ) )
+                except ValueError:
+                    print( "Error on line %i at field '%s'" % ( lineCount, k ))
+                    print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
+                    print( "Using string type instead")
+                    v = str( dictEntry[ k ])
+                    
+                if self.hasNewName( k ):
+                    doc[ self.nameData( k )] = v
+                else:
+                    doc[ k ] = v
+                        
+            except ValueError :
+                print( "Value error parsing field : [%s]" % k )
+                print( "read value is: '%s'" % dictEntry[ k ] )
+                print( "line: %i, '%s'" % ( lineCount, dictEntry ))
+                #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
+                raise   
+    
+        return doc
+
     

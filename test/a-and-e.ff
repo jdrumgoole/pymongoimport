@@ -1,6 +1,10 @@
 [Count]
 
-type = str
+type = int
+
+[blank]
+
+type = None
 
 [SHA]
 
@@ -16,7 +20,7 @@ type=str
 
 [Type 1 Departments - Major A&E | A&E attendances]
 
-type=str
+type=float
 
 [Type 2 Departments - Single Specialty]
 
@@ -32,44 +36,44 @@ type=float
 
 [Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission, transfer or discharge]
 
-type=str
+type=float
 
 [Type 2 Departments - Single Specialty]
 
-type=str
+type=float
 
 [Type 3 Departments - Other A&E/Minor Injury Unit]
 
-type=str
+type=float
 
 [Percentage in 4 hours or less (type 1)]
 
-type=str
+type=float
 
 [Percentage in 4 hours or less (all)]
 
-type=str
+type=float
 
 [Emergency Admissions via Type 1 A&E | Emergency Admissions]
 
-type=str
+type=float
 
 [Emergency Admissions via Type 2 A&E]
 
-type=str
+type=float
 
 [Emergency Admissions via Type 3 and 4 A&E]
 
-type=str
+type=float
 
 [Other Emergency admissions (ie not via A&E)]
 
-type=str
+type=float
 
 [Number of patients spending >4 hours but <12 hours from decision to admit to admission]
 
-type=str
+type=float
 
 [Number of patients spending >12 hours from decision to admit to admission]
 
-type=str
+type=float

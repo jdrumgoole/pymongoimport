@@ -76,18 +76,19 @@ class BatchWriter(object):
             timeStart = time.time() 
             bulkerCount = 0
             insertedThisQuantum = 0
-            header = True
+            
+            firstRecord = True
             for dictEntry in reader :
-                if header :
-                    header=False
-                    continue #hack
-                #print( "dict: %s" % dictEntry )
-                totalRead = totalRead + 1 
+                if firstRecord and self._fieldConfig.hasheader():
+                    firstRecord = False
+                    continue
+                
+                totalRead = totalRead + 1
                 if self._args.addfilename :
                     path = self._filename
                 else:
                     path =  None
-                d = createDoc( self._fieldConfig, file_timestamp, dictEntry, totalRead, path )
+                d = self._fieldConfig.createDoc( file_timestamp, dictEntry, totalRead, path )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
@@ -123,58 +124,6 @@ class BatchWriter(object):
         
         return  totalRead 
 
-def createDoc( fieldConfig, file_timestamp, dictEntry, lineCount, path ):
-
-    doc = OrderedDict()
-    
-    if file_timestamp :
-        if file_timestamp is None:
-            pass
-        elif file_timestamp == "generate" :
-            doc[ "timestamp" ] = datetime.utcnow()
-        else:
-            doc[ "timestamp" ] = file_timestamp
-    
-    if path :
-        doc[ 'filename'] = path
-        
-    for k in fieldConfig.fields() :
-        try :
-            #print( "line: %s" % dictEntry )
-            
-            typeField = fieldConfig.typeData( k )
-            try: 
-                if typeField == "ignore" :
-                    continue
-                if typeField == "int" :
-                    v = int( dictEntry[ k ])
-                elif typeField == "float" :
-                    v = float( dictEntry[ k ])
-                elif typeField == "str" :
-                    v = str( dictEntry[ k ])
-                elif typeField == "date":
-                    if dictEntry[ k ] == "NULL" :
-                        v = 'NULL'
-                    else:
-                        v = datetime.strptime( dictEntry[ k ], fieldConfig.formatData( k ) )
-            except ValueError:
-                print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
-                print( "Using string type instead")
-                v = str( dictEntry[ k ])
-                
-            if fieldConfig.hasNewName( k ):
-                doc[ fieldConfig.nameData( k )] = v
-            else:
-                doc[ k ] = v
-                    
-        except ValueError :
-            print( "Value error parsing field : [%s]" % k )
-            print( "read value is: '%s'" % dictEntry[ k ] )
-            print( "line: %i, '%s'" % ( lineCount, dictEntry ))
-            #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
-            raise   
-
-    return doc
         
 # def tracker(totalCount, result, filename ):
 #     totalCount = totalCount + result[ "nInserted" ]
@@ -235,8 +184,9 @@ def processOneFile( collection, fieldConfig, file_timestamp, args, path ):
             totalRead = skipLines( f, totalWritten )
 
             #print( "field names: %s" % fieldDict.keys() )
+                
             reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
-            reader.next() # skip header line for NHS data (hack)
+
             bw = BatchWriter( collection, path, fieldConfig, args )
             lineCount = bw.bulkWrite(reader, file_timestamp, totalRead, totalWritten, "input: " + path  )
 
@@ -300,8 +250,6 @@ def mainline( args ):
     pymongodbimport is a python program that will import data into a mongodb
     database (default 'test' ) and a mongodb collection (default 'test' ).
     
-    The input files must be named using the --filenames parameter.
-    
     Each file in the input list must correspond to a fieldfile format that is
     common across all the files. The fieldfile is specified by the 
     --fieldfile parameter.
@@ -313,7 +261,7 @@ def mainline( args ):
     parser = argparse.ArgumentParser( prog = "pymongodbimport", usage=usage_message )
     parser.add_argument( '--database', default="test", help='specify the database name')
     parser.add_argument( '--collection', default="test", help='specify the collection name')
-    parser.add_argument( '--host', default="mongodb://localhost:27017", help='mongodb://localhost:270017 : std URI arguments apply')
+    parser.add_argument( '--host', default="mongodb://localhost:27017/test", help='mongodb://localhost:270017 : std URI arguments apply')
     parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts' )
     parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
     parser.add_argument( '--restart', default=False, action="store_true", help="use record count insert to restart at last write")
@@ -328,13 +276,10 @@ def mainline( args ):
     parser.add_argument('--version', action='version', version='%(prog)s version:' + __VERSION__ )
     parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry" )
     parser.add_argument('--addtimestamp', default="none", help="Add a timestamp to each record" )
+    parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names")
+    parser.add_argument( '--genfieldfile', default=None, help="Generate a fieldfile from the data file")
     
     args= parser.parse_args( args )
-    
-    if args.testmode :
-        import doctest
-        doctest.testmod()
-        sys.exit( 0 )
 
     fieldConfig = None
         
@@ -355,11 +300,25 @@ def mainline( args ):
         
     if args.fieldfile:
         try :
-            fieldConfig = FieldConfig( args.fieldfile )
+            fieldConfig = FieldConfig( args.fieldfile, args.hasheader )
         except OSError, e:
             print( "Field file : '%s' cannot be opened : %s" % (args.fieldfile, e  ))
             sys.exit( 1 )
-    
+    elif args.genfieldfile :
+        print( "Generating a field file from '%s'"  % args.genfieldfile )
+        if os.path.isfile( args.genfieldfile ) :
+            genfilename = os.path.splitext( os.path.basename( args.genfieldfile ))[0] + ".ff"
+            with open( genfilename, "w") as genfile :
+                print( "The field file will be '%s'" % genfilename )
+                with open( args.genfieldfile, "r") as inputfile :
+                    line = inputfile.readline().rstrip() #strip newline
+                for i in line.split( args.delimiter ) :
+                    print( "'%s'"  % i )
+                    i = i.replace( '$', '_') # not valid keys for mongodb
+                    i = i.replace( '.', '_') # not valid keys for mongodb
+                    genfile.write( "[%s]\n" % i )
+                    genfile.write( "type=str\n")
+            print("Generation completed")
 
     if args.drop :
         database.drop_collection( args.collection )
@@ -376,15 +335,16 @@ def mainline( args ):
             file_timestamp = datetime.utcnow()
         else:
             file_timestamp  = parse( args.addtimestamp )
-            
-    print(  "database: %s, collection: %s" % ( args.database, args.collection ))
-    print( "files      : %s" % args.filenames )
-
-    if args.chunksize < 1 :
-        print( "Chunksize must be 1 or more. Chunksize : %i" % args.chunksize )
-        sys.exit( 1 )
+         
+    if args.filenames:   
+        print(  "Using database: %s, collection: %s" % ( args.database, args.collection ))
+        print( "processing %i files" % len( args.filenames ))
     
-    processFiles( collection, fieldConfig,file_timestamp, args )
+        if args.chunksize < 1 :
+            print( "Chunksize must be 1 or more. Chunksize : %i" % args.chunksize )
+            sys.exit( 1 )
+        
+        processFiles( collection, fieldConfig,file_timestamp, args )
     
             
     
