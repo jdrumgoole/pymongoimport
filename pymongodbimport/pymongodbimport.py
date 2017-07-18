@@ -101,7 +101,6 @@ class BatchWriter(object):
                         bulker = self._collection.initialize_unordered_bulk_op()
                  
                     bulkerCount = 0
-
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
                     print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
@@ -306,19 +305,8 @@ def mainline( args ):
             sys.exit( 1 )
     elif args.genfieldfile :
         print( "Generating a field file from '%s'"  % args.genfieldfile )
-        if os.path.isfile( args.genfieldfile ) :
-            genfilename = os.path.splitext( os.path.basename( args.genfieldfile ))[0] + ".ff"
-            with open( genfilename, "w") as genfile :
-                print( "The field file will be '%s'" % genfilename )
-                with open( args.genfieldfile, "r") as inputfile :
-                    line = inputfile.readline().rstrip() #strip newline
-                for i in line.split( args.delimiter ) :
-                    print( "'%s'"  % i )
-                    i = i.replace( '$', '_') # not valid keys for mongodb
-                    i = i.replace( '.', '_') # not valid keys for mongodb
-                    genfile.write( "[%s]\n" % i )
-                    genfile.write( "type=str\n")
-            print("Generation completed")
+        genfilename = FieldConfig.generate_field_file( args.genfieldfile, args.delimiter, ext=".ff" )
+        print("Generated: '%s'" % genfilename )
 
     if args.drop :
         database.drop_collection( args.collection )

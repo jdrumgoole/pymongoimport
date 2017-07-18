@@ -7,6 +7,7 @@ Created on 2 Mar 2016
 from ConfigParser import RawConfigParser
 from datetime import datetime
 import csv
+import os
 
 import textwrap
 from collections import OrderedDict
@@ -115,16 +116,41 @@ class FieldConfig(object):
     def nameData(self , fieldName ):
         return self._cfg.get( fieldName, "name" )
     
+#     @staticmethod
+#     def generateFieldFile( csvfile, delimiter=',' ):
+#         
+#         with open( csvfile ) as inputfile :
+#             header = inputfile.readline()
+#             
+#         for field in header.split(  delimiter ):
+#             print( field )
+            
     @staticmethod
-    def generateFieldFile( csvfile, delimiter=',' ):
+    def typeConvert( s ):
+        '''
+        Try and convert a string s to an object. Start with float, then try int
+        and if that doesn't work return the string.
+        '''
         
-        with open( csvfile ) as inputfile :
-            header = inputfile.readline()
-            
-        for field in header.split(  delimiter ):
-            print( field )
-            
-    
+        if type( s ) != type( "" ):
+            raise ValueError( "typeconvert expects a string parameter")
+        
+        v = None
+        try :
+            v = int( s )
+            return ( v, "int" ) 
+        except ValueError :
+            pass
+        
+        try :
+            v = float( s )
+            return (v, "float")
+        except ValueError :
+            pass
+        
+        v = str( s )
+        return ( v, "str" )
+        
     def createDoc( self, file_timestamp, dictEntry, lineCount, path ):
     
         doc = OrderedDict()
@@ -178,4 +204,32 @@ class FieldConfig(object):
     
         return doc
 
-    
+    @staticmethod
+    def generate_field_file( path, delimiter=",", ext=".ff"):
+        '''
+        Take a file name and create a field file name and the corresponding field file data 
+        from that file by reading the headers and 'sniffing' the first line of data.
+        '''
+        
+        if os.path.isfile( path) :
+            genfilename = os.path.splitext( os.path.basename( path ))[0] + ext
+            with open( genfilename, "w") as genfile :
+                #print( "The field file will be '%s'" % genfilename )
+                with open( path, "rU") as inputfile :
+                    header_line = inputfile.readline().rstrip().split( delimiter ) #strip newline
+                    value_line  = inputfile.readline().rstrip().split( delimiter )
+                    if len( header_line ) != len( value_line ):
+                        raise ValueError( "Header line and next line have different numbers of columns: %i, %i" % ( len( header_line ), len( value_line )))
+                value_index = 0
+                for i in header_line :
+                    if i == "" :
+                        i = "blank"
+                    #print( i )
+                    i = i.replace( '$', '_') # not valid keys for mongodb
+                    i = i.replace( '.', '_') # not valid keys for mongodb
+                    ( _, t ) = FieldConfig.typeConvert( value_line[ value_index ] )
+                    value_index = value_index + 1 
+                    genfile.write( "[%s]\n" % i )
+                    genfile.write( "type=%s\n" % t )
+                    
+        return genfilename
