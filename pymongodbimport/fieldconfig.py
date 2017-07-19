@@ -151,7 +151,7 @@ class FieldConfig(object):
         v = str( s )
         return ( v, "str" )
         
-    def createDoc( self, file_timestamp, dictEntry, lineCount, path ):
+    def createDoc( self, file_timestamp, file_path, dictEntry, lineCount ):
     
         doc = OrderedDict()
         
@@ -163,8 +163,8 @@ class FieldConfig(object):
             else:
                 doc[ "timestamp" ] = file_timestamp
         
-        if path :
-            doc[ 'filename'] = path
+        if file_path :
+            doc[ 'filename'] = file_path
             
         for k in self.fields() :
             if k == "" or k == "blank":
@@ -185,9 +185,9 @@ class FieldConfig(object):
                         else:
                             v = datetime.strptime( dictEntry[ k ], self.formatData( k ) )
                 except ValueError:
-                    print( "Error on line %i at field '%s'" % ( lineCount, k ))
-                    print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
-                    print( "Using string type instead")
+                    #print( "Error on line %i at field '%s'" % ( lineCount, k ))
+                    #print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
+                    #print( "Using string type instead")
                     v = str( dictEntry[ k ])
                     
                 if self.hasNewName( k ):
@@ -211,25 +211,27 @@ class FieldConfig(object):
         from that file by reading the headers and 'sniffing' the first line of data.
         '''
         
-        if os.path.isfile( path) :
-            genfilename = os.path.splitext( os.path.basename( path ))[0] + ext
-            with open( genfilename, "w") as genfile :
-                #print( "The field file will be '%s'" % genfilename )
-                with open( path, "rU") as inputfile :
-                    header_line = inputfile.readline().rstrip().split( delimiter ) #strip newline
-                    value_line  = inputfile.readline().rstrip().split( delimiter )
-                    if len( header_line ) != len( value_line ):
-                        raise ValueError( "Header line and next line have different numbers of columns: %i, %i" % ( len( header_line ), len( value_line )))
-                value_index = 0
-                for i in header_line :
-                    if i == "" :
-                        i = "blank"
-                    #print( i )
-                    i = i.replace( '$', '_') # not valid keys for mongodb
-                    i = i.replace( '.', '_') # not valid keys for mongodb
-                    ( _, t ) = FieldConfig.typeConvert( value_line[ value_index ] )
-                    value_index = value_index + 1 
-                    genfile.write( "[%s]\n" % i )
-                    genfile.write( "type=%s\n" % t )
-                    
+        if not os.path.isfile( path) :
+            raise OSError( "no such field file '%s'"  % path)
+        
+        genfilename = os.path.splitext( os.path.basename( path ))[0] + ext
+        with open( genfilename, "w") as genfile :
+            #print( "The field file will be '%s'" % genfilename )
+            with open( path, "rU") as inputfile :
+                header_line = inputfile.readline().rstrip().split( delimiter ) #strip newline
+                value_line  = inputfile.readline().rstrip().split( delimiter )
+                if len( header_line ) != len( value_line ):
+                    raise ValueError( "Header line and next line have different numbers of columns: %i, %i" % ( len( header_line ), len( value_line )))
+            value_index = 0
+            for i in header_line :
+                if i == "" :
+                    i = "blank"
+                #print( i )
+                i = i.replace( '$', '_') # not valid keys for mongodb
+                i = i.replace( '.', '_') # not valid keys for mongodb
+                ( _, t ) = FieldConfig.typeConvert( value_line[ value_index ] )
+                value_index = value_index + 1 
+                genfile.write( "[%s]\n" % i )
+                genfile.write( "type=%s\n" % t )
+                                
         return genfilename

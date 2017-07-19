@@ -33,7 +33,7 @@ def skipLines( f, skipCount ):
     lineCount = 0 
     if ( skipCount > 0 ) :
         #print( "Skipping")
-        dummy = f.readline()
+        dummy = f.readline() #skicaount may be bigger thant he number of lines i  the fole
         while dummy :
             lineCount = lineCount + 1
             if ( lineCount == skipCount ) :
@@ -62,12 +62,43 @@ class BatchWriter(object):
         self._chunkSize = args.chunksize
         self._args = args
         self._filename = path
+        self._totalWritten = 0
+        self._path = path
+        self._currentLine = 0
+        self._progressFilename = os.path.splitext(os.path.basename(path))[0] + ".pilog"
         
-    def bulkWrite(self, reader, file_timestamp, totalRead, totalWritten, thread_name="single-writer"):
-        bulker = None
-        totalWritten = totalWritten
-        totalRead    = totalRead
-        try : 
+        if args.hasheader :
+            self._currentLine = self._currentLine + 1 
+            
+        if args.restart:
+            if os.path.exists( self._progressFilename ):
+                with open( self._progressFilename, "rU") as pfile:
+                    progress = pfile.readline().rstrip()
+                    self._currentLine = self._currentLine + int( progress.split( ':')[1] )
+                    print( "Retrieving progress from '%s' : %i reccords written" % ( self._progressFilename, self._currentLine ))
+            else:
+                print( "Can't open progress file ('%s') for input file: '%s'" % ( path, self._progressFilename ))
+
+            
+    def updateProgress(self, totalWritten ):
+        with open( self._progressFilename, "w") as pfile:
+            pfile.write( "progress: %i\n" % totalWritten )
+    
+    def bulkWrite(self, file_timestamp ):
+        '''
+        Write the contents of the file to MongoDB potentially adding timestamps and file stamps
+        
+        self._totalRead = all the lines read from the file including headers.
+        self._totalWritten = all the lines written to MongoDB. Not we don't write the header line.
+        This becomes important during restarts because in a restart the restart count starts from the non-headerline
+        so we must skip the header and then start skipping lines.
+        '''
+        
+        with open( self._path, "rU") as f :
+            
+            skipLines( f, self._currentLine )
+            
+ 
             if self._orderedWrites :
                 bulker = self._collection.initialize_ordered_bulk_op()
             else:
@@ -76,24 +107,24 @@ class BatchWriter(object):
             timeStart = time.time() 
             bulkerCount = 0
             insertedThisQuantum = 0
-            
-            firstRecord = True
+            totalRead = 0
+    
+            reader = csv.DictReader( f, fieldnames = self._fieldConfig.fields(), delimiter = self._args.delimiter )
+
             for dictEntry in reader :
-                if firstRecord and self._fieldConfig.hasheader():
-                    firstRecord = False
-                    continue
-                
                 totalRead = totalRead + 1
                 if self._args.addfilename :
-                    path = self._filename
+                    file_path = self._filename
                 else:
-                    path =  None
-                d = self._fieldConfig.createDoc( file_timestamp, dictEntry, totalRead, path )
+                    file_path =  None
+                    
+                d = self._fieldConfig.createDoc( file_timestamp, file_path,  dictEntry, totalRead )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
                     result = bulker.execute()
-                    totalWritten = totalWritten + result[ 'nInserted' ]
+                    self._totalWritten = self._totalWritten + result[ 'nInserted' ]
+                    self.updateProgress( self._totalWritten )
                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()
@@ -103,25 +134,22 @@ class BatchWriter(object):
                     bulkerCount = 0
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
-                    print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
+                    print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( self._path, insertedThisQuantum, totalRead, self._totalWritten ))
                     insertedThisQuantum = 0
                     timeStart = timeNow
              
             if insertedThisQuantum > 0 :
-                print( "'%s' : records written per second %i, records read: %i" % ( thread_name, insertedThisQuantum, totalRead ))
+                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( self._path, insertedThisQuantum, totalRead, self._totalWritten  ))
 
             if ( bulkerCount > 0 ) :
                 result = bulker.execute()
-                print( "'%s' : Inserted last %i records" % ( thread_name, result[ 'nInserted'] ))
-                totalWritten = totalWritten + result[ 'nInserted' ]
+                self._totalWritten = self._totalWritten + result[ 'nInserted' ]
+                self.updateProgress( self._totalWritten )
+                print( "Input: '%s' : Inserted last %i records" % ( self._path, result[ 'nInserted'] ))
+ 
 
-            print( "Total records read: %i, totalWritten: %i" % ( totalRead, totalWritten ))
-        
-        except pymongo.errors.BulkWriteError as e :
-            print( "Bulk write error : %s" % e.details )
-            raise
-        
-        return  totalRead 
+            print( "Total records read: %i, totalWritten: %i" % ( totalRead, self._totalWritten ))
+            return  self._totalWritten
 
         
 # def tracker(totalCount, result, filename ):
@@ -170,36 +198,12 @@ def processOneFile( collection, fieldConfig, file_timestamp, args, path ):
         except OSError, e:
             raise FieldConfigException( "no valid field file for :%s"  % fieldFilename )
 
+    bw = BatchWriter( collection, path, fieldConfig, args )
+    totalWritten = bw.bulkWrite( file_timestamp  )
 
-    if args.restart:
-        totalWritten = collection.count()
-    else:
-        totalWritten = args.skip
-        
-
-    totalRead = totalWritten
-    try :
-        with open( path, "rU") as f :
-            totalRead = skipLines( f, totalWritten )
-
-            #print( "field names: %s" % fieldDict.keys() )
-                
-            reader = csv.DictReader( f, fieldnames = fieldConfig.fields(), delimiter = args.delimiter )
-
-            bw = BatchWriter( collection, path, fieldConfig, args )
-            lineCount = bw.bulkWrite(reader, file_timestamp, totalRead, totalWritten, "input: " + path  )
-
-            return ( path, lineCount )
+    return ( path, totalWritten )
             
-    except OSError, e :
-        raise InputFileException( "Can't open '%s' : %s" % ( path, e ))
-    
-    except KeyboardInterrupt:
-        print( "Keyboard Interrupt exiting...")
-        sys.exit( 2 )
-        
-
-    
+  
 def processFiles( collection, fieldConfig, file_timestamp, args ):
     
     totalCount = 0
@@ -208,7 +212,6 @@ def processFiles( collection, fieldConfig, file_timestamp, args ):
     failures=[]
     
     for i in args.filenames :
-            
         try:
             print ("Processing : %s" % i )
             ( filename, lineCount ) = processOneFile( collection, fieldConfig, file_timestamp, args, i  )
@@ -262,7 +265,6 @@ def mainline( args ):
     parser.add_argument( '--collection', default="test", help='specify the collection name')
     parser.add_argument( '--host', default="mongodb://localhost:27017/test", help='mongodb://localhost:270017 : std URI arguments apply')
     parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts' )
-    parser.add_argument( '--skip', default=0, type=int, help="skip lines before reading")
     parser.add_argument( '--restart', default=False, action="store_true", help="use record count insert to restart at last write")
     parser.add_argument( '--insertmany', default=False, action="store_true", help="use insert_many")
     parser.add_argument( '--testlogin', default=False, action="store_true", help="test database login")
@@ -309,8 +311,11 @@ def mainline( args ):
         print("Generated: '%s'" % genfilename )
 
     if args.drop :
-        database.drop_collection( args.collection )
-        print( "dropped collection: %s.%s" % ( args.database, args.collection ))
+        if args.restart :
+            print( "Warning --restart overrides --drop ignoring drop commmand")
+        else:
+            database.drop_collection( args.collection )
+            print( "dropped collection: %s.%s" % ( args.database, args.collection ))
     
     file_timestamp = None
     
@@ -333,7 +338,6 @@ def mainline( args ):
             sys.exit( 1 )
         
         processFiles( collection, fieldConfig,file_timestamp, args )
-    
             
     
 if __name__ == '__main__':
