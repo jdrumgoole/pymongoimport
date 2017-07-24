@@ -9,7 +9,7 @@ import csv
 
 class BulkWriter(object):
      
-    def __init__(self, collection, input_filename, fieldConfig, args, orderedWrites=None ):
+    def __init__(self, collection, input_filename, fieldConfig, hasheader, args, orderedWrites=None ):
          
         self._collection = collection
         self._orderedWrites = orderedWrites
@@ -21,7 +21,7 @@ class BulkWriter(object):
         self._progressFilename = os.path.splitext(os.path.basename(input_filename ))[0] + ".pilog"
         self._currentLine = 0
         
-        if args.hasheader :
+        if hasheader :
             self._currentLine = self._currentLine + 1 
             
         if args.restart:

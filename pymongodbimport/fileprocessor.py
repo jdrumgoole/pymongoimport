@@ -17,9 +17,9 @@ class FileProcessor( object ):
     def __init__(self, collection ):
         self._collection = collection
         
-    def processOneFile( self, input_filename, fieldConfig, args ):
+    def processOneFile( self, input_filename, fieldConfig, hasheader,  args ):
     
-        bw = BulkWriter( self._collection, input_filename, fieldConfig, args )
+        bw = BulkWriter( self._collection, input_filename, fieldConfig, hasheader, args )
         totalWritten = bw.bulkWrite()
         return totalWritten 
     
@@ -29,31 +29,30 @@ class FileProcessor( object ):
         lineCount = 0
         results=[]
         failures=[]
+        hasheader = True
         
         for i in args.filenames :
-            if args.genfieldfile :
-                if len( args.filenames ) > 0 : 
-                    print( "Generating a field file from '%s'"  % args.filenames[ 0 ]  )
-                    field_filename = FieldConfig.generate_field_file( args.filenames[ 0 ], args.delimiter, ext=".ff" )
-                    print("Generated: '%s'" % field_filename )
-                else:
-                    print( "No files to generate a field file from")
-                sys.exit( 0 )
-            elif args.fieldfile:
+            if args.genfieldfile :  # generate a file
+                print( "Generating a field file from '%s'"  % i  )
+                field_filename = FieldConfig.generate_field_file( i, args.delimiter, ext=".ff" )
+                print("Generated: '%s'" % field_filename )
+                hasheader = True
+            elif args.fieldfile: # use the file on the command line
                 field_filename = args.fieldfile
+                hasheader = args.hasheader
             else:
-                field_filename = FieldConfig.generate_field_filename( args.filenames[ 0 ] )
-                
+                field_filename = FieldConfig.generate_field_filename( i ) # use an existing fle
+                hasheader = True
         
             fieldConfig = FieldConfig( field_filename,
                                        i,
-                                       args.hasheader, 
+                                       hasheader, 
                                        args.addfilename, 
                                        args.addtimestamp, 
                                        args.id)
             try:
                 print ("Processing : %s" % i )
-                lineCount = self.processOneFile( i, fieldConfig, args )
+                lineCount = self.processOneFile( i, fieldConfig, hasheader, args )
                 totalCount = lineCount + totalCount
             except FieldConfigException, e :
                 print( "Field file error for %s : %s" % ( i, e ))

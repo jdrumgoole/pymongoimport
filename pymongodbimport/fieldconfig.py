@@ -6,7 +6,6 @@ Created on 2 Mar 2016
 
 from ConfigParser import RawConfigParser
 from datetime import datetime
-import csv
 import os
 
 import textwrap
@@ -49,7 +48,7 @@ class FieldConfig(object):
         self._id = _id
         self._filename = input_filename
         self._record_count = 0
-        self._timestamp = addtimestamp
+        self._timestamp = datetime.utcnow()
         self._pid = os.getpid()
         
         if cfgFilename :
@@ -185,9 +184,12 @@ class FieldConfig(object):
             doc[ 'timestamp' ] = datetime.utcnow()
             
         #print( dictEntry )
+        fieldCount = 0
         for k in self.fields() :
-            if k == "" or k == "blank":
-                # blank column, ignore
+            #print( k )
+            fieldCount = fieldCount + 1
+            if k.startswith( "blank-" ): #ignore blank- columns
+                #print( "Field %i is blank" % fieldCount )
                 continue
             try:
                 typeField = self.typeData( k )
@@ -249,14 +251,16 @@ class FieldConfig(object):
                 if len( header_line ) != len( value_line ):
                     raise ValueError( "Header line and next line have different numbers of columns: %i, %i" % ( len( header_line ), len( value_line )))
             value_index = 0
+            fieldCount = 0
             for i in header_line :
+
                 if i == "" :
-                    i = "blank"
+                    i = "blank-%i" % fieldCount
                 #print( i )
                 i = i.replace( '$', '_') # not valid keys for mongodb
                 i = i.replace( '.', '_') # not valid keys for mongodb
-                ( _, t ) = FieldConfig.typeConvert( value_line[ value_index ] )
-                value_index = value_index + 1 
+                ( _, t ) = FieldConfig.typeConvert( value_line[ fieldCount ] )
+                fieldCount = fieldCount + 1
                 genfile.write( "[%s]\n" % i )
                 genfile.write( "type=%s\n" % t )
                                 
