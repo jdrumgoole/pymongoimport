@@ -35,7 +35,7 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, filename = None, hasheader=None ):
+    def __init__(self, cfgFilename = None, input_filename = None, hasheader=None, addfilename=None, addtimestamp=None, _id=None ):
         '''
         Constructor
         '''
@@ -45,9 +45,22 @@ class FieldConfig(object):
         self._cfg = RawConfigParser()
         self._fieldDict = OrderedDict()
         self._names = OrderedDict()
+        self._doc_template = OrderedDict()
+        self._id = _id
+        self._filename = input_filename
+        self._record_count = 0
+        self._timestamp = addtimestamp
+        self._pid = os.getpid()
         
-        if filename :
-            self._fieldDict = self.read( filename )
+        if cfgFilename :
+            self._fieldDict = self.read( cfgFilename )
+            
+        if addfilename:
+            self._doc_template[ "filename"] = os.path.basename( self._filename )
+ 
+        if addtimestamp == "now" :
+            self._doc_template[ "timestamp" ] = self._timestamp
+            
     
     def duplicateIDMsg(self, firstSection, secondSection):
         msg = textwrap.dedent( """\
@@ -151,21 +164,27 @@ class FieldConfig(object):
         v = str( s )
         return ( v, "str" )
         
-    def createDoc( self, file_timestamp, file_path, dictEntry, lineCount ):
+    def doc_template(self):
+        return self._doc_template
     
-        doc = OrderedDict()
+    def createDoc( self, dictEntry  ):
         
-        if file_timestamp :
-            if file_timestamp is None:
-                pass
-            elif file_timestamp == "generate" :
-                doc[ "timestamp" ] = datetime.utcnow()
-            else:
-                doc[ "timestamp" ] = file_timestamp
+        '''
+        WIP
+        Do we make gen id generate a compound key or another field instead of ID
+        '''
+        self._record_count = self._record_count + 1 
         
-        if file_path :
-            doc[ 'filename'] = file_path
+        doc = {}
+        doc.update( self._doc_template )
+        
+        if self._id == "gen" :
+            doc[ "_id"] = "%i-%i" % ( self._pid, self._record_count )
             
+        if self._timestamp == "gen" :
+            doc[ 'timestamp' ] = datetime.utcnow()
+            
+        #print( dictEntry )
         for k in self.fields() :
             if k == "" or k == "blank":
                 # blank column, ignore
@@ -185,7 +204,7 @@ class FieldConfig(object):
                         else:
                             v = datetime.strptime( dictEntry[ k ], self.formatData( k ) )
                 except ValueError:
-                    #print( "Error on line %i at field '%s'" % ( lineCount, k ))
+                    #print( "Error on line %i at field '%s'" % ( self._record_count, k ))
                     #print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
                     #print( "Using string type instead")
                     v = str( dictEntry[ k ])
@@ -198,12 +217,21 @@ class FieldConfig(object):
             except ValueError :
                 print( "Value error parsing field : [%s]" % k )
                 print( "read value is: '%s'" % dictEntry[ k ] )
-                print( "line: %i, '%s'" % ( lineCount, dictEntry ))
+                print( "line: %i, '%s'" %  ( self._record_count, dictEntry ))
                 #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
                 raise   
     
         return doc
 
+    @staticmethod
+    def generate_field_filename( path, ext=".ff"):
+        if not os.path.isfile( path) :
+            raise OSError( "no such field file '%s'"  % path)
+        
+        if not ext.startswith( '.'):
+            ext = "." + ext
+        return os.path.splitext( os.path.basename( path ))[0] + ext
+        
     @staticmethod
     def generate_field_file( path, delimiter=",", ext=".ff"):
         '''
@@ -211,10 +239,8 @@ class FieldConfig(object):
         from that file by reading the headers and 'sniffing' the first line of data.
         '''
         
-        if not os.path.isfile( path) :
-            raise OSError( "no such field file '%s'"  % path)
+        genfilename = FieldConfig.generate_field_filename(path, ext)
         
-        genfilename = os.path.splitext( os.path.basename( path ))[0] + ext
         with open( genfilename, "w") as genfile :
             #print( "The field file will be '%s'" % genfilename )
             with open( path, "rU") as inputfile :
