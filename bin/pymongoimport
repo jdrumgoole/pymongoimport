@@ -59,6 +59,7 @@ def mainline( args ):
     parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names")
     parser.add_argument( '--genfieldfile', default=False, action="store_true", help="Generate a fieldfile from the data file")
     parser.add_argument( '--id', default="mongodb", choices=[ "mongodb", "gen"], help="Autogenerate ID default [ mongodb ]")
+    parser.add_argument( '--onerror', choices=[ 'fail', "warn" , "ignore"], help="What to do when we hit an error parsing a csv file")
     
     args= parser.parse_args( args )
         

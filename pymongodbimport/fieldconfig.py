@@ -34,18 +34,19 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, cfgFilename = None, input_filename = None, hasheader=None, addfilename=None, addtimestamp=None, _id=None ):
+    def __init__(self, cfgFilename = None, input_filename, args ):
         '''
         Constructor
         '''
+        self._args = args
         self._idField = None # section on which name == _id
-        self._hasheader = hasheader
+        self._hasheader = args.hasheader
         self._tags = [ "name", "type", "format" ]
         self._cfg = RawConfigParser()
         self._fieldDict = OrderedDict()
         self._names = OrderedDict()
         self._doc_template = OrderedDict()
-        self._id = _id
+        self._id = args.id
         self._filename = input_filename
         self._record_count = 0
         self._timestamp = datetime.utcnow()
@@ -54,10 +55,10 @@ class FieldConfig(object):
         if cfgFilename :
             self._fieldDict = self.read( cfgFilename )
             
-        if addfilename:
+        if self._args.addfilename:
             self._doc_template[ "filename"] = os.path.basename( self._filename )
  
-        if addtimestamp == "now" :
+        if self._args.addtimestamp == "now" :
             self._doc_template[ "timestamp" ] = self._timestamp
             
     
@@ -209,7 +210,16 @@ class FieldConfig(object):
                     #print( "Error on line %i at field '%s'" % ( self._record_count, k ))
                     #print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
                     #print( "Using string type instead")
-                    v = str( dictEntry[ k ])
+                    
+                    if self._args.onerror == "fail" :
+                        raise
+                    elif self._args.onerror == "warn" :
+                        print( "Error in '%s' at line %i at field '%s'" % ( self._filename, self._record_count, k ))
+                        print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
+                        print( "Using string type instead" )
+                        v = str( dictEntry[ k ])
+                    else:
+                        v = str( dictEntry[ k ])
                     
                 if self.hasNewName( k ):
                     doc[ self.nameData( k )] = v
@@ -250,7 +260,6 @@ class FieldConfig(object):
                 value_line  = inputfile.readline().rstrip().split( delimiter )
                 if len( header_line ) != len( value_line ):
                     raise ValueError( "Header line and next line have different numbers of columns: %i, %i" % ( len( header_line ), len( value_line )))
-            value_index = 0
             fieldCount = 0
             for i in header_line :
 
