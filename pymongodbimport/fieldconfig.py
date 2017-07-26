@@ -34,7 +34,7 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, cfgFilename = None, input_filename, args ):
+    def __init__(self, cfgFilename, input_filename, args ):
         '''
         Constructor
         '''
