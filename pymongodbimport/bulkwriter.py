@@ -6,21 +6,46 @@ Created on 23 Jul 2017
 import os
 import time
 import csv
+import tempfile
+from pymongodbimport.fieldconfig import FieldConfig, FieldConfigException
 
 class BulkWriter(object):
      
-    def __init__(self, collection, input_filename, fieldConfig, hasheader, args, orderedWrites=None ):
+    def __init__(self, collection, input_filename, args, orderedWrites=None ):
          
         self._collection = collection
         self._orderedWrites = orderedWrites
-        self._fieldConfig = fieldConfig
+        self._fieldConfig = None
         self._chunkSize = args.chunksize
         self._args = args
         self._filename = input_filename
         self._totalWritten = 0
-        self._progressFilename = os.path.splitext(os.path.basename(input_filename ))[0] + ".pilog"
+        self._restartFilename = os.path.splitext(os.path.basename(input_filename ))[0] + ".restart.log"
         self._currentLine = 0
+        self._restartFile = None
         
+        if args.genfieldfile :  # generate a file
+            print( "Generating a field file from '%s'"  % input_filename  )
+            field_filename = FieldConfig.generate_field_file( input_filename, args.delimiter, ext=".ff" )
+            print("Generated: '%s'" % field_filename )
+            hasheader = True
+        elif args.fieldfile: # use the file on the command line
+            field_filename = args.fieldfile
+            hasheader = args.hasheader
+        else:
+            field_filename = FieldConfig.generate_field_filename( input_filename ) # use an existing fle
+            hasheader = True
+    
+            try :
+                self._fieldConfig = FieldConfig( field_filename,
+                                                  input_filename,
+                                                  hasheader, 
+                                                  args.addfilename, 
+                                                  args.addtimestamp, 
+                                                  args.id)
+            except FieldConfigException :
+                raise
+            
         if hasheader :
             self._currentLine = self._currentLine + 1 
             
@@ -28,21 +53,29 @@ class BulkWriter(object):
             self._currentLine = self.restart( self._currentLine)
             
     def restart(self, currentLine ):
-        progressFilename = os.path.splitext(os.path.basename(self._filename ))[0] + ".pilog"
-        if os.path.exists( progressFilename ):
-            with open( progressFilename, "rU") as pfile:
+        if os.path.exists( self._restartFilename ):
+            with open( self._restartFilename, "rU") as pfile:
+
+                currentID = pfile.readline().rstrip()
                 progress = pfile.readline().rstrip()
                 currentLine = self._currentLine + int( progress.split( ':')[1] )
-                print( "Retrieving progress from '%s' : %i records written" % ( progressFilename, currentLine ))
+                print( "Retrieving restart point from '%s' : %i records written" % ( self._restartFilename, currentLine ))
         else:
-            print( "Can't open progress file ('%s') for input file: '%s'" % ( self._filename, progressFilename ))
+            print( "Can't open restart file ('%s') for input file: '%s'" % ( self._filename, self._restartFilename ))
         
         return currentLine
         
-    def updateProgress(self, totalWritten ):
-        with open( self._progressFilename, "w") as pfile:
-            pfile.write( "progress: %i\n" % totalWritten )
-    
+    def update_restart_log(self, collection, totalWritten ):
+        
+        name = None 
+        with tempfile.NamedTemporaryFile( mode="w", dir=os.getcwd(), delete=False ) as tempFile :
+            doc = collection.find().sort({"$natural" :-1}).limit( 1 )
+            self._restartFile.write( "id : %s\nprogress: %i\n" % doc[ "_id" ], totalWritten )
+            self._restartFile.flush()
+            name = tempFile.name()
+            
+        os.rename( name, self._restartFile )
+        
     @staticmethod
     def skipLines( f, skipCount ):
         '''
@@ -54,7 +87,7 @@ class BulkWriter(object):
         lineCount = 0 
         if ( skipCount > 0 ) :
             #print( "Skipping")
-            dummy = f.readline() #skicaount may be bigger thant he number of lines i  the fole
+            dummy = f.readline() #skicaount may be bigger than the number of lines i  the file
             while dummy :
                 lineCount = lineCount + 1
                 if ( lineCount == skipCount ) :
@@ -98,7 +131,7 @@ class BulkWriter(object):
                 if ( bulkerCount == self._chunkSize ):
                     result = bulker.execute()
                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                    self.updateProgress( self._totalWritten )
+                    self.update_restart_log( self._totalWritten )
                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()
@@ -118,7 +151,7 @@ class BulkWriter(object):
             if ( bulkerCount > 0 ) :
                 result = bulker.execute()
                 self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                self.updateProgress( self._totalWritten )
+)               self.update_restart_log( self._totalWritten )
                 print( "Input: '%s' : Inserted last %i records" % ( self._filename, result[ 'nInserted'] ))
  
 
