@@ -64,10 +64,16 @@ class Restarter(object):
                                                 "doc_id"    : doc_id })
         
     def restart(self ):
+        '''
+        Get the restart doc. Now find any docs created after the restart doc was created
+        within the same process and machine. Count those so we know where we are.
+        Return the new doc count that we can skip too.
+        '''
         
         self._restartDoc = self._restartlog.find_one( { "name" : self._name })
         count = self._restartDoc[ "count"]
-        ( epoch, machine, pid, counter ) = Restarter.splitID( self._restartDoc[ "doc_id"])
+        ( _, machine, pid, _ ) = Restarter.splitID( self._restartDoc[ "doc_id"])
+        
         cursor = self._collection.find( { "_id" : { "$gt" : self._restartDoc[ "doc_id" ]}})
         
         for i in cursor:
