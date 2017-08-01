@@ -7,6 +7,7 @@ Created on 2 Mar 2016
 from ConfigParser import RawConfigParser
 from datetime import datetime
 import os
+import csv
 
 import textwrap
 from collections import OrderedDict
@@ -34,33 +35,49 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, cfgFilename, input_filename, args ):
+    def __init__(self, cfgFilename, input_filename, delimiter, gen_id, onerror):
         '''
         Constructor
         '''
-        self._args = args
         self._idField = None # section on which name == _id
-        self._hasheader = args.hasheader
         self._tags = [ "name", "type", "format" ]
         self._cfg = RawConfigParser()
         self._fieldDict = OrderedDict()
         self._names = OrderedDict()
         self._doc_template = OrderedDict()
-        self._id = args.id
+        self._id = gen_id
+        self._delimiter = delimiter
         self._filename = input_filename
         self._record_count = 0
-        self._timestamp = datetime.utcnow()
+        self._timestamp = None
         self._pid = os.getpid()
+        self._onerror = onerror
         
         if cfgFilename :
             self._fieldDict = self.read( cfgFilename )
             
-        if self._args.addfilename:
-            self._doc_template[ "filename"] = os.path.basename( self._filename )
- 
-        if self._args.addtimestamp == "now" :
-            self._doc_template[ "timestamp" ] = self._timestamp
             
+    
+    def add_timestamp(self, timestamp ):
+        '''
+        timestamp = "now" generate time once for all docs
+        timestamp = "gen" generate a new timestamp for each doc
+        timestamp = "none" don't add timestamp field
+        '''
+        self._timestamp = timestamp 
+        if timestamp == "now":
+            self._doc_template[ "timestamp" ] = datetime.utcnow()
+        return self._doc_template
+            
+    def add_filename(self, filename ):
+        self._doc_template[ "filename"] = os.path.basename( filename )
+        return self._doc_template
+      
+    def input_filename(self):
+        return self._filename 
+    
+    def get_dict_reader(self, f ):
+        return csv.DictReader( f, fieldnames = self.fields(), delimiter = self._delimiter )
     
     def duplicateIDMsg(self, firstSection, secondSection):
         msg = textwrap.dedent( """\
@@ -211,9 +228,9 @@ class FieldConfig(object):
                     #print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
                     #print( "Using string type instead")
                     
-                    if self._args.onerror == "fail" :
+                    if self._onerror == "fail" :
                         raise
-                    elif self._args.onerror == "warn" :
+                    elif self._onerror == "warn" :
                         print( "Error in '%s' at line %i at field '%s'" % ( self._filename, self._record_count, k ))
                         print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
                         print( "Using string type instead" )

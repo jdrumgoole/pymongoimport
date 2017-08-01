@@ -27,24 +27,27 @@ class Restarter(object):
     '''
 
 
-    def __init__(self, collection, name, database ):
+    def __init__(self, database, output_collection, input_filename, batch_size ):
         '''
         Constructor
         '''
         self._restartlog = database[ "restartlog" ]
-        self._collection = collection
-        self._name = name
+        self._collection = output_collection
+        self._name = input_filename
+        self._batch_size = batch_size 
         self._restartDoc = self._restartlog.find_one( { "name" : self._name })
         
         if self._restartDoc is None :
             
-            self._restartDoc = self._restartlog.insert_one( { "name"   : self._name, 
-                                                              "start"  : datetime.utcnow(),
-                                                              "count"  : 0 }  )
+            self._restartDoc = self._restartlog.insert_one( { "name"           : self._name, 
+                                                              "timestamp"      : None,
+                                                              "batch_size"     : batch_size,
+                                                              "count"          : 0,
+                                                              "doc_id"         : None }  )
         
         
     @staticmethod
-    def splitID( doc_id ):
+    def split_ID( doc_id ):
         '''
         Split a MongoDB Object ID
         a 4-byte value representing the seconds since the Unix epoch,
@@ -82,5 +85,17 @@ class Restarter(object):
             if i_machine == machine and i_pid == pid :
                 count = count + 1
                 
+            if count == self._restartDoc[ "batch_size"]:
+                # we have the full batch, we can't have inserted more than 
+                # this before writing a restart doc
+                break
+            
         return count
             
+    def reset(self, batch_size ):
+        
+        self._restartDoc = self._restartlog.find_one_and_update(  { "name"           : self._name, 
+                                                                    "timestamp"      : None,
+                                                                    "batch_size"     : batch_size,
+                                                                    "count"          : 0,
+                                                                    "doc_id"         : None }  )

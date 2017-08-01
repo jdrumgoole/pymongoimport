@@ -56,7 +56,7 @@ def mainline( args ):
     parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry" )
     parser.add_argument('--addtimestamp', default="none", choices=[ "none", "now", "gen" ], help="Add a timestamp to each record [default: %(default)s]" )
     parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names [default: %(default)s]")
-    parser.add_argument( '--genfieldfile', default=False, action="store_true", help="Generate a fieldfile from the data file [default: %(default)s]")
+    parser.add_argument( '--genfieldfile', default=False, action="store_true", help="Generate a fieldfile from the data file, we set hasheader to true [default: %(default)s]")
     parser.add_argument( '--id', default="mongodb", choices=[ "mongodb", "gen"], help="Autogenerate ID default [ mongodb ]")
     parser.add_argument( '--onerror', default="warn", choices=[ 'fail', "warn" , "ignore"], help="What to do when we hit an error parsing a csv file [default: %(default)s]")
     
@@ -65,6 +65,10 @@ def mainline( args ):
     client = MongoDB( args.host).client()
     database = client[ args.database ]
     collection = database[ args.collection ]
+        
+        
+    if args.genfieldfile :
+        args.hasheader = True
         
     if args.drop :
         if args.restart :

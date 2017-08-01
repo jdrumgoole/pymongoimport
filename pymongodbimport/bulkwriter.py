@@ -5,53 +5,30 @@ Created on 23 Jul 2017
 '''
 import os
 import time
-import csv
 import tempfile
-from pymongodbimport.fieldconfig import FieldConfig, FieldConfigException
 
 class BulkWriter(object):
      
-    def __init__(self, collection, input_filename, args, orderedWrites=None ):
+    def __init__(self, collection, fieldConfig, hasheader, chunksize=500, restart=False, orderedWrites=None ):
          
         self._collection = collection
         self._orderedWrites = orderedWrites
         self._fieldConfig = None
-        self._chunkSize = args.chunksize
-        self._args = args
-        self._filename = input_filename
+        self._chunkSize = chunksize
         self._totalWritten = 0
-        self._restartFilename = os.path.splitext(os.path.basename(input_filename ))[0] + ".restart.log"
+        self._restart = restart
+
         self._currentLine = 0
         self._restartFile = None
-        
-        if args.genfieldfile :  # generate a file
-            print( "Generating a field file from '%s'"  % input_filename  )
-            field_filename = FieldConfig.generate_field_file( input_filename, args.delimiter, ext=".ff" )
-            print("Generated: '%s'" % field_filename )
-            hasheader = True
-        elif args.fieldfile: # use the file on the command line
-            field_filename = args.fieldfile
-            hasheader = args.hasheader
-        else:
-            field_filename = FieldConfig.generate_field_filename( input_filename ) # use an existing fle
-            hasheader = True
-    
-            try :
-                self._fieldConfig = FieldConfig( field_filename,
-                                                  input_filename,
-                                                  hasheader, 
-                                                  args.addfilename, 
-                                                  args.addtimestamp, 
-                                                  args.id)
-            except FieldConfigException :
-                raise
-            
+        self._fieldConfig = fieldConfig
+        self._restartFilename = os.path.splitext(os.path.basename( self._fieldConfig.input_filename()))[0] + ".restart.log"
         if hasheader :
             self._currentLine = self._currentLine + 1 
             
-        if args.restart:
+        if self._restart:
             self._currentLine = self.restart( self._currentLine)
             
+        
     def restart(self, currentLine ):
         if os.path.exists( self._restartFilename ):
             with open( self._restartFilename, "rU") as pfile:
@@ -61,7 +38,7 @@ class BulkWriter(object):
                 currentLine = self._currentLine + int( progress.split( ':')[1] )
                 print( "Retrieving restart point from '%s' : %i records written" % ( self._restartFilename, currentLine ))
         else:
-            print( "Can't open restart file ('%s') for input file: '%s'" % ( self._filename, self._restartFilename ))
+            print( "Can't open restart file ('%s') for input file: '%s'" % ( self._fieldConfig.input_filename(), self._restartFilename ))
         
         return currentLine
         
@@ -105,8 +82,8 @@ class BulkWriter(object):
         This becomes important during restarts because in a restart the restart count starts from the non-headerline
         so we must skip the header and then start skipping lines.
         '''
-        
-        with open( self._filename, "rU") as f :
+        filename = self._fieldConfig.input_filename()
+        with open( filename, "rU") as f :
             
             BulkWriter.skipLines( f, self._currentLine )
  
@@ -120,7 +97,7 @@ class BulkWriter(object):
             insertedThisQuantum = 0
             totalRead = 0
     
-            reader = csv.DictReader( f, fieldnames = self._fieldConfig.fields(), delimiter = self._args.delimiter )
+            reader = self._fieldConfig.get_dict_reader( f )
 
             for dictEntry in reader :
                 totalRead = totalRead + 1
@@ -131,7 +108,8 @@ class BulkWriter(object):
                 if ( bulkerCount == self._chunkSize ):
                     result = bulker.execute()
                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                    self.update_restart_log( self._totalWritten )
+                    if self._restart:
+                        self.update_restart_log( self._totalWritten )
                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()
@@ -141,18 +119,19 @@ class BulkWriter(object):
                     bulkerCount = 0
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
-                    print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( self._filename, insertedThisQuantum, totalRead, self._totalWritten ))
+                    print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, totalRead, self._totalWritten ))
                     insertedThisQuantum = 0
                     timeStart = timeNow
              
             if insertedThisQuantum > 0 :
-                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( self._filename, insertedThisQuantum, totalRead, self._totalWritten  ))
+                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, totalRead, self._totalWritten  ))
 
             if ( bulkerCount > 0 ) :
                 result = bulker.execute()
                 self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-)               self.update_restart_log( self._totalWritten )
-                print( "Input: '%s' : Inserted last %i records" % ( self._filename, result[ 'nInserted'] ))
+                if self._restart:
+                    self.update_restart_log( self._totalWritten )
+                print( "Input: '%s' : Inserted last %i records" % ( filename, result[ 'nInserted'] ))
  
 
             print( "Total records read: %i, totalWritten: %i" % ( totalRead, self._totalWritten ))
