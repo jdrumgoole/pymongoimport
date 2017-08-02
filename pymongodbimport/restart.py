@@ -27,12 +27,11 @@ class Restarter(object):
     '''
 
 
-    def __init__(self, database, output_collection, input_filename, batch_size ):
+    def __init__(self, database, input_filename, batch_size ):
         '''
         Constructor
         '''
         self._restartlog = database[ "restartlog" ]
-        self._collection = output_collection
         self._name = input_filename
         self._batch_size = batch_size 
         self._restartDoc = self._restartlog.find_one( { "name" : self._name })
@@ -66,7 +65,7 @@ class Restarter(object):
                                                 "timestamp" : datetime.utcnow(),
                                                 "doc_id"    : doc_id })
         
-    def restart(self ):
+    def restart(self, collection ):
         '''
         Get the restart doc. Now find any docs created after the restart doc was created
         within the same process and machine. Count those so we know where we are.
@@ -77,7 +76,7 @@ class Restarter(object):
         count = self._restartDoc[ "count"]
         ( _, machine, pid, _ ) = Restarter.splitID( self._restartDoc[ "doc_id"])
         
-        cursor = self._collection.find( { "_id" : { "$gt" : self._restartDoc[ "doc_id" ]}})
+        cursor = collection.find( { "_id" : { "$gt" : self._restartDoc[ "doc_id" ]}})
         
         for i in cursor:
             ( _, i_machine, i_pid, _ ) = Restarter.splitID( i[ "_id"])

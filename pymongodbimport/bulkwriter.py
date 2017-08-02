@@ -5,8 +5,7 @@ Created on 23 Jul 2017
 '''
 import os
 import time
-import tempfile
-
+from pymongodbimport.restart import Restarter
 class BulkWriter(object):
      
     def __init__(self, collection, fieldConfig, hasheader, chunksize=500, restart=False, orderedWrites=None ):
@@ -25,34 +24,11 @@ class BulkWriter(object):
         if hasheader :
             self._currentLine = self._currentLine + 1 
             
+        self._restarter = None
         if self._restart:
-            self._currentLine = self.restart( self._currentLine)
+            self._restarter = Restarter( self._collection.database, self._fieldConfig.input_filename(), self._chunkSize )
+            self._currentLine  = self._currentLine + self._restarter.restart( self._collection )
             
-        
-    def restart(self, currentLine ):
-        if os.path.exists( self._restartFilename ):
-            with open( self._restartFilename, "rU") as pfile:
-
-                currentID = pfile.readline().rstrip()
-                progress = pfile.readline().rstrip()
-                currentLine = self._currentLine + int( progress.split( ':')[1] )
-                print( "Retrieving restart point from '%s' : %i records written" % ( self._restartFilename, currentLine ))
-        else:
-            print( "Can't open restart file ('%s') for input file: '%s'" % ( self._fieldConfig.input_filename(), self._restartFilename ))
-        
-        return currentLine
-        
-    def update_restart_log(self, collection, totalWritten ):
-        
-        name = None 
-        with tempfile.NamedTemporaryFile( mode="w", dir=os.getcwd(), delete=False ) as tempFile :
-            doc = collection.find().sort({"$natural" :-1}).limit( 1 )
-            self._restartFile.write( "id : %s\nprogress: %i\n" % doc[ "_id" ], totalWritten )
-            self._restartFile.flush()
-            name = tempFile.name()
-            
-        os.rename( name, self._restartFile )
-        
     @staticmethod
     def skipLines( f, skipCount ):
         '''
@@ -109,7 +85,7 @@ class BulkWriter(object):
                     result = bulker.execute()
                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]
                     if self._restart:
-                        self.update_restart_log( self._totalWritten )
+                        self._restarter.update( self._totalWritten )
                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()

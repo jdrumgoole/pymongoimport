@@ -57,7 +57,7 @@ def mainline( args ):
     parser.add_argument('--addtimestamp', default="none", choices=[ "none", "now", "gen" ], help="Add a timestamp to each record [default: %(default)s]" )
     parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names [default: %(default)s]")
     parser.add_argument( '--genfieldfile', default=False, action="store_true", help="Generate a fieldfile from the data file, we set hasheader to true [default: %(default)s]")
-    parser.add_argument( '--id', default="mongodb", choices=[ "mongodb", "gen"], help="Autogenerate ID default [ mongodb ]")
+    parser.add_argument( '--id', default="mongodb", choices=[ "mongodb", "gen"], help="Autogenerate ID default [ %(default)s ]")
     parser.add_argument( '--onerror', default="warn", choices=[ 'fail', "warn" , "ignore"], help="What to do when we hit an error parsing a csv file [default: %(default)s]")
     
     args= parser.parse_args( args )
@@ -85,8 +85,8 @@ def mainline( args ):
             print( "Chunksize must be 1 or more. Chunksize : %i" % args.chunksize )
             sys.exit( 1 )
         
-        file_processor = FileProcessor( collection )
-        file_processor.processFiles( args )
+        file_processor = FileProcessor( collection, args.delimiter, args.onerror, args.id, args.chunksize )
+        file_processor.processFiles( args.filenames, args.hasheader, args.fieldfile )
             
     
 if __name__ == '__main__':

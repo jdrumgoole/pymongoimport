@@ -20,8 +20,8 @@ class Test(unittest.TestCase):
 
 
     def test_Restart(self):
-        r = Restarter( self._db, self._collection, input_filename="test.csv", batch_size=50 )
-        bw - 
+        r = Restarter( self._db, input_filename="10k.txt", batch_size=10 )
+        bw = BulkWriter( self._collection, "10k.txt" )
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_Restart']

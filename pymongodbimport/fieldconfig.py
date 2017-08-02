@@ -212,8 +212,12 @@ class FieldConfig(object):
             try:
                 typeField = self.typeData( k )
                 try: 
-                    if typeField == "int" :
-                        v = int( dictEntry[ k ])
+             
+                    if typeField == "int" : #Ints can be floats
+                        try :
+                            v = int( dictEntry[ k ])
+                        except ValueError :
+                            v = float( dictEntry[ k ])
                     elif typeField == "float" :
                         v = float( dictEntry[ k ])
                     elif typeField == "str" :
@@ -232,7 +236,7 @@ class FieldConfig(object):
                         raise
                     elif self._onerror == "warn" :
                         print( "Error in '%s' at line %i at field '%s'" % ( self._filename, self._record_count, k ))
-                        print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
+                        print("type conversion error: Cannot convert '%s' to type %s" % (dictEntry[ k ], typeField))
                         print( "Using string type instead" )
                         v = str( dictEntry[ k ])
                     else:

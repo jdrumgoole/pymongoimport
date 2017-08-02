@@ -14,47 +14,53 @@ class InputFileException(Exception):
         
 class FileProcessor( object ):
     
-    def __init__(self, collection ):
+    def __init__(self, collection, delimiter, onerror, gen_id, chunksize ):
         self._collection = collection
+        self._delimiter = delimiter
+        self._onerror = onerror
+        self._gen_id = gen_id
+        self._chunksize = chunksize 
         
-    def processOneFile( self, field_filename, input_filename, delimiter, hasheader, gen_id, onerror ):
+    def processOneFile( self, field_filename, input_filename, hasheader ):
             
-        fieldConfig = FieldConfig( field_filename, input_filename, delimiter, gen_id, onerror )
+        fieldConfig = FieldConfig( field_filename, input_filename, self._delimiter, self._gen_id, self._onerror )
     
-        bw = BulkWriter( self._collection, fieldConfig, hasheader )
+        bw = BulkWriter( self._collection, fieldConfig, hasheader, self._chunksize )
         totalWritten = bw.bulkWrite()
         return totalWritten 
     
-    def processFiles( self, args ):
+    def processFiles( self, filenames, hasheader, field_filename ):
         
         totalCount = 0
         lineCount = 0
         results=[]
         failures=[]
-
+        new_name = None
         
-        for i in args.filenames :
-            field_filename = os.path.splitext(os.path.basename( i ))[0] + ".ff"
+        for i in filenames :
+            
             try:
                 print ("Processing : %s" % i )
-                if args.genfieldfile :
-                    field_filename = FieldConfig.generate_field_file( i )
-                    print( "Created field file: '%s'" % field_filename )
-                elif args.fieldfile :
-                    field_filename = args.fieldfile
+                if field_filename :
+                    new_name = field_filename
                     print( "using field file: '%s'" % field_filename )
-                    
-                lineCount = self.processOneFile( field_filename, i, args.delimiter, args.hasheader, args.id, args.onerror )
+                elif hasheader :
+                    new_name = FieldConfig.generate_field_file( i )
+                    print( "Created field file: '%s'" % field_filename )
+                else:
+                    new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff" 
+                   
+                lineCount = self.processOneFile( new_name, i, hasheader )
                 totalCount = lineCount + totalCount
             except FieldConfigException, e :
                 print( "Field file error for %s : %s" % ( i, e ))
                 failures.append( i )
-                if args.onerror == "fail":
+                if self._.onerror == "fail":
                     raise
             except InputFileException, e :
                 print( "Input file error for %s : %s" % ( i, e ))
                 failures.append( i )
-                if args.onerror == "fail":
+                if self._.onerror == "fail":
                     raise
                 
         if len( results ) > 0 :
