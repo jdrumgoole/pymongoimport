@@ -35,7 +35,7 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, cfgFilename, input_filename, delimiter, gen_id, onerror):
+    def __init__(self, cfgFilename, delimiter=",", gen_id="mongodb", onerror="warn"):
         '''
         Constructor
         '''
@@ -47,7 +47,6 @@ class FieldConfig(object):
         self._doc_template = OrderedDict()
         self._id = gen_id
         self._delimiter = delimiter
-        self._filename = input_filename
         self._record_count = 0
         self._timestamp = None
         self._pid = os.getpid()
@@ -72,9 +71,6 @@ class FieldConfig(object):
     def add_filename(self, filename ):
         self._doc_template[ "filename"] = os.path.basename( filename )
         return self._doc_template
-      
-    def input_filename(self):
-        return self._filename 
     
     def get_dict_reader(self, f ):
         return csv.DictReader( f, fieldnames = self.fields(), delimiter = self._delimiter )
@@ -90,6 +86,9 @@ class FieldConfig(object):
 
     def hasheader(self ):
         return self._hasheader
+    
+    def delimiter(self):
+        return self._delimiter
     
     def read(self, filename):
         
@@ -235,7 +234,7 @@ class FieldConfig(object):
                     if self._onerror == "fail" :
                         raise
                     elif self._onerror == "warn" :
-                        print( "Error in '%s' at line %i at field '%s'" % ( self._filename, self._record_count, k ))
+                        print( "Error at line %i at field '%s'" % ( self._record_count, k ))
                         print("type conversion error: Cannot convert '%s' to type %s" % (dictEntry[ k ], typeField))
                         print( "Using string type instead" )
                         v = str( dictEntry[ k ])

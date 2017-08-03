@@ -23,10 +23,10 @@ class FileProcessor( object ):
         
     def processOneFile( self, field_filename, input_filename, hasheader ):
             
-        fieldConfig = FieldConfig( field_filename, input_filename, self._delimiter, self._gen_id, self._onerror )
+        fieldConfig = FieldConfig( field_filename, self._delimiter, self._gen_id, self._onerror )
     
         bw = BulkWriter( self._collection, fieldConfig, hasheader, self._chunksize )
-        totalWritten = bw.bulkWrite()
+        totalWritten = bw.insert_file( input_filename )
         return totalWritten 
     
     def processFiles( self, filenames, hasheader, field_filename ):

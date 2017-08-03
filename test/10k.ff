@@ -1,2 +1,43 @@
-[17|28|2013-05-02|2|N|P|46414|BN|SUZUKI|UNCLASSIFIED|GREEN|P|398|1993-08-11]
-type=str
+[TestID]
+type : int
+	
+[VehicleID]
+type : int
+
+[TestDate]
+type : date
+format : %Y-%m-%d
+ 	
+[TestClassID]
+type : str
+
+[TestType]
+type : str
+
+[TestResult]
+type : str
+
+[TestMileage]
+type : int
+
+[Postcode] 
+type : str
+
+[Make]
+type : str
+
+[Model]
+type : str
+
+[Colour]
+type : str
+
+[FuelType] : 
+type: str
+	
+[CylinderCapacity] : 
+type: int
+	
+[FirstUseDate]
+type : date 
+format: %Y-%m-%d

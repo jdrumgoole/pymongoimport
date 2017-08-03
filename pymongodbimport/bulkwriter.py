@@ -5,7 +5,9 @@ Created on 23 Jul 2017
 '''
 import os
 import time
+import pprint
 from pymongodbimport.restart import Restarter
+
 class BulkWriter(object):
      
     def __init__(self, collection, fieldConfig, hasheader, chunksize=500, restart=False, orderedWrites=None ):
@@ -20,13 +22,12 @@ class BulkWriter(object):
         self._currentLine = 0
         self._restartFile = None
         self._fieldConfig = fieldConfig
-        self._restartFilename = os.path.splitext(os.path.basename( self._fieldConfig.input_filename()))[0] + ".restart.log"
         if hasheader :
             self._currentLine = self._currentLine + 1 
             
         self._restarter = None
         if self._restart:
-            self._restarter = Restarter( self._collection.database, self._fieldConfig.input_filename(), self._chunkSize )
+            self._restarter = Restarter( self._collection.database, "dummy", self._chunkSize )
             self._currentLine  = self._currentLine + self._restarter.restart( self._collection )
             
     @staticmethod
@@ -49,7 +50,54 @@ class BulkWriter(object):
                 
         return lineCount 
 
-    def bulkWrite(self ):
+    def insert_file(self, filename ):
+        
+        start = time.time()
+        with open( filename, "rU") as f :
+            
+            timeStart = time.time() 
+            insertedThisQuantum = 0
+            total_read = 0
+            insert_list = []
+            reader = self._fieldConfig.get_dict_reader( f )
+
+            for dictEntry in reader :
+                
+                if len( dictEntry ) == 1 :
+                    print( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')" % self._fieldConfig.delimiter())
+                    print( "input line : '%s'" % "".join( dictEntry.values()))
+
+                total_read = total_read + 1
+
+                d = self._fieldConfig.createDoc( dictEntry )
+                insert_list.append( d )
+                if total_read % self._chunkSize == 0 :
+                    results = self._collection.insert_many( insert_list )
+                    insert_list = []
+                    self._totalWritten = self._totalWritten + len( results.inserted_ids )
+                    insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
+                    timeNow = time.time()
+                    if timeNow > timeStart + 1  :
+                        print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, self._totalWritten ))
+                        insertedThisQuantum = 0
+                        timeStart = timeNow
+                        
+            if insertedThisQuantum > 0  :
+                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, self._totalWritten ))
+                insertedThisQuantum = 0
+             
+            if ( len( insert_list ) > 0  ) :
+                results = self._collection.insert_many( insert_list )
+                insert_list = []
+                self._totalWritten = self._totalWritten + len( results.inserted_ids )
+                insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
+                print( "Input: '%s' : Inserted last %i records" % ( filename, self._totalWritten ))
+                
+        finish = time.time()
+        print( "Total elapsed time to upload '%s' : %.3f" %  ( filename,finish - start ))
+        return self._totalWritten
+    
+    def bulkWrite(self, filename  ):
         '''
         Write the contents of the file to MongoDB potentially adding timestamps and file stamps
         
@@ -58,7 +106,6 @@ class BulkWriter(object):
         This becomes important during restarts because in a restart the restart count starts from the non-headerline
         so we must skip the header and then start skipping lines.
         '''
-        filename = self._fieldConfig.input_filename()
         with open( filename, "rU") as f :
             
             BulkWriter.skipLines( f, self._currentLine )
@@ -83,6 +130,7 @@ class BulkWriter(object):
                 bulkerCount = bulkerCount + 1 
                 if ( bulkerCount == self._chunkSize ):
                     result = bulker.execute()
+                    bulkerCount = 0
                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]
                     if self._restart:
                         self._restarter.update( self._totalWritten )
@@ -92,7 +140,7 @@ class BulkWriter(object):
                     else:
                         bulker = self._collection.initialize_unordered_bulk_op()
                  
-                    bulkerCount = 0
+
                 timeNow = time.time()
                 if timeNow > timeStart + 1  :
                     print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, totalRead, self._totalWritten ))
