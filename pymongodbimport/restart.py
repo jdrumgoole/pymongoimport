@@ -66,7 +66,12 @@ class Restarter(object):
         Return the new doc count that we can skip too.
         '''
         
+        
         self._restartDoc = self._restartlog.find_one( { "name" : self._name })
+        
+        if self._restartDoc is None:
+            return 0
+        
         count = self._restartDoc[ "count"]
         ( _, machine, pid, _ ) = Restarter.split_ID( self._restartDoc[ "doc_id"])
         
@@ -80,7 +85,7 @@ class Restarter(object):
                 
             if count == self._restartDoc[ "batch_size"]:
                 # we have the full batch, we can't have inserted more than 
-                # this before writing a restart doc
+                # this before updating the restart doc
                 break
             
         return count
