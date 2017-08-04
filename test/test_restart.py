@@ -26,7 +26,7 @@ class Test(unittest.TestCase):
         fc = FieldConfig( "10k.ff" )
         bw = BulkWriter( self._collection, fc, hasheader=False, chunksize = chunk_size )
         bw.bulkWrite( "100k.txt")
-        bw.insert_file( "100k.txt")
+        bw.insert_file( "100k.txt", r )
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_Restart']
     unittest.main()

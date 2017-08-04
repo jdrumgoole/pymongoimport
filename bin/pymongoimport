@@ -86,7 +86,7 @@ def mainline( args ):
             sys.exit( 1 )
         
         file_processor = FileProcessor( collection, args.delimiter, args.onerror, args.id, args.chunksize )
-        file_processor.processFiles( args.filenames, args.hasheader, args.fieldfile )
+        file_processor.processFiles( args.filenames, args.hasheader, args.fieldfile, args.restart )
             
     
 if __name__ == '__main__':

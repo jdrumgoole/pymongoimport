@@ -21,15 +21,15 @@ class FileProcessor( object ):
         self._gen_id = gen_id
         self._chunksize = chunksize 
         
-    def processOneFile( self, field_filename, input_filename, hasheader ):
+    def processOneFile( self, field_filename, input_filename, hasheader, restart ):
             
         fieldConfig = FieldConfig( field_filename, self._delimiter, self._gen_id, self._onerror )
     
         bw = BulkWriter( self._collection, fieldConfig, hasheader, self._chunksize )
-        totalWritten = bw.insert_file( input_filename )
+        totalWritten = bw.insert_file( input_filename, restart )
         return totalWritten 
     
-    def processFiles( self, filenames, hasheader, field_filename ):
+    def processFiles( self, filenames, hasheader, field_filename, restart ):
         
         totalCount = 0
         lineCount = 0
@@ -50,7 +50,7 @@ class FileProcessor( object ):
                 else:
                     new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff" 
                    
-                lineCount = self.processOneFile( new_name, i, hasheader )
+                lineCount = self.processOneFile( new_name, i, hasheader, restart )
                 totalCount = lineCount + totalCount
             except FieldConfigException, e :
                 print( "Field file error for %s : %s" % ( i, e ))

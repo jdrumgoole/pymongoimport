@@ -50,15 +50,27 @@ class BulkWriter(object):
                 
         return lineCount 
 
-    def insert_file(self, filename ):
+    def insert_file(self, filename, restart = None ):
         
         start = time.time()
+        total_written = 0
+
         with open( filename, "rU") as f :
             
             timeStart = time.time() 
             insertedThisQuantum = 0
             total_read = 0
             insert_list = []
+            restarter = None 
+            
+            if restart :
+                restarter = Restarter( self._collection.database,  filename, self._chunkSize )
+                skip_count = restarter.restart( self._collection  )
+                if skip_count > 0 :
+                    print( "Restarting : skipping %i lines" % skip_count )
+                    self.skipLines(f, skip_count )
+                
+                
             reader = self._fieldConfig.get_dict_reader( f )
 
             for dictEntry in reader :
@@ -73,29 +85,36 @@ class BulkWriter(object):
                 insert_list.append( d )
                 if total_read % self._chunkSize == 0 :
                     results = self._collection.insert_many( insert_list )
-                    insert_list = []
-                    self._totalWritten = self._totalWritten + len( results.inserted_ids )
+                    total_written = total_written + len( results.inserted_ids )
+                    if restarter :
+                        restarter.update( results.inserted_ids[ -1], total_written )
                     insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
+                    insert_list = []
                     timeNow = time.time()
                     if timeNow > timeStart + 1  :
-                        print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, self._totalWritten ))
+                        print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, total_written ))
                         insertedThisQuantum = 0
                         timeStart = timeNow
                         
             if insertedThisQuantum > 0  :
-                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, self._totalWritten ))
+                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, total_written ))
                 insertedThisQuantum = 0
              
             if ( len( insert_list ) > 0  ) :
                 results = self._collection.insert_many( insert_list )
+                total_written = total_written + len( results.inserted_ids )
+                if restarter :
+                    restarter.update( results.inserted_ids[ -1 ], total_written )
                 insert_list = []
-                self._totalWritten = self._totalWritten + len( results.inserted_ids )
+
                 insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
                 print( "Input: '%s' : Inserted last %i records" % ( filename, self._totalWritten ))
                 
         finish = time.time()
         print( "Total elapsed time to upload '%s' : %.3f" %  ( filename,finish - start ))
-        return self._totalWritten
+        if restarter :
+            restarter.reset()
+        return total_written
     
     def bulkWrite(self, filename  ):
         '''

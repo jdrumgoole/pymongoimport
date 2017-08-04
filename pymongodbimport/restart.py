@@ -37,13 +37,7 @@ class Restarter(object):
         self._restartDoc = self._restartlog.find_one( { "name" : self._name })
         
         if self._restartDoc is None :
-            
-            self._restartDoc = self._restartlog.insert_one( { "name"           : self._name, 
-                                                              "timestamp"      : None,
-                                                              "batch_size"     : batch_size,
-                                                              "count"          : 0,
-                                                              "doc_id"         : None }  )
-        
+            self.reset()
         
     @staticmethod
     def split_ID( doc_id ):
@@ -61,9 +55,9 @@ class Restarter(object):
     def update(self, doc_id, count ):
         
         self._restartlog.find_one_and_update( { "name"      : self._name },
-                                              { "$inc"      : { "count" : count },
-                                                "timestamp" : datetime.utcnow(),
-                                                "doc_id"    : doc_id })
+                                              { "$set"      : { "count" : count,
+                                                                "timestamp" : datetime.utcnow(),
+                                                                "doc_id"    : doc_id }})
         
     def restart(self, collection ):
         '''
@@ -74,12 +68,12 @@ class Restarter(object):
         
         self._restartDoc = self._restartlog.find_one( { "name" : self._name })
         count = self._restartDoc[ "count"]
-        ( _, machine, pid, _ ) = Restarter.splitID( self._restartDoc[ "doc_id"])
+        ( _, machine, pid, _ ) = Restarter.split_ID( self._restartDoc[ "doc_id"])
         
         cursor = collection.find( { "_id" : { "$gt" : self._restartDoc[ "doc_id" ]}})
         
         for i in cursor:
-            ( _, i_machine, i_pid, _ ) = Restarter.splitID( i[ "_id"])
+            ( _, i_machine, i_pid, _ ) = Restarter.split_ID( i[ "_id"])
               
             if i_machine == machine and i_pid == pid :
                 count = count + 1
@@ -91,10 +85,12 @@ class Restarter(object):
             
         return count
             
-    def reset(self, batch_size ):
+    def reset(self ):
         
-        self._restartDoc = self._restartlog.find_one_and_update(  { "name"           : self._name, 
-                                                                    "timestamp"      : None,
-                                                                    "batch_size"     : batch_size,
-                                                                    "count"          : 0,
-                                                                    "doc_id"         : None }  )
+        self._restartDoc = self._restartlog.find_one_and_update( { "name"      : self._name },
+                                                                 { "$set" : { "name"           : self._name, 
+                                                                              "timestamp"      : None,
+                                                                              "batch_size"     : self._batch_size,
+                                                                              "count"          : 0,
+                                                                              "doc_id"         : 0 }},
+                                                                  upsert=True  )
