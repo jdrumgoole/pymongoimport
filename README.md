@@ -1,6 +1,6 @@
 # pymongodbimport
 
-## usage:
+## Usage:
 
 pymongodbimport is a python program that will import data into a mongodb
  database (default 'test' ) and a mongodb collection (default 'test' ).
@@ -16,10 +16,10 @@ An example run:
 
 ## Arguments
 
-### positional arguments:
+### Positional arguments:
   *filenames*        : list of files to be processed
 
-### xoptional arguments:
+### Optional arguments:
 
 **-h --help**      : Show the help message and exit.
 
