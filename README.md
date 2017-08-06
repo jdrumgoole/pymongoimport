@@ -14,12 +14,12 @@ An example run:
    $python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
 ```
 
-##Arguments
+## Arguments
 
-###positional arguments:
+### positional arguments:
   *filenames*        : list of files to be processed
 
-###optional arguments:
+### xoptional arguments:
 
 **-h --help**      : Show the help message and exit.
 
