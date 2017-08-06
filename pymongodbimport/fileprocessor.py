@@ -14,18 +14,18 @@ class InputFileException(Exception):
         
 class FileProcessor( object ):
     
-    def __init__(self, collection, delimiter, onerror, gen_id, chunksize ):
+    def __init__(self, collection, delimiter, onerror, gen_id, batchsize ):
         self._collection = collection
         self._delimiter = delimiter
         self._onerror = onerror
         self._gen_id = gen_id
-        self._chunksize = chunksize 
+        self._batchsize = batchsize 
         
     def processOneFile( self, field_filename, input_filename, hasheader, restart ):
             
         fieldConfig = FieldConfig( field_filename, self._delimiter, self._gen_id, self._onerror )
     
-        bw = BulkWriter( self._collection, fieldConfig, hasheader, self._chunksize )
+        bw = BulkWriter( self._collection, fieldConfig, hasheader, self._batchsize )
         totalWritten = bw.insert_file( input_filename, restart )
         return totalWritten 
     

@@ -10,12 +10,12 @@ from pymongodbimport.restart import Restarter
 
 class BulkWriter(object):
      
-    def __init__(self, collection, fieldConfig, hasheader, chunksize=500, restart=False, orderedWrites=None ):
+    def __init__(self, collection, fieldConfig, hasheader, batchsize=500, restart=False, orderedWrites=None ):
          
         self._collection = collection
         self._orderedWrites = orderedWrites
         self._fieldConfig = None
-        self._chunkSize = chunksize
+        self._batchsize = batchsize
         self._totalWritten = 0
         self._restart = restart
 
@@ -27,7 +27,7 @@ class BulkWriter(object):
             
         self._restarter = None
         if self._restart:
-            self._restarter = Restarter( self._collection.database, "dummy", self._chunkSize )
+            self._restarter = Restarter( self._collection.database, "dummy", self._batchsize )
             self._currentLine  = self._currentLine + self._restarter.restart( self._collection )
             
     @staticmethod
@@ -64,7 +64,7 @@ class BulkWriter(object):
             restarter = None 
             
             if restart :
-                restarter = Restarter( self._collection.database,  filename, self._chunkSize )
+                restarter = Restarter( self._collection.database,  filename, self._batchsize )
                 skip_count = restarter.restart( self._collection  )
                 if skip_count > 0 :
                     print( "Restarting : skipping %i lines" % skip_count )
@@ -83,7 +83,7 @@ class BulkWriter(object):
 
                 d = self._fieldConfig.createDoc( dictEntry )
                 insert_list.append( d )
-                if total_read % self._chunkSize == 0 :
+                if total_read % self._batchsize == 0 :
                     results = self._collection.insert_many( insert_list )
                     total_written = total_written + len( results.inserted_ids )
                     if restarter :
@@ -147,7 +147,7 @@ class BulkWriter(object):
                 d = self._fieldConfig.createDoc( dictEntry )
                 bulker.insert( d )
                 bulkerCount = bulkerCount + 1 
-                if ( bulkerCount == self._chunkSize ):
+                if ( bulkerCount == self._batchsize ):
                     result = bulker.execute()
                     bulkerCount = 0
                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]

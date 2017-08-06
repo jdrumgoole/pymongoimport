@@ -44,7 +44,7 @@ def mainline( args ):
     parser = argparse.ArgumentParser( prog = "pymongodbimport", usage=usage_message )
     parser.add_argument( '--database', default="test", help='specify the database name [default: %(default)s]')
     parser.add_argument( '--collection', default="test", help='specify the collection name [default: %(default)s]')
-    parser.add_argument( '--host', default="mongodb://localhost:27017/test", help='mongodb://localhost:270017 : std URI arguments apply [default: %(default)s]')
+    parser.add_argument( '--host', default="mongodb://localhost:27017/test", help='mongodb URI. see https://docs.mongodb.com/manual/reference/connection-string/ for details [default: %(default)s]')
     parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts[default: %(default)s]' )
     parser.add_argument( '--restart', default=False, action="store_true", help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading [default: %(default)s]" )
