@@ -36,7 +36,7 @@ Specify the URI for connecting to the database. The full connection
 URI syntax is documented on the
 [MongoDB docs website.](https://docs.mongodb.com/manual/reference/connection-string/)
 
-The default is *mongodb://localhost:27017.*
+The default is *mongodb://localhost:27017/test*
 
 **--batchsize** *batchsize*
 
@@ -44,7 +44,7 @@ set batch size for bulk inserts. This is the amount of docs the client
 will add to a batch before trying to upload the whole chunk to the
 server (reduces server round trips). The default *batchsize* is 500.
 
-For larger documents you may find a smaller chunksize is more efficient.
+For larger documents you may find a smaller *batchsize* is more efficient.
 
 **--restart**
 
@@ -54,11 +54,11 @@ called *restartlog*. Each file to be uploaded has its own record in the
 *restartlog*. The restart log record format is :
 
 ```
-{ "name"           : *<name of file being uploade>*, 
-  "timestamp"      : *<datetime that this doc was inserted>*,
-  "batch_size"     : *<the batchsize specified by **--batchsize**>*,
-  "count"          : *<the total number of documents inserted from **<name>** file to **<timestamp>**> *,
-  "doc_id"         : *<The mongodb _id field for the last record inserted in this batch>* }
+{ "name"           : <name of file being uploaded>, 
+  "timestamp"      : <datetime that this doc was inserted>,
+  "batch_size"     : <the batchsize specified by --batchsize>,
+  "count"          : <the total number of documents inserted from <name> file to <timestamp> >,
+  "doc_id"         : <The mongodb _id field for the last record inserted in this batch> }
 ```
 use record count insert to restart at last write also
                         enable restart logfile [default: False]
