@@ -38,7 +38,7 @@ URI syntax is documented on the
 
 The default is *mongodb://localhost:27017.*
 
-** --batchsize** *batchsize*
+**--batchsize** *batchsize*
 
 set batch size for bulk inserts. This is the amount of docs the client
 will add to a batch before trying to upload the whole chunk to the
