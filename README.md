@@ -1,6 +1,6 @@
 # pymongodbimport
 
-usage:
+## usage:
 
 pymongodbimport is a python program that will import data into a mongodb
  database (default 'test' ) and a mongodb collection (default 'test' ).
@@ -23,14 +23,15 @@ An example run:
 
 **-h --help**      : Show the help message and exit.
 
-**--database <name>**
+**--database** *name* 
 
-Specify the name of the database to use  [default: test]
+Specify the *name* of the database to use  [default: *test*]
 
-**--collection <name**
+**--collection** *name*
 
-Specify the name of the collection to use [default : test]
-**--host <mongodb URI>**
+Specify the *name* of the collection to use [default : *test*]
+
+**--host** *mongodb URI*
 Specify the URI for connecting to the database.  The format is defined by MongoDB see
 mongodb://localhost:270017 : std URI arguments apply
                         [default: mongodb://localhost:27017/test]
