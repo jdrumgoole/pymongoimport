@@ -3,7 +3,14 @@
 ## Usage:
 
 pymongodbimport is a python program that will import data into a mongodb
- database (default 'test' ) and a mongodb collection (default 'test' ).
+database (default 'test' ) and a mongodb collection (default 'test' ).
+ 
+Why do we have pymongodbimport when MongoDB has a perfectly good (and much faster)
+[mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) program 
+that is available for free in the standard MongoDB [community download](https://www.mongodb.com/download-center#community).
+
+Well pymonogodbimport does a few things that mongoimport doesn't do (yet). For people
+with new CSV fields there is the [**--genfieldfile** option]( #genfieldfile )
 
 Each file in the input list must correspond to a fieldfile format that is
 common across all the files. The fieldfile is specified by the  `--fieldfile` parameter.
@@ -60,6 +67,9 @@ called *restartlog*. Each file to be uploaded has its own record in the
   "count"          : <the total number of documents inserted from <name> file to <timestamp> >,
   "doc_id"         : <The mongodb _id field for the last record inserted in this batch> }
 ```
+
+The restart log is keyed of the filename so each filename must be unique otherwise
+imports that are running in parallel will overwrite each others restart logs.
 use record count insert to restart at last write also
                         enable restart logfile [default: False]
 
@@ -83,7 +93,9 @@ use record count insert to restart at last write also
 
   --hasheader           Use header line for column names [default: False]
 
-  --genfieldfile        Generate a fieldfile from the data file, we set
+  <a name="genfieldfile"></a>**--genfieldfile**        
+  
+  Generate a fieldfile from the data file, we set
                         hasheader to true [default: False]
 
   --id {mongodb,gen}    Autogenerate ID default [ mongodb ]
