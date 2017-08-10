@@ -35,7 +35,6 @@ class FieldConfig(object):
       
     '''
 
-
     def __init__(self, cfgFilename, delimiter=",", hasheader=True, gen_id="mongodb", onerror="warn"):
         '''
         Constructor
@@ -94,9 +93,10 @@ class FieldConfig(object):
     def read(self, filename):
         
         fieldDict = OrderedDict()
+        
         result = self._cfg.read( filename )
         if len( result ) == 0 :
-            raise ValueError( "Couldn't open %s" % filename )
+            raise FieldConfigException( "Couldn't open '%s'" % filename )
 
         self._fields = self._cfg.sections()
         
@@ -106,13 +106,13 @@ class FieldConfig(object):
             for o in self._cfg.options( s ):
                 #print("option : '%s'" % o )
                 if not o in self._tags :
-                    raise ValueError( "No such field type: %s in section: %s" % (o, s ))
+                    raise FieldConfigException( "No such field type: %s in section: %s" % (o, s ))
                 if ( o == "name" ):
                     if ( self._cfg.get( s, o ) == "_id" ) :
                         if self._idField == None :
                             self._idField = s
                         else:
-                            raise ValueError( self.duplicateIDMsg( self._idField, s ))
+                            raise FieldConfigException( self.duplicateIDMsg( self._idField, s ))
                     
                 fieldDict[ s ][ o ] = self._cfg.get( s, o )
                 

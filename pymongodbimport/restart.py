@@ -4,6 +4,11 @@ Created on 30 Jul 2017
 @author: jdrumgoole
 '''
 from datetime import datetime
+import socket
+import os
+
+from pymongodbimport.canonical_path import Canonical_Path
+
 class Restarter(object):
     '''
     Track insertion of a collection of docs by adding the last inserted
@@ -31,13 +36,14 @@ class Restarter(object):
         '''
         Constructor
         '''
-        self._restartlog = database[ "restartlog" ]
-        self._name = input_filename
-        self._batch_size = batch_size 
-        self._restartDoc = self._restartlog.find_one( { "name" : self._name })
+        self._audit = database[ "audit" ]
+        self._name = Canonical_Path( input_filename )
+        self._batch_size = batch_size
+        self._hostname =  socket.gethostname()
+        self._restartDoc = self._audit.find_one( { "name" : self._name() })
         
         if self._restartDoc is None :
-            self.reset()
+            self.start()
         
     @staticmethod
     def split_ID( doc_id ):
@@ -52,12 +58,22 @@ class Restarter(object):
         #        epoch 0        machine   1    process ID  2    counter 3
         return ( id_str[ 0:8 ],id_str[ 8:14],id_str[ 14:18], id_str[ 18:24]  )
     
+
+    def start(self ):
+        self._audit.insert_one( { "name"       : self._name(),
+                                  "timestamp"  : datetime.utcnow(),
+                                  "doc_id"     : None,
+                                  "count"      : 0,
+                                  "batch_size" : self._batch_size,
+                                  "state"      : "starting"})
+    
     def update(self, doc_id, count ):
         
-        self._restartlog.find_one_and_update( { "name"      : self._name },
-                                              { "$set"      : { "count" : count,
-                                                                "timestamp" : datetime.utcnow(),
-                                                                "doc_id"    : doc_id }})
+        self._audit.find_one_and_update( { "name"      : self._name() },
+                                         { "$set"      : { "count"     : count,
+                                                           "timestamp" : datetime.utcnow(),
+                                                           "doc_id"    : doc_id,
+                                                           "state"     : "inprogress"}})
         
     def restart(self, collection ):
         '''
@@ -67,7 +83,7 @@ class Restarter(object):
         '''
         
         
-        self._restartDoc = self._restartlog.find_one( { "name" : self._name })
+        self._restartDoc = self._audit.find_one( { "name" : self._name() })
         
         if self._restartDoc is None:
             return 0
@@ -90,12 +106,22 @@ class Restarter(object):
             
         return count
             
+    def finish(self, doc_id, count ):
+        
+        self._restartDoc = self._audit.find_one_and_update( 
+            { "name"      : self._name },
+            { "$set" : { "name"           : self._name(), 
+                       "timestamp"      : datetime.utcnow(),
+                       "batch_size"     : self._batch_size,
+                       "count"          : count,
+                       "doc_id"         : doc_id,
+                       "state"          : "completed" }} )
+        
     def reset(self ):
         
-        self._restartDoc = self._restartlog.find_one_and_update( { "name"      : self._name },
-                                                                 { "$set" : { "name"           : self._name, 
-                                                                              "timestamp"      : None,
+        self._restartDoc = self._audit.find_one_and_update( { "name"      : self._name() },
+                                                                 { "$set" : { "timestamp"      : datetime.utcnow(),
                                                                               "batch_size"     : self._batch_size,
                                                                               "count"          : 0,
-                                                                              "doc_id"         : 0 }},
-                                                                  upsert=True  )
+                                                                              "doc_id"         : 0,
+                                                                              "state"          : "inprogress" }} )

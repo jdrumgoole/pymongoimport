@@ -23,9 +23,9 @@ class FileProcessor( object ):
         
     def processOneFile( self, field_filename, input_filename, hasheader, restart ):
             
-        fieldConfig = FieldConfig( field_filename, self._delimiter, self._gen_id, self._onerror )
+        fieldConfig = FieldConfig( field_filename, self._delimiter, hasheader, self._gen_id, self._onerror )
     
-        bw = BulkWriter( self._collection, fieldConfig, hasheader, self._batchsize )
+        bw = BulkWriter( self._collection, fieldConfig, self._batchsize )
         totalWritten = bw.insert_file( input_filename, restart )
         return totalWritten 
     
@@ -53,7 +53,7 @@ class FileProcessor( object ):
                 lineCount = self.processOneFile( new_name, i, hasheader, restart )
                 totalCount = lineCount + totalCount
             except FieldConfigException, e :
-                print( "Field file error for %s : %s" % ( i, e ))
+                print( "FieldConfig error for %s : %s" % ( i, e ))
                 failures.append( i )
                 if self._onerror == "fail":
                     raise

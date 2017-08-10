@@ -5,19 +5,37 @@
 pymongodbimport is a python program that will import data into a mongodb
 database (default 'test' ) and a mongodb collection (default 'test' ).
  
-Why do we have pymongodbimport when MongoDB has a perfectly good (and much faster)
+Why do we have pymongodbimport? MongoDB already has a perfectly good (and much faster)
 [mongoimport](https://docs.mongodb.com/manual/reference/program/mongoimport/) program 
 that is available for free in the standard MongoDB [community download](https://www.mongodb.com/download-center#community).
 
 Well pymonogodbimport does a few things that mongoimport doesn't do (yet). For people
 with new CSV fields there is the [**--genfieldfile**](#genfieldfile) option which will automatically
 generate a typed field file for the specified input file. Even with a field file pymongodbimport
-will fall back to the string type if type conversion fails on any input column.
+will fall back to the string type if type conversion fails on any
+input column.
 
-Once you have generated a [field file](#fieldfile) you can pass it in on the command line
-by using the --fieldfile argument.
+Pymongodbimport also has the ability to restart an upload from the
+point where is finished. This restart capability is recorded in an
+```audit``` collection in the current database. And audit record is
+stored for each upload in progress and each completed upload. Thus the
+audit collection gives you a record of all uploads by filename and
+date time.
 
-<a name="fieldfile"></a>## Field Files
+
+If a fieldfile is not explicitly passed in the program will look for a
+fieldfile corresponding to the file name with the extension replaced
+by `.ff`. So for an input file `inventory.csv` the corresponding field
+file would be `inventory.ff`.
+
+If there is no corresponding field file the upload will fail.
+
+## Field Files <a name="fieldfile"></a>
+
+Each file you intend to upload must have a field file defining the
+contents of the CSV file you plan to upload.
+
+
 
 Field files (normally expected to have the extension `.ff`) define the names of columns and their
 types for the importer. A field file is formatted line a
@@ -44,15 +62,31 @@ type=str
 type=int
 ```
 
-
-
 Each file in the input list must correspond to a fieldfile format that is
 common across all the files. The fieldfile is specified by the  `--fieldfile` parameter.
 
+Once you have generated a [field file](#fieldfile) you can pass it in on the command line
+by using the `--fieldfile` argument.
+
+## Examples
+
+How to generate a field file
+
+```
+$pymongoimport --genfieldfile inventory.csv
+Creating 'inventory.ff' from 'inventory.csv'
+```
 An example run:
 
 ```
-   $python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
+   $pymongoimport --delimiter '|' --database demo --collection demo
+   --fieldfile mot_test_set_small.ff mot_test_set_small.csv
+   Using database: demo, collection: demo
+processing 1 files
+Processing : mot_test_set_small.csv
+using field file: 'mot_test_set_small.ff'
+Input: 'mot_test_set_small.csv' : Inserted 100 records
+Total elapsed time to upload 'mot_test_set_small.csv' : 0.047
 ```
 
 ## Arguments

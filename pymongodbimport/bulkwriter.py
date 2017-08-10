@@ -101,7 +101,7 @@ class BulkWriter(object):
                 if restarter :
                     restarter.update( results.inserted_ids[ -1 ], total_written )
                 insert_list = []
-                print( "Input: '%s' : Inserted last %i records" % ( filename, total_written ))
+                print( "Input: '%s' : Inserted %i records" % ( filename, total_written ))
                 
         finish = time.time()
         print( "Total elapsed time to upload '%s' : %.3f" %  ( filename,finish - start ))
