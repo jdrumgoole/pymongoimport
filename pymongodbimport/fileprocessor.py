@@ -4,9 +4,13 @@ Created on 24 Jul 2017
 @author: jdrumgoole
 '''
 
+import os
+import sys
+
 from pymongodbimport.fieldconfig import FieldConfigException, FieldConfig
 from pymongodbimport.bulkwriter import BulkWriter
-import os
+
+
 
 class InputFileException(Exception):
     def __init__(self, *args,**kwargs):

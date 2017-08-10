@@ -54,7 +54,7 @@ class BulkWriter(object):
         
         start = time.time()
         total_written = 0
-
+        results = None
         with open( filename, "rU") as f :
             
             timeStart = time.time() 
@@ -104,9 +104,9 @@ class BulkWriter(object):
                 print( "Input: '%s' : Inserted %i records" % ( filename, total_written ))
                 
         finish = time.time()
-        print( "Total elapsed time to upload '%s' : %.3f" %  ( filename,finish - start ))
         if restarter :
-            restarter.reset()
+            restarter.finish()
+        print( "Total elapsed time to upload '%s' : %.3f" %  ( filename,finish - start ))
         return total_written
     
     def bulkWrite(self, filename  ):

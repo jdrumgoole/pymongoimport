@@ -98,5 +98,5 @@ def mainline( args ):
     
 if __name__ == '__main__':
     
-    sys.argv.pop( 0 ) # remove script file name 
-    mainline( sys.argv )
+    
+    mainline( sys.argv[1:] )

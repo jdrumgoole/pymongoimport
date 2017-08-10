@@ -5,7 +5,7 @@ Created on 30 Jul 2017
 '''
 from datetime import datetime
 import socket
-import os
+import sys
 
 from pymongodbimport.canonical_path import Canonical_Path
 
@@ -32,7 +32,7 @@ class Restarter(object):
     '''
 
 
-    def __init__(self, database, input_filename, batch_size ):
+    def __init__(self, database, input_filename, batch_size, cmd=None ):
         '''
         Constructor
         '''
@@ -40,7 +40,13 @@ class Restarter(object):
         self._name = Canonical_Path( input_filename )
         self._batch_size = batch_size
         self._hostname =  socket.gethostname()
-        self._restartDoc = self._audit.find_one( { "name" : self._name() })
+        if cmd is None:
+            self._cmd = " ".join( sys.argv )
+        else:
+            self._cmd = cmd
+
+        self._restartDoc = self._audit.find_one( { "name" : self._name(),
+                                                   "state" : "inprogress" })
         
         if self._restartDoc is None :
             self.start()
@@ -61,18 +67,20 @@ class Restarter(object):
 
     def start(self ):
         self._audit.insert_one( { "name"       : self._name(),
-                                  "timestamp"  : datetime.utcnow(),
-                                  "doc_id"     : None,
+                                  "start"      : datetime.utcnow(),
+                                  "last_doc_id"     : None,
                                   "count"      : 0,
                                   "batch_size" : self._batch_size,
-                                  "state"      : "starting"})
+                                  "command"    : self._cmd,
+                                  "state"      : "inprogress"})
     
     def update(self, doc_id, count ):
         
-        self._audit.find_one_and_update( { "name"      : self._name() },
+        self._audit.find_one_and_update( { "name"      : self._name(),
+                                           "state"     : "inprogress" },
                                          { "$set"      : { "count"     : count,
-                                                           "timestamp" : datetime.utcnow(),
-                                                           "doc_id"    : doc_id,
+                                                           "end"       : datetime.utcnow(),
+                                                           "last_doc_id"    : doc_id,
                                                            "state"     : "inprogress"}})
         
     def restart(self, collection ):
@@ -82,16 +90,16 @@ class Restarter(object):
         Return the new doc count that we can skip too.
         '''
         
+        self._restartDoc = self._audit.find_one( { "name"  : self._name(),
+                                                   "state" : "inprogress" })
         
-        self._restartDoc = self._audit.find_one( { "name" : self._name() })
-        
-        if self._restartDoc is None:
+        if self._restartDoc is None: # skip nothing, nothing to restart
             return 0
         
         count = self._restartDoc[ "count"]
-        ( _, machine, pid, _ ) = Restarter.split_ID( self._restartDoc[ "doc_id"])
+        ( _, machine, pid, _ ) = Restarter.split_ID( self._restartDoc[ "last_doc_id"])
         
-        cursor = collection.find( { "_id" : { "$gt" : self._restartDoc[ "doc_id" ]}})
+        cursor = collection.find( { "_id" : { "$gt" : self._restartDoc[ "last_doc_id" ]}})
         
         for i in cursor:
             ( _, i_machine, i_pid, _ ) = Restarter.split_ID( i[ "_id"])
@@ -106,16 +114,13 @@ class Restarter(object):
             
         return count
             
-    def finish(self, doc_id, count ):
+    def finish(self ):
         
         self._restartDoc = self._audit.find_one_and_update( 
-            { "name"      : self._name },
-            { "$set" : { "name"           : self._name(), 
-                       "timestamp"      : datetime.utcnow(),
-                       "batch_size"     : self._batch_size,
-                       "count"          : count,
-                       "doc_id"         : doc_id,
-                       "state"          : "completed" }} )
+            { "name"      : self._name(),
+              "state"     : "inprogress" },
+            { "$set" : { "end"      : datetime.utcnow(),
+                         "state"          : "completed" }} )
         
     def reset(self ):
         
@@ -123,5 +128,5 @@ class Restarter(object):
                                                                  { "$set" : { "timestamp"      : datetime.utcnow(),
                                                                               "batch_size"     : self._batch_size,
                                                                               "count"          : 0,
-                                                                              "doc_id"         : 0,
+                                                                              "last_doc_id"         : 0,
                                                                               "state"          : "inprogress" }} )
