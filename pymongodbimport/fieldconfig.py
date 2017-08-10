@@ -8,6 +8,7 @@ from ConfigParser import RawConfigParser
 from datetime import datetime
 import os
 import csv
+import sys
 
 import textwrap
 from collections import OrderedDict
@@ -35,7 +36,7 @@ class FieldConfig(object):
     '''
 
 
-    def __init__(self, cfgFilename, delimiter=",", gen_id="mongodb", onerror="warn"):
+    def __init__(self, cfgFilename, delimiter=",", hasheader=True, gen_id="mongodb", onerror="warn"):
         '''
         Constructor
         '''
@@ -48,14 +49,18 @@ class FieldConfig(object):
         self._id = gen_id
         self._delimiter = delimiter
         self._record_count = 0
+        self._line_count = 0
         self._timestamp = None
         self._pid = os.getpid()
         self._onerror = onerror
+        self._hasheader = hasheader
         
         if cfgFilename :
             self._fieldDict = self.read( cfgFilename )
             
             
+    def hasheader(self):
+        return self._hasheader
     
     def add_timestamp(self, timestamp ):
         '''
@@ -82,10 +87,6 @@ class FieldConfig(object):
         """ )
         
         return msg % (firstSection, secondSection )
-        
-
-    def hasheader(self ):
-        return self._hasheader
     
     def delimiter(self):
         return self._delimiter
@@ -205,8 +206,16 @@ class FieldConfig(object):
         for k in self.fields() :
             #print( k )
             fieldCount = fieldCount + 1
+            
+            if dictEntry[ k ] is None:
+                if self._hasheader :
+                    self._line_count = self._record_count + 1
+                else:
+                    self._line_count = self._record_count
+                print( "value for field '%s' at line %i is None which is not valid" % ( k, self._line_count ))
+                sys.exit( 0 )
             if k.startswith( "blank-" ): #ignore blank- columns
-                #print( "Field %i is blank" % fieldCount )
+                print( "Field %i is blank [blank-] : ignorning" % fieldCount )
                 continue
             try:
                 typeField = self.typeData( k )

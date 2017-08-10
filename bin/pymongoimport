@@ -11,6 +11,7 @@ import sys
 
 from mongodb_utils.mongodb import MongoDB
 from pymongodbimport.fileprocessor import FileProcessor 
+from pymongodbimport.fieldconfig import FieldConfig
 
 def mainline( args ):
     
@@ -45,7 +46,7 @@ def mainline( args ):
     parser.add_argument( '--database', default="test", help='specify the database name [default: %(default)s]')
     parser.add_argument( '--collection', default="test", help='specify the collection name [default: %(default)s]')
     parser.add_argument( '--host', default="mongodb://localhost:27017/test", help='mongodb URI. see https://docs.mongodb.com/manual/reference/connection-string/ for details [default: %(default)s]')
-    parser.add_argument( '--chunksize', type=int, default=500, help='set chunk size for bulk inserts[default: %(default)s]' )
+    parser.add_argument( '--batchsize', type=int, default=500, help='set batch size for bulk inserts [default: %(default)s]' )
     parser.add_argument( '--restart', default=False, action="store_true", help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument( '--drop', default=False, action="store_true", help="drop collection before loading [default: %(default)s]" )
     parser.add_argument( '--ordered', default=False, action="store_true", help="forced ordered inserts" )
@@ -77,17 +78,23 @@ def mainline( args ):
             database.drop_collection( args.collection )
             print( "dropped collection: %s.%s" % ( args.database, args.collection ))
          
-    if args.filenames:   
+    if args.genfieldfile :
+        for i in args.filenames :
+            fc_filename = FieldConfig.generate_field_file( i, args.delimiter )
+            print( "Creating '%s' from '%s'" % (fc_filename, i ))
+        sys.exit( 0 )
+    elif args.filenames:   
         print(  "Using database: %s, collection: %s" % ( args.database, args.collection ))
         print( "processing %i files" % len( args.filenames ))
     
-        if args.chunksize < 1 :
-            print( "Chunksize must be 1 or more. Chunksize : %i" % args.chunksize )
+        if args.batchsize < 1 :
+            print( "Chunksize must be 1 or more. Chunksize : %i" % args.batchsize )
             sys.exit( 1 )
         
-        file_processor = FileProcessor( collection, args.delimiter, args.onerror, args.id, args.chunksize )
+        file_processor = FileProcessor( collection, args.delimiter, args.onerror, args.id, args.batchsize )
         file_processor.processFiles( args.filenames, args.hasheader, args.fieldfile, args.restart )
-            
+    else:
+        print( "No input files: Nothing to do") 
     
 if __name__ == '__main__':
     

@@ -14,7 +14,7 @@ class InputFileException(Exception):
         
 class FileProcessor( object ):
     
-    def __init__(self, collection, delimiter, onerror, gen_id, batchsize ):
+    def __init__(self, collection, delimiter, onerror="warn", gen_id="mongodb", batchsize=500):
         self._collection = collection
         self._delimiter = delimiter
         self._onerror = onerror
@@ -55,12 +55,12 @@ class FileProcessor( object ):
             except FieldConfigException, e :
                 print( "Field file error for %s : %s" % ( i, e ))
                 failures.append( i )
-                if self._.onerror == "fail":
+                if self._onerror == "fail":
                     raise
             except InputFileException, e :
                 print( "Input file error for %s : %s" % ( i, e ))
                 failures.append( i )
-                if self._.onerror == "fail":
+                if self._onerror == "fail":
                     raise
                 
         if len( results ) > 0 :

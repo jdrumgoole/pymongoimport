@@ -10,7 +10,7 @@ from pymongodbimport.restart import Restarter
 
 class BulkWriter(object):
      
-    def __init__(self, collection, fieldConfig, hasheader, batchsize=500, restart=False, orderedWrites=None ):
+    def __init__(self, collection, fieldConfig, batchsize=500, restart=False, orderedWrites=None ):
          
         self._collection = collection
         self._orderedWrites = orderedWrites
@@ -22,7 +22,7 @@ class BulkWriter(object):
         self._currentLine = 0
         self._restartFile = None
         self._fieldConfig = fieldConfig
-        if hasheader :
+        if fieldConfig.hasheader() :
             self._currentLine = self._currentLine + 1 
             
         self._restarter = None
@@ -63,23 +63,23 @@ class BulkWriter(object):
             insert_list = []
             restarter = None 
             
+            
             if restart :
                 restarter = Restarter( self._collection.database,  filename, self._batchsize )
                 skip_count = restarter.restart( self._collection  )
                 if skip_count > 0 :
                     print( "Restarting : skipping %i lines" % skip_count )
-                    self.skipLines(f, skip_count )
-                
-                
+                    self._currentLine = self._currentLine + skip_count
+                    
+            self.skipLines(f, self._currentLine ) # skips header if present
+                  
             reader = self._fieldConfig.get_dict_reader( f )
 
             for dictEntry in reader :
-                
+                total_read = total_read + 1 
                 if len( dictEntry ) == 1 :
                     print( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')" % self._fieldConfig.delimiter())
                     print( "input line : '%s'" % "".join( dictEntry.values()))
-
-                total_read = total_read + 1
 
                 d = self._fieldConfig.createDoc( dictEntry )
                 insert_list.append( d )
@@ -88,7 +88,6 @@ class BulkWriter(object):
                     total_written = total_written + len( results.inserted_ids )
                     if restarter :
                         restarter.update( results.inserted_ids[ -1], total_written )
-                    insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
                     insert_list = []
                     timeNow = time.time()
                     if timeNow > timeStart + 1  :
@@ -96,19 +95,13 @@ class BulkWriter(object):
                         insertedThisQuantum = 0
                         timeStart = timeNow
                         
-            if insertedThisQuantum > 0  :
-                print( "Input: '%s' : records written per second %i, records read: %i written: %i" % ( filename, insertedThisQuantum, total_read, total_written ))
-                insertedThisQuantum = 0
-             
-            if ( len( insert_list ) > 0  ) :
+            if len( insert_list ) > 0  :
                 results = self._collection.insert_many( insert_list )
                 total_written = total_written + len( results.inserted_ids )
                 if restarter :
                     restarter.update( results.inserted_ids[ -1 ], total_written )
                 insert_list = []
-
-                insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
-                print( "Input: '%s' : Inserted last %i records" % ( filename, self._totalWritten ))
+                print( "Input: '%s' : Inserted last %i records" % ( filename, total_written ))
                 
         finish = time.time()
         print( "Total elapsed time to upload '%s' : %.3f" %  ( filename,finish - start ))
@@ -121,9 +114,8 @@ class BulkWriter(object):
         Write the contents of the file to MongoDB potentially adding timestamps and file stamps
         
         self._totalRead = all the lines read from the file including headers.
-        self._totalWritten = all the lines written to MongoDB. Not we don't write the header line.
-        This becomes important during restarts because in a restart the restart count starts from the non-headerline
-        so we must skip the header and then start skipping lines.
+        self._totalWritten = all the lines written to MongoDB. We can't restart bulkWrites because
+        we don't know the id of the last object written.
         '''
         with open( filename, "rU") as f :
             
@@ -151,8 +143,6 @@ class BulkWriter(object):
                     result = bulker.execute()
                     bulkerCount = 0
                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                    if self._restart:
-                        self._restarter.update( self._totalWritten )
                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
                     if self._orderedWrites :
                         bulker = self._collection.initialize_ordered_bulk_op()
@@ -172,8 +162,6 @@ class BulkWriter(object):
             if ( bulkerCount > 0 ) :
                 result = bulker.execute()
                 self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                if self._restart:
-                    self.update_restart_log( self._totalWritten )
                 print( "Input: '%s' : Inserted last %i records" % ( filename, result[ 'nInserted'] ))
  
 
