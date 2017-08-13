@@ -88,6 +88,11 @@ Input: 'mot_test_set_small.csv' : Inserted 100 records
 Total elapsed time to upload 'mot_test_set_small.csv' : 0.047
 ```
 
+An example run where we want the upload to restart
+
+```
+```
+
 ## Arguments
 
 ### Positional arguments:

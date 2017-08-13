@@ -6,12 +6,13 @@ Created on 12 Aug 2017
 
 import argparse
 
-def pymongodb_arg_parser( parents=[]):
+def pymongodb_arg_parser( parents=None):
     '''
     Construct parser for pymongodbimport return it as a list suitable for passing to the parents
     argument of the next parser
     ''' 
-        
+    if parents is None:
+        parents = []  
     parser = argparse.ArgumentParser( parents=parents, add_help=False )
     parser.add_argument( '--database', default="test", help='specify the database name [default: %(default)s]')
     parser.add_argument( '--collection', default="test", help='specify the collection name [default: %(default)s]')
@@ -31,5 +32,6 @@ def pymongodb_arg_parser( parents=[]):
     parser.add_argument( '--id', default="mongodb", choices=[ "mongodb", "gen"], help="Autogenerate ID default [ %(default)s ]")
     parser.add_argument( '--onerror', default="warn", choices=[ 'fail', "warn" , "ignore"], help="What to do when we hit an error parsing a csv file [default: %(default)s]")
     
-    return [ parser ]
+    parents.append( parser )
+    return parents
     
