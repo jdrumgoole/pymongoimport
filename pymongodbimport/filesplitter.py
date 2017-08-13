@@ -1,15 +1,11 @@
 '''
-Created on 11 Aug 2017
+Created on 13 Aug 2017
 
 @author: jdrumgoole
 '''
-import argparse
-import sys
 import os
 
-from pymongodbimport.filesplitter import File_Splitter
-
-class File_Splitter_x( object ):
+class File_Splitter( object ):
     
     def __init__(self, filename, split_count, hasheader=False):
         
@@ -20,6 +16,7 @@ class File_Splitter_x( object ):
         self._header_line = ""
         self._output_files = []
         self._size = os.path.getsize( filename )
+        self._data_lines = 0
         
     @staticmethod 
     def split_filename( filename, ext ):
@@ -29,11 +26,22 @@ class File_Splitter_x( object ):
     def size(self):
         return self._size
     
+    @staticmethod
+    def count_lines( filename ):
+        count = 0
+        with open( filename, "rU")  as input_file :
+            for _ in input_file:
+                count = count + 1
+                
+        return count
     def no_header_size(self):
         return self._size - len( self._header_line )
     
     def output_files(self):
         return self._output_files
+    
+    def data_lines(self):
+        return self._data_lines
     
     def split_file( self, split_size = 0 ):
         
@@ -46,8 +54,9 @@ class File_Splitter_x( object ):
             
             #print( "Creating: '%s'"  % output_files[-1])
             while line != "" :
+                self._data_lines = self._data_lines + 1
                 if current_split_size == 0 :
-                    output_files.append( File_Splitter_x.split_filename( self._filename, len( output_files ) + 1 ))
+                    output_files.append( File_Splitter.split_filename( self._filename, len( output_files ) + 1 ))
                     output_file = open( output_files[ -1 ], "w" )
                     print( "Creating: '%s'"  % output_files[-1])
                     current_split_size = current_split_size + 1
@@ -59,12 +68,11 @@ class File_Splitter_x( object ):
                 else:
                     current_split_size = current_split_size + 1
                     output_file.write( line )
-
+                    
                 line = input_file.readline()
-             
         return output_files
             
-    def autosplit( self, splits ):
+    def autosplit( self ):
         
         line_sample = 10
         sample_size = 0
@@ -92,57 +100,7 @@ class File_Splitter_x( object ):
         print( "Average line size: %i"  % average_line_size )
         total_lines = file_size / average_line_size
         print( "total lines : %i"  % total_lines )
-        split_size = total_lines / splits
+        split_size = total_lines / self._split_count
         
-        print( "Splitting file into %i pieces of size %i" %  ( splits, split_size ))
+        print( "Splitting '%s' into at least %i pieces of size %i" %  ( self._filename, self._split_count + 1, split_size ))
         return self.split_file(  split_size ) 
-
-            
-from pymongodbimport.argparser import pymongodb_arg_parser
-if __name__ == '__main__':
-    
-    __VERSION__ = "0.1"
-    
-    usage_message = '''
-    
-    split a text file into seperate pieces. if you specify autosplit then the program
-    will use the first ten lines to calcuate an average line size and use that to determine
-    the rough number of splits.
-    
-    if you use --splitsize then the file will be split using --splitsize chunks until it is consumed
-    '''
-    
-    parser = argparse.ArgumentParser( usage=usage_message, version=__VERSION__ )
-    
-    parser.add_argument( "--autosplit", type=int, 
-                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
-    parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names [default: %(default)s]")
-    parser.add_argument( "--splitsize", type=int, help="Split file into chunks of this size")
-    parser.add_argument( "filenames", nargs="*", help='list of files')
-    args= parser.parse_args( sys.argv[1:])
-    
-    print( "Splitting file")
-    if len( args.filenames ) == 0 :
-        print( "No input file specified to split")
-    elif len( args.filenames) > 1 :
-        print( "More than one input file specified ( %s ) only splitting the first file:'%s'" % 
-               ( " ".join( args.filenames ), args.filenames[ 0 ] ))
-    
-    splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
-    if args.autosplit:
-        print( "Autosplitting: '%s" % args.filenames[ 0 ] )
-        files = splitter.autosplit()
-    else:
-        print( "Splitting '%s' using %i splitsize" % ( args.filenames[ 0 ], args.splitsize ))
-        files = splitter.split_file( args.splitsize )
-    #print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
-    count = 1
-    total_size = 0
-    for i in files:
-        size = os.path.getsize( i )
-        total_size = total_size + size
-        print ( "%i. %s : size: %i" % ( count, i, size ))
-        count = count + 1
-    
-    if total_size != splitter.no_header_size():
-        raise ValueError( "Filesize of original and pieces does not match")
