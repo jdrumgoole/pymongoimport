@@ -41,18 +41,23 @@ class File_Splitter( object ):
             if self._hasheader :
                 self._header_line = input_file.readline()
             line = input_file.readline()
-            output_files.append( File_Splitter.split_filename( self._filename, len( output_files) + 1 ))
-            output_file = open( output_files[ -1 ], "w" )
+            
             #print( "Creating: '%s'"  % output_files[-1])
             while line != "" :
-                output_file.write( line )
-                current_split_size = current_split_size + 1
-                if current_split_size == split_size :
-                    output_file.close()
-                    output_files.append( File_Splitter.split_filename( self._filename, len( output_files) + 1 ))
+                if current_split_size == 0 :
+                    output_files.append( File_Splitter.split_filename( self._filename, len( output_files ) + 1 ))
                     output_file = open( output_files[ -1 ], "w" )
-                    #print( "Creating: '%s'"  % output_files[-1])
+                    print( "Creating: '%s'"  % output_files[-1])
+                    output_file.write( line )
+                    current_split_size = current_split_size + 1
+                elif current_split_size == split_size :
+                    output_file.write( line )
                     current_split_size = 0
+                    output_file.close()
+                else:
+                    output_file.write( line )
+                    current_split_size = current_split_size + 1
+
                 line = input_file.readline()
              
         return output_files
@@ -98,10 +103,11 @@ if __name__ == '__main__':
     
     usage_message = '''
     
-    A master script to manage uploading of a single data file as multiple input files. Multi-import
-    will optionally split a single file (specified by the --single argument) or optionally upload an
-    already split list of files passed in on the command line.
-    Each file is uplaoded by a separate pymongoimport subprocess. 
+    split a text file into seperate pieces. if you specify autosplit then the program
+    will use the first ten lines to calcuate an average line size and use that to determine
+    the rough number of splits.
+    
+    if you use --splitsize then the file will be split using --splitsize chunks until it is consumed
     '''
     
     parser = argparse.ArgumentParser( usage=usage_message, version=__VERSION__ )
@@ -109,27 +115,32 @@ if __name__ == '__main__':
     parser.add_argument( "--autosplit", type=int, 
                          help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names [default: %(default)s]")
-
+    parser.add_argument( "--splitsize", type=int, help="Split file into chunks of this size")
+    parser.add_argument( "filenames", nargs="*", help='list of files')
     args= parser.parse_args( sys.argv[1:])
     
+    print( "Splitting file")
+    if len( args.filenames ) == 0 :
+        print( "No input file specified to split")
+    elif len( args.filenames) > 1 :
+        print( "More than one input file specified ( %s ) only splitting the first file:'%s'" % 
+               ( " ".join( args.filenames ), args.filenames[ 0 ] ))
+    
+    splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
     if args.autosplit:
-        print( "Autosplitting file")
-        if len( args.filenames ) == 0 :
-            print( "No input file specified to split")
-        elif len( args.filenames) > 1 :
-            print( "More than one input file specified ( %s ) only splitting the first file:'%s'" % 
-                   ( " ".join( args.filenames ), args.filenames[ 0 ] ))
-        
-        splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
+        print( "Autosplitting: '%s" % args.filenames[ 0 ] )
         files = splitter.autosplit( args.autosplit )
-        print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
-        count = 1
-        total_size = 0
-        for i in files:
-            size = os.path.getsize( i )
-            total_size = total_size + size
-            print ( "%i. %s : size: %i" % ( count, i, size ))
-            count = count + 1
-        
-        if total_size != splitter.no_header_size():
-            raise ValueError( "Filesize of original and pieces does not match")
+    else:
+        print( "Splitting '%s' using %i splitsize" % ( args.filenames[ 0 ], args.splitsize ))
+        files = splitter.split_file( args.splitsize )
+    print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
+    count = 1
+    total_size = 0
+    for i in files:
+        size = os.path.getsize( i )
+        total_size = total_size + size
+        print ( "%i. %s : size: %i" % ( count, i, size ))
+        count = count + 1
+    
+    if total_size != splitter.no_header_size():
+        raise ValueError( "Filesize of original and pieces does not match")
