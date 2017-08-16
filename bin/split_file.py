@@ -9,96 +9,95 @@ import os
 
 from pymongodbimport.filesplitter import File_Splitter
 
-class File_Splitter_x( object ):
-    
-    def __init__(self, filename, split_count, hasheader=False):
-        
-        self._filename = filename
-        self._split_count = split_count
-        self._hasheader = hasheader
-        
-        self._header_line = ""
-        self._output_files = []
-        self._size = os.path.getsize( filename )
-        
-    @staticmethod 
-    def split_filename( filename, ext ):
-        basename = os.path.basename( filename )
-        return "%s.%i" % ( basename, ext )
+# class File_Splitter_x( object ):
+#     
+#     def __init__(self, filename, split_count, hasheader=False):
+#         
+#         self._filename = filename
+#         self._split_count = split_count
+#         self._hasheader = hasheader
+#         
+#         self._header_line = ""
+#         self._output_files = []
+#         self._size = os.path.getsize( filename )
+#         
+#     @staticmethod 
+#     def split_filename( filename, ext ):
+#         basename = os.path.basename( filename )
+#         return "%s.%i" % ( basename, ext )
+# 
+#     def size(self):
+#         return self._size
+#     
+#     def no_header_size(self):
+#         return self._size - len( self._header_line )
+#     
+#     def output_files(self):
+#         return self._output_files
+#     
+#     def split_file( self, split_size = 0 ):
+#         
+#         current_split_size = 0
+#         output_files = []
+#         with open( self._filename, "rU") as input_file:
+#             if self._hasheader :
+#                 self._header_line = input_file.readline()
+#             line = input_file.readline()
+#             
+#             #print( "Creating: '%s'"  % output_files[-1])
+#             while line != "" :
+#                 if current_split_size == 0 :
+#                     output_files.append( File_Splitter_x.split_filename( self._filename, len( output_files ) + 1 ))
+#                     output_file = open( output_files[ -1 ], "w" )
+#                     print( "Creating: '%s'"  % output_files[-1])
+#                     current_split_size = current_split_size + 1
+#                     output_file.write( line )
+#                 elif current_split_size == split_size :
+#                     current_split_size = 0
+#                     output_file.write( line )
+#                     output_file.close()
+#                 else:
+#                     current_split_size = current_split_size + 1
+#                     output_file.write( line )
+# 
+#                 line = input_file.readline()
+#              
+#         return output_files
+#             
+#     def autosplit( self, splits ):
+#         
+#         line_sample = 10
+#         sample_size = 0
+#         count = 0
+#         average_line_size = 0
+#         
+#         with open( self._filename, "rU") as f:
+#             if self._hasheader:
+#                 self._header_line = f.readline()
+#                 
+#             line = f.readline()
+#             while line and count < 10 :
+#                 sample_size = sample_size + len( line )
+#                 count = count + 1
+#                 line = f.readline()
+#                 
+#             average_line_size = sample_size / line_sample
+#             
+#         file_size = self._size
+#     
+#         if self._hasheader:
+#             file_size = file_size - len( self._header_line )
+#             
+#         print( "file size: %i"  % file_size )
+#         print( "Average line size: %i"  % average_line_size )
+#         total_lines = file_size / average_line_size
+#         print( "total lines : %i"  % total_lines )
+#         split_size = total_lines / splits
+#         
+#         print( "Splitting file into %i pieces of size %i" %  ( splits, split_size ))
+#         return self.split_file(  split_size ) 
 
-    def size(self):
-        return self._size
-    
-    def no_header_size(self):
-        return self._size - len( self._header_line )
-    
-    def output_files(self):
-        return self._output_files
-    
-    def split_file( self, split_size = 0 ):
-        
-        current_split_size = 0
-        output_files = []
-        with open( self._filename, "rU") as input_file:
-            if self._hasheader :
-                self._header_line = input_file.readline()
-            line = input_file.readline()
-            
-            #print( "Creating: '%s'"  % output_files[-1])
-            while line != "" :
-                if current_split_size == 0 :
-                    output_files.append( File_Splitter_x.split_filename( self._filename, len( output_files ) + 1 ))
-                    output_file = open( output_files[ -1 ], "w" )
-                    print( "Creating: '%s'"  % output_files[-1])
-                    current_split_size = current_split_size + 1
-                    output_file.write( line )
-                elif current_split_size == split_size :
-                    current_split_size = 0
-                    output_file.write( line )
-                    output_file.close()
-                else:
-                    current_split_size = current_split_size + 1
-                    output_file.write( line )
 
-                line = input_file.readline()
-             
-        return output_files
-            
-    def autosplit( self, splits ):
-        
-        line_sample = 10
-        sample_size = 0
-        count = 0
-        average_line_size = 0
-        
-        with open( self._filename, "rU") as f:
-            if self._hasheader:
-                self._header_line = f.readline()
-                
-            line = f.readline()
-            while line and count < 10 :
-                sample_size = sample_size + len( line )
-                count = count + 1
-                line = f.readline()
-                
-            average_line_size = sample_size / line_sample
-            
-        file_size = self._size
-    
-        if self._hasheader:
-            file_size = file_size - len( self._header_line )
-            
-        print( "file size: %i"  % file_size )
-        print( "Average line size: %i"  % average_line_size )
-        total_lines = file_size / average_line_size
-        print( "total lines : %i"  % total_lines )
-        split_size = total_lines / splits
-        
-        print( "Splitting file into %i pieces of size %i" %  ( splits, split_size ))
-        return self.split_file(  split_size ) 
-
-            
-from pymongodbimport.argparser import pymongodb_arg_parser
 if __name__ == '__main__':
     
     __VERSION__ = "0.1"
@@ -145,4 +144,4 @@ if __name__ == '__main__':
         count = count + 1
     
     if total_size != splitter.no_header_size():
-        raise ValueError( "Filesize of original and pieces does not match")
+        raise ValueError( "Filesize of original and pieces does not match: total_size: %i, no header split_size: %i" % ( total_size, splitter.no_header_size()))

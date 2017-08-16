@@ -5,91 +5,31 @@ Created on 11 Aug 2017
 '''
 import argparse
 import sys
-import os
+from multiprocessing import Process
+from collections import OrderedDict
+import time
 
-class File_Splitter( object ):
-    
-    def __init__(self, filename, split_count, hasheader=False):
-        
-        self._filename = filename
-        self._split_count = split_count
-        self._hasheader = hasheader
-        
-        self._header_line = ""
-        self._output_files = []
-        self._size = os.path.getsize( filename )
-        
-    @staticmethod 
-    def split_filename( filename, ext ):
-        basename = os.path.basename( filename )
-        return "%s.%i" % ( basename, ext )
+from pymongodbimport.filesplitter import File_Splitter
+from pymongodbimport.main import mainline
 
-    def size(self):
-        return self._size
-    
-    def no_header_size(self):
-        return self._size - len( self._header_line )
-    
-    def output_files(self):
-        return self._output_files
-    
-    def split_file( self, split_size = 0 ):
+def main_line( *a ):
+    print( " ".join( a ))
+    mainline( a )
+  
+
+def strip_arg( args, remove_arg, has_trailing=False ):
+    try :
+        location = args.index( remove_arg )
+        if has_trailing:
+            del args[ location + 1 ]
+        del args[ location]
         
-        current_split_size = 0
-        output_files = []
-        with open( self._filename, "rU") as input_file:
-            if self._hasheader :
-                self._header_line = input_file.readline()
-            line = input_file.readline()
-            output_files.append( File_Splitter.split_filename( self._filename, len( output_files) + 1 ))
-            output_file = open( output_files[ -1 ], "w" )
-            #print( "Creating: '%s'"  % output_files[-1])
-            while line != "" :
-                output_file.write( line )
-                current_split_size = current_split_size + 1
-                if current_split_size == split_size :
-                    output_file.close()
-                    output_files.append( File_Splitter.split_filename( self._filename, len( output_files) + 1 ))
-                    output_file = open( output_files[ -1 ], "w" )
-                    #print( "Creating: '%s'"  % output_files[-1])
-                    current_split_size = 0
-                line = input_file.readline()
+    except ValueError :
+        pass
+    
+    return args
+            
              
-        return output_files
-            
-    def autosplit( self, splits ):
-        
-        line_sample = 10
-        sample_size = 0
-        count = 0
-        average_line_size = 0
-        
-        with open( self._filename, "rU") as f:
-            if self._hasheader:
-                self._header_line = f.readline()
-                
-            line = f.readline()
-            while line and count < 10 :
-                sample_size = sample_size + len( line )
-                count = count + 1
-                line = f.readline()
-                
-            average_line_size = sample_size / line_sample
-            
-        file_size = self._size
-    
-        if self._hasheader:
-            file_size = file_size - len( self._header_line )
-            
-        print( "file size: %i"  % file_size )
-        print( "Average line size: %i"  % average_line_size )
-        total_lines = file_size / average_line_size
-        print( "total lines : %i"  % total_lines )
-        split_size = total_lines / splits
-        
-        print( "Splitting file into %i pieces of size %i" %  ( splits, split_size ))
-        return self.split_file(  split_size ) 
-
             
 from pymongodbimport.argparser import pymongodb_arg_parser
 if __name__ == '__main__':
@@ -105,12 +45,13 @@ if __name__ == '__main__':
     '''
     
     parser = argparse.ArgumentParser( parents=pymongodb_arg_parser(),usage=usage_message, version=__VERSION__ )
-    
     parser.add_argument( "--autosplit", type=int, 
                          help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
-    
+    parser.add_argument( "--splitsize", type=int, help="Split file into chunks of this size")   
     args= parser.parse_args( sys.argv[1:])
     
+    new_args = sys.argv[1:]
+    children = OrderedDict()
     if args.autosplit:
         print( "Autosplitting file")
         if len( args.filenames ) == 0 :
@@ -118,17 +59,40 @@ if __name__ == '__main__':
         elif len( args.filenames) > 1 :
             print( "More than one input file specified ( %s ) only splitting the first file:'%s'" % 
                    ( " ".join( args.filenames ), args.filenames[ 0 ] ))
+        new_args = strip_arg( new_args, "--autosplit", True)
+    else:
+        new_args = strip_arg( new_args, "--splitsize", True )
         
-        splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
-        files = splitter.autosplit( args.autosplit )
-        print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
-        count = 1
-        total_size = 0
-        for i in files:
-            size = os.path.getsize( i )
-            total_size = total_size + size
-            print ( "%i. %s : size: %i" % ( count, i, size ))
-            count = count + 1
+    for i in args.filenames:
+        new_args = strip_arg( new_args,  i )
         
-        if total_size != splitter.no_header_size():
-            raise ValueError( "Filesize of original and pieces does not match")
+    splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
+    process_count = 0
+    
+    stripped_args = []
+    if args.autosplit:
+        generator = splitter.autosplit()
+        
+        
+    else:
+        generator = splitter.split_file( args.splitsize )
+        
+    start = time.time()
+    
+    for filename in generator:
+        print( "Processing '%s'" % filename )
+        process_count = process_count + 1
+        proc_name = "%s.%i" % ( "main_line", process_count )
+        new_args.append( filename )
+        proc = Process( target=main_line, name=proc_name, args=new_args )
+        children[ proc_name ] = proc
+        print( "starting sub process: %s" % proc_name )
+        proc.start()
+        
+    for i in children.keys():
+        print( "Waiting for process: '%s' to complete" % i )
+        children[ i ].join()
+        
+    finish = time.time()
+    
+    print( "Total elapsed time:%f" % ( finish - start ))
