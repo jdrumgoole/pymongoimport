@@ -28,8 +28,8 @@ class Test(unittest.TestCase):
         self._db.drop_collection( "FC_TEST")
 
 
-    def test_FieldConfig(self, filename = "test_fieldconfig.ff"):
-        fc = FieldConfig( filename )
+    def test_FieldConfig(self ):
+        fc = FieldConfig( "test_fieldconfig.ff" )
         
         self.assertEqual( len( fc.fields()), 4 )
         
