@@ -5,11 +5,11 @@ Created on 24 Jul 2017
 '''
 
 import os
-import sys
+import logging
 
 from pymongodbimport.fieldconfig import FieldConfigException, FieldConfig
 from pymongodbimport.bulkwriter import BulkWriter
-
+from pymongodbimport.logger import Logger
 
 
 class InputFileException(Exception):
@@ -19,6 +19,7 @@ class InputFileException(Exception):
 class FileProcessor( object ):
     
     def __init__(self, collection, delimiter, onerror="warn", gen_id="mongodb", batchsize=500):
+        self._logger = logging.getLogger( Logger.LOGGER_NAME  )
         self._collection = collection
         self._delimiter = delimiter
         self._onerror = onerror
@@ -44,30 +45,30 @@ class FileProcessor( object ):
         for i in filenames :
             
             try:
-                print ("Processing : %s" % i )
+                self._logger.info("Processing : %s", i )
                 if field_filename :
                     new_name = field_filename
-                    print( "using field file: '%s'" % field_filename )
+                    self._logger.info( "using field file: '%s'", field_filename )
                 elif hasheader :
                     new_name = FieldConfig.generate_field_file( i )
-                    print( "Created field file: '%s'" % field_filename )
+                    self._logger.info( "Created field file: '%s'", field_filename )
                 else:
                     new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff" 
                    
                 lineCount = self.processOneFile( new_name, i, hasheader, restart )
                 totalCount = lineCount + totalCount
             except FieldConfigException, e :
-                print( "FieldConfig error for %s : %s" % ( i, e ))
+                self._logger.info( "FieldConfig error for %s : %s", i, e )
                 failures.append( i )
                 if self._onerror == "fail":
                     raise
             except InputFileException, e :
-                print( "Input file error for %s : %s" % ( i, e ))
+                self._logger.info( "Input file error for %s : %s", i, e )
                 failures.append( i )
                 if self._onerror == "fail":
                     raise
                 
         if len( results ) > 0 :
-            print( "Processed  : %i files" % len( results ))
+            self._logger.info( "Processed  : %i files", len( results ))
         if len( failures ) > 0 :
-            print( "Failed to process : %s" % failures )
+            self._logger.info( "Failed to process : %s", failures )

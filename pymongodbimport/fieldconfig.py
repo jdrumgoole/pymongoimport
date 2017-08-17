@@ -9,6 +9,8 @@ from datetime import datetime
 import os
 import csv
 import sys
+import logging
+from pymongodbimport.logger import Logger
 
 import textwrap
 from collections import OrderedDict
@@ -39,6 +41,7 @@ class FieldConfig(object):
         '''
         Constructor
         '''
+        self._logger = logging.getLogger( Logger.LOGGER_NAME  )
         self._idField = None # section on which name == _id
         self._tags = [ "name", "type", "format" ]
         self._cfg = RawConfigParser()
@@ -156,7 +159,7 @@ class FieldConfig(object):
 #             print( field )
             
     @staticmethod
-    def typeConvert( s ):
+    def guess_type( s ):
         '''
         Try and convert a string s to an object. Start with float, then try int
         and if that doesn't work return the string.
@@ -183,6 +186,28 @@ class FieldConfig(object):
         
     def doc_template(self):
         return self._doc_template
+    
+    def type_convert(self, k, v ):
+        t = self.typeData( k )
+        v = v.strip()
+        if t == "int" : #Ints can be floats
+            try :
+                v = int( v)
+            except ValueError :
+                v = float( v )
+        elif t == "float" :
+            v = float( v )
+        elif t == "str" :
+            v = str( v )
+        elif t == "date":
+            if v == "NULL" :
+                v = 'NULL'
+            else:
+                v = datetime.strptime( v, self.formatData( k ) )
+        else:
+            raise ValueError( "Cannot convert  field %s (value: %s) to type %s" % ( k, v, t ))
+        
+        return ( t, v )
     
     def createDoc( self, dictEntry  ):
         
@@ -212,40 +237,45 @@ class FieldConfig(object):
                     self._line_count = self._record_count + 1
                 else:
                     self._line_count = self._record_count
-                print( "value for field '%s' at line %i is None which is not valid" % ( k, self._line_count ))
-                sys.exit( 0 )
+                #self._logger.warn( "value for field '%s' at line %i is None which is not valid", k, self._line_count )
+                raise ValueError( "value for field '%s' at line %i is None which is not valid (wrong delimiter?)" % (k, self._line_count))
             if k.startswith( "blank-" ): #ignore blank- columns
-                print( "Field %i is blank [blank-] : ignorning" % fieldCount )
+                self._logger.warn( "Field %i is blank [blank-] : ignoring", fieldCount )
                 continue
+            
             try:
-                typeField = self.typeData( k )
-                try: 
-             
-                    if typeField == "int" : #Ints can be floats
-                        try :
-                            v = int( dictEntry[ k ])
-                        except ValueError :
-                            v = float( dictEntry[ k ])
-                    elif typeField == "float" :
-                        v = float( dictEntry[ k ])
-                    elif typeField == "str" :
-                        v = str( dictEntry[ k ])
-                    elif typeField == "date":
-                        if dictEntry[ k ] == "NULL" :
-                            v = 'NULL'
-                        else:
-                            v = datetime.strptime( dictEntry[ k ], self.formatData( k ) )
+                try :
+                    ( type_field, v ) = self.type_convert( k, dictEntry[ k ])
+#                 typeField = self.typeData( k )
+#                 try: 
+#              
+#                     if typeField == "int" : #Ints can be floats
+#                         try :
+#                             v = int( dictEntry[ k ])
+#                         except ValueError :
+#                             v = float( dictEntry[ k ])
+#                     elif typeField == "float" :
+#                         v = float( dictEntry[ k ])
+#                     elif typeField == "str" :
+#                         v = str( dictEntry[ k ])
+#                     elif typeField == "date":
+#                         if dictEntry[ k ] == "NULL" :
+#                             v = 'NULL'
+#                         else:
+#                             v = datetime.strptime( dictEntry[ k ], self.formatData( k ) )
                 except ValueError:
                     #print( "Error on line %i at field '%s'" % ( self._record_count, k ))
                     #print("type conversion error: Cannot convert %s to type %s" % (dictEntry[ k ], typeField))
                     #print( "Using string type instead")
                     
                     if self._onerror == "fail" :
+                        self._logger.error( "Error at line %i at field '%s'", self._record_count, k )
+                        self._logger.error("type conversion error: Cannot convert '%s' to type %s", dictEntry[ k ], type_field )
                         raise
                     elif self._onerror == "warn" :
-                        print( "Error at line %i at field '%s'" % ( self._record_count, k ))
-                        print("type conversion error: Cannot convert '%s' to type %s" % (dictEntry[ k ], typeField))
-                        print( "Using string type instead" )
+                        self._logger.warn( "Parse failure at line %i at field '%s'", self._record_count, k )
+                        self._logger.warn( "type conversion error: Cannot convert '%s' to type %s", dictEntry[ k ], type_field )
+                        self._logger.warn( "Using string type instead" )
                         v = str( dictEntry[ k ])
                     else:
                         v = str( dictEntry[ k ])
@@ -256,9 +286,9 @@ class FieldConfig(object):
                     doc[ k ] = v
                         
             except ValueError :
-                print( "Value error parsing field : [%s]" % k )
-                print( "read value is: '%s'" % dictEntry[ k ] )
-                print( "line: %i, '%s'" %  ( self._record_count, dictEntry ))
+                self._logger.error( "Value error parsing field : [%s]" , k )
+                self._logger.error( "read value is: '%s'", dictEntry[ k ] )
+                self._logger.error( "line: %i, '%s'", self._record_count, dictEntry )
                 #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
                 raise   
     
@@ -297,7 +327,7 @@ class FieldConfig(object):
                 #print( i )
                 i = i.replace( '$', '_') # not valid keys for mongodb
                 i = i.replace( '.', '_') # not valid keys for mongodb
-                ( _, t ) = FieldConfig.typeConvert( value_line[ fieldCount ] )
+                ( _, t ) = FieldConfig.guess_type( value_line[ fieldCount ] )
                 fieldCount = fieldCount + 1
                 genfile.write( "[%s]\n" % i )
                 genfile.write( "type=%s\n" % t )

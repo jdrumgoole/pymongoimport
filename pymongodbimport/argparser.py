@@ -31,7 +31,9 @@ def pymongodb_arg_parser( parents=None):
     parser.add_argument( '--genfieldfile', default=False, action="store_true", help="Generate a fieldfile from the data file, we set hasheader to true [default: %(default)s]")
     parser.add_argument( '--id', default="mongodb", choices=[ "mongodb", "gen"], help="Autogenerate ID default [ %(default)s ]")
     parser.add_argument( '--onerror', default="warn", choices=[ 'fail', "warn" , "ignore"], help="What to do when we hit an error parsing a csv file [default: %(default)s]")
-    
+    #parser.add_argument(  '--logname', default="pymongodbimport", help="Logfile to write output to [default: %(default)s]")
+    parser.add_argument( '--loglevel', default="INFO", choices=[ "CRITICAL", "ERROR", "WARNING", "INFO",  "DEBUG" ], help='Logging level [default: %(default)s]')
+   
     parents.append( parser )
     return parents
     

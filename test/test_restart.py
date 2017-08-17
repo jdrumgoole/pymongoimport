@@ -21,10 +21,10 @@ class Test(unittest.TestCase):
 
 
     def test_Restart(self):
-        chunk_size = 500
-        r = Restarter( self._db, input_filename="10k.txt",  batch_size=chunk_size )
+        batch_size = 500
+        r = Restarter( self._db, input_filename="10k.txt",  batch_size=batch_size )
         fc = FieldConfig( "10k.ff" )
-        bw = BulkWriter( self._collection, fc, hasheader=False, chunksize = chunk_size )
+        bw = BulkWriter( self._collection, fc, batch_size = batch_size )
         bw.bulkWrite( "100k.txt")
         bw.insert_file( "100k.txt", r )
 if __name__ == "__main__":

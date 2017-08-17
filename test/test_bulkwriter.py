@@ -12,7 +12,7 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         client = pymongo.MongoClient()
-        self._db = self._client[ "test"]
+        self._db = client[ "test"]
         self._collection = self._db[ 'test']
 
 

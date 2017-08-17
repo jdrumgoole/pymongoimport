@@ -8,17 +8,23 @@ Need tests for skip larger than file size.
 '''
 import argparse
 import sys
+import logging
 
 from mongodb_utils.mongodb import MongoDB
 from pymongodbimport.fileprocessor import FileProcessor 
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.argparser import pymongodb_arg_parser
+from pymongodbimport.logger import Logger
 
 def mainline_argsparsed( args ):
     '''
     Expects the output of parse_args.
     '''
     
+    log = logging.getLogger( Logger.LOGGER_NAME )
+    Logger.add_file_handler( Logger.LOGGER_NAME )
+    
+    log.info( "Started pymongodbimport")
     client = MongoDB( args.host).client()
     database = client[ args.database ]
     collection = database[ args.collection ]
@@ -29,30 +35,30 @@ def mainline_argsparsed( args ):
         
     if args.drop :
         if args.restart :
-            print( "Warning --restart overrides --drop ignoring drop commmand")
+            log.info( "Warning --restart overrides --drop ignoring drop commmand")
         else:
             database.drop_collection( args.collection )
-            print( "dropped collection: %s.%s" % ( args.database, args.collection ))
+            log.info( "dropped collection: %s.%s", args.database, args.collection )
          
     if args.genfieldfile :
         for i in args.filenames :
             fc_filename = FieldConfig.generate_field_file( i, args.delimiter )
-            print( "Creating '%s' from '%s'" % (fc_filename, i ))
+            log.info( "Creating '%s' from '%s'", fc_filename, i )
         sys.exit( 0 )
     elif args.filenames:   
-        print(  "Using database: %s, collection: %s" % ( args.database, args.collection ))
-        print( "processing %i files" % len( args.filenames ))
+        log.info(  "Using database: %s, collection: %s", args.database, args.collection )
+        log.info( "processing %i files", len( args.filenames ))
     
         if args.batchsize < 1 :
-            print( "Chunksize must be 1 or more. Chunksize : %i" % args.batchsize )
+            log.warn( "Chunksize must be 1 or more. Chunksize : %i", args.batchsize )
             sys.exit( 1 )
         try :
             file_processor = FileProcessor( collection, args.delimiter, args.onerror, args.id, args.batchsize )
             file_processor.processFiles( args.filenames, args.hasheader, args.fieldfile, args.restart )
         except KeyboardInterrupt :
-            print( "exiting due to keyboard interrupt...")
+            log.warn( "exiting due to keyboard interrupt...")
     else:
-        print( "No input files: Nothing to do") 
+        log.info( "No input files: Nothing to do") 
 
 def mainline( args ):
     
