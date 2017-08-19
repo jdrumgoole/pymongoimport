@@ -57,9 +57,9 @@ the section defined by `key=value` pairs.
 for a csv file defined by the following format,
 
 ```
-Inventory Item, Amount, Last Order
-Screws,             300,       1-Jan-2016
-Bolts,                150,       3-Feb-2017
+Inventory Item, Amount,   Last Order
+Screws,                   300,    1-Jan-2016
+Bolts,                      150,    3-Feb-2017
 Nails,                  25,       31-Dec-2017
 Nuts,                   75,       29-Feb-2016
 ```
