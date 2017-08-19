@@ -26,7 +26,12 @@ class FileProcessor( object ):
         self._gen_id = gen_id
         self._batchsize = batchsize 
         
-    def processOneFile( self, field_filename, input_filename, hasheader, restart ):
+    def processOneFile( self, input_filename, field_filename, hasheader, restart ):
+            
+        if field_filename :
+            self._logger.info( "using field file: '%s'", field_filename )
+        else:
+            field_filename = os.path.splitext(os.path.basename( input_filename ))[0] + ".ff" 
             
         fieldConfig = FieldConfig( field_filename, self._delimiter, hasheader, self._gen_id, self._onerror )
     
@@ -46,16 +51,12 @@ class FileProcessor( object ):
             
             try:
                 self._logger.info("Processing : %s", i )
-                if field_filename :
-                    new_name = field_filename
-                    self._logger.info( "using field file: '%s'", field_filename )
-                elif hasheader :
-                    new_name = FieldConfig.generate_field_file( i )
-                    self._logger.info( "Created field file: '%s'", field_filename )
-                else:
-                    new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff" 
-                   
-                lineCount = self.processOneFile( new_name, i, hasheader, restart )
+#                 if field_filename :
+#                     new_name = field_filename
+#                     self._logger.info( "using field file: '%s'", new_name )
+#                 else:
+#                     new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff" 
+                lineCount = self.processOneFile( i, field_filename, hasheader, restart )
                 totalCount = lineCount + totalCount
             except FieldConfigException, e :
                 self._logger.info( "FieldConfig error for %s : %s", i, e )

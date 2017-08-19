@@ -21,15 +21,17 @@ def mainline_argsparsed( args ):
     Expects the output of parse_args.
     '''
     
-    log = logging.getLogger( Logger.LOGGER_NAME )
+    log = Logger( Logger.LOGGER_NAME, args.loglevel ).log()
     Logger.add_file_handler( Logger.LOGGER_NAME )
+    Logger.add_stream_handler( Logger.LOGGER_NAME )
+    
+    
     
     log.info( "Started pymongodbimport")
     client = MongoDB( args.host).client()
     database = client[ args.database ]
     collection = database[ args.collection ]
-        
-        
+                
     if args.genfieldfile :
         args.hasheader = True
         
@@ -47,7 +49,7 @@ def mainline_argsparsed( args ):
         sys.exit( 0 )
     elif args.filenames:   
         log.info(  "Using database: %s, collection: %s", args.database, args.collection )
-        log.info( "processing %i files", len( args.filenames ))
+        #log.info( "processing %i files", len( args.filenames ))
     
         if args.batchsize < 1 :
             log.warn( "Chunksize must be 1 or more. Chunksize : %i", args.batchsize )

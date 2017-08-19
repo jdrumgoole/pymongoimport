@@ -8,7 +8,7 @@ import os
 
 import pymongo
 
-from pymongodbimport.fieldconfig import FieldConfig
+from pymongodbimport.fieldconfig import FieldConfig, FieldConfigException
 from pymongodbimport.bulkwriter import BulkWriter
 from pymongodbimport.logger import Logger
 from pymongodbimport.filesplitter import File_Splitter
@@ -99,13 +99,6 @@ class Test(unittest.TestCase):
                 for c in cursor:
                     del c[ "_id" ]
                     self.assertEqual(  c, row )
-                        
-                #print( row )
-#             for row in reader:
-#                 cursor = self._col.find( "")
-#                     for k,v in i :
-#                         self.assertTrue( k in row )
-                #self.assertTrue( i[ k ] == v )
                     
             
     def test_date(self):
@@ -130,7 +123,23 @@ class Test(unittest.TestCase):
                 for c in cursor:
                     del c[ "_id" ]
                     self.assertEqual(  c, row )
+        
+    def test_field_config_exception(self):
 
+        #f.open( "duplicateID.ff" )
+        self.assertRaises( FieldConfigException, FieldConfig, "nosuchfile.ff" )
+        #print( "fields: %s" % f.fields())
+
+    def testFieldDict(self):
+        f = FieldConfig( "testresults.ff", delimiter="|")
+        d = f.fieldDict()
+        self.assertTrue( d.has_key("TestID"))
+        self.assertTrue( d.has_key("FirstUseDate"))
+        self.assertTrue( d.has_key( "Colour"))
+        self.assertTrue( d["TestID"]["type"] == "int")
+        
+    def test_duplicate_id(self):
+        self.assertRaises( FieldConfigException,FieldConfig, "duplicate_id.ff" )
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_FieldConfig']

@@ -8,12 +8,12 @@ import logging
 
 class Logger(object):
     
-    LOGGER_NAME="pymongodbimport"
+    LOGGER_NAME="root.pymongodbimport"
     
     '''
     Logging class that encapsulates logging interface
     '''
-    format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format_string = "%(asctime)s: %(filename)s:%(funcName)s:%(lineno)s: %(levelname)s: %(message)s"
     
     
     def __init__(self, logger_name, log_level = None):
@@ -21,14 +21,14 @@ class Logger(object):
         self._logger_name = logger_name
         self._log_filename = None
         self._logger = logging.getLogger( logger_name )
-        self._log_level = Logger.LoggingLevel( log_level )
         if log_level :
             self._logger.setLevel( log_level )
         else:
-            self._logger.setLevel( logging.INFO )
+            self._logger.setLevel( logging.INFO)
             
-        self._logger.addHandler(logging.NullHandler())
-        self._null_hander = False
+        self.add_null_hander()
+        self._null_hander = True
+        
     @staticmethod
     def formatter():
         return logging.Formatter( Logger.format_string )
@@ -42,14 +42,17 @@ class Logger(object):
         return logger
     
     @staticmethod
-    def add_stream_handler( name, log_level = None ):
+    def add_stream_handler( name=None, log_level = None ):
         sh = logging.StreamHandler()
         sh.setFormatter( Logger.formatter())
         if log_level :
             sh.setLevel( log_level )
         else:
             sh.setLevel( logging.INFO )
-        logger = logging.getLogger( name)
+        
+        if name is None:
+            name = Logger.LOGGER_NAME
+        logger = logging.getLogger( name )
         logger.addHandler( sh )
         return logger
         
