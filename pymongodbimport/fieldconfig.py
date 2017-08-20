@@ -195,8 +195,11 @@ class FieldConfig(object):
     def doc_template(self):
         return self._doc_template
     
-    def type_convert(self, k, v ):
-        t = self.typeData( k )
+    def type_convert(self, v, t ):
+        '''
+        Use type entry for the field in the fieldConfig file (.ff) to determine what type
+        conversion to use.
+        '''
         v = v.strip()
         if t == "int" : #Ints can be floats
             try :
@@ -213,9 +216,9 @@ class FieldConfig(object):
             else:
                 v = parse( v )
         else:
-            raise ValueError( "Cannot convert  field %s (value: %s) to type %s" % ( k, v, t ))
+            raise ValueError
         
-        return ( t, v )
+        return v
     
     def createDoc( self, dictEntry  ):
         
@@ -251,37 +254,38 @@ class FieldConfig(object):
                 self._logger.info( "Field %i is blank [blank-] : ignoring", fieldCount )
                 continue
             
-            try:
-                try :
-                    ( type_field, v ) = self.type_convert( k, dictEntry[ k ])
+            #try:
+            try :
+                type_field  = self.typeData( k )
+                v = self.type_convert( dictEntry[ k ], type_field )
 
-                except ValueError:
-                    
-                    if self._onerror == "fail" :
-                        self._logger.error( "Error at line %i at field '%s'", self._record_count, k )
-                        self._logger.error("type conversion error: Cannot convert '%s' to type %s", dictEntry[ k ], type_field )
-                        raise
-                    elif self._onerror == "warn" :
-                        self._logger.info( "Parse failure at line %i at field '%s'", self._record_count, k )
-                        self._logger.info( "type conversion error: Cannot convert '%s' to type %s", dictEntry[ k ], type_field )
-                        self._logger.info( "Using string type instead" )
-                        v = str( dictEntry[ k ])
-                    elif self._onerror == "ignore":
-                        v = str( dictEntry[ k ])
-                    else:
-                        raise ValueError( "Invalid value for onerror: %s" % self._onerror )
-                    
-                if self.hasNewName( k ):
-                    doc[ self.nameData( k )] = v
+            except ValueError:
+                
+                if self._onerror == "fail" :
+                    self._logger.error( "Error at line %i at field '%s'", self._record_count, k )
+                    self._logger.error("type conversion error: Cannot convert '%s' to type %s", dictEntry[ k ], type_field )
+                    raise
+                elif self._onerror == "warn" :
+                    self._logger.info( "Parse failure at line %i at field '%s'", self._record_count, k )
+                    self._logger.info( "type conversion error: Cannot convert '%s' to type %s", dictEntry[ k ], type_field )
+                    self._logger.info( "Using string type instead" )
+                    v = str( dictEntry[ k ])
+                elif self._onerror == "ignore":
+                    v = str( dictEntry[ k ])
                 else:
-                    doc[ k ] = v
-                        
-            except ValueError :
-                self._logger.error( "Value error parsing field : [%s]" , k )
-                self._logger.error( "read value is: '%s'", dictEntry[ k ] )
-                self._logger.error( "line: %i, '%s'", self._record_count, dictEntry )
-                #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
-                raise   
+                    raise ValueError( "Invalid value for onerror: %s" % self._onerror )
+                
+            if self.hasNewName( k ):
+                doc[ self.nameData( k )] = v
+            else:
+                doc[ k ] = v
+                    
+#             except ValueError :
+#                 self._logger.error( "Value error parsing field : [%s]" , k )
+#                 self._logger.error( "read value is: '%s'", dictEntry[ k ] )
+#                 self._logger.error( "line: %i, '%s'", self._record_count, dictEntry )
+#                 #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
+#                 raise   
     
         return doc
 

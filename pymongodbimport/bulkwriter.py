@@ -13,7 +13,7 @@ from pymongodbimport.logger import Logger
 
 class BulkWriter(object):
      
-    def __init__(self, collection, fieldConfig, batch_size=500, restart=False, orderedWrites=None ):
+    def __init__(self, collection, fieldConfig, batch_size=500, orderedWrites=None ):
          
         self._logger = logging.getLogger( Logger.LOGGER_NAME )
         self._collection = collection
@@ -21,18 +21,11 @@ class BulkWriter(object):
         self._fieldConfig = None
         self._batch_size = batch_size
         self._totalWritten = 0
-        self._restart = restart
 
         self._currentLine = 0
-        self._restartFile = None
         self._fieldConfig = fieldConfig
         if fieldConfig.hasheader() :
             self._currentLine = self._currentLine + 1 
-            
-        self._restarter = None
-        if self._restart:
-            self._restarter = Restarter( self._collection.database, "dummy", self._batch_size )
-            self._currentLine  = self._currentLine + self._restarter.restart( self._collection )
             
     @staticmethod
     def skipLines( f, skipCount ):
@@ -54,7 +47,7 @@ class BulkWriter(object):
                 
         return lineCount 
 
-    def insert_file(self, filename, restart = None ):
+    def insert_file(self, filename, restart=False ):
         
         start = time.time()
         total_written = 0
@@ -90,6 +83,7 @@ class BulkWriter(object):
                 if total_read % self._batch_size == 0 :
                     results = self._collection.insert_many( insert_list )
                     total_written = total_written + len( results.inserted_ids )
+                    insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
                     if restarter :
                         restarter.update( results.inserted_ids[ -1], total_written )
                     insert_list = []

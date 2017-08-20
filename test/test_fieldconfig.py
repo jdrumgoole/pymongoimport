@@ -92,7 +92,7 @@ class Test(unittest.TestCase):
             for row in reader:
                 #print( row )
                 for f in fields:
-                    ( _, row[ f ] ) = fc.type_convert( f, row[ f ] ) # remember we type convert fields
+                    row[ f ] = fc.type_convert( row[ f ], fc.typeData( f )) # remember we type convert fields
 
                 cursor = self._col.find( row )
                 self.assertEqual( cursor.count(), 1 )
@@ -116,7 +116,7 @@ class Test(unittest.TestCase):
             for row in reader:
                 #print( row )
                 for f in fields:
-                    ( _, row[ f ] ) = fc.type_convert( f, row[ f ]) # remember we type convert fields
+                    row[ f ]= fc.type_convert( row[ f ], fc.typeData( f )) # remember we type convert fields
 
                 cursor = self._col.find( row )
                 self.assertEqual( cursor.count(), 1 )

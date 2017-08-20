@@ -54,7 +54,9 @@ types for the importer. A field file is formatted line a
 with each section defined by a name inside square brackets ( `[` and `]` ) and values for
 the section defined by `key=value` pairs.
 
-for a csv file defined by the following format,
+for a csv file
+[inventory.csv](https://github.com/jdrumgoole/pymongodbimport/blob/master/test/inventory.csv)
+defined by the following format,
 
 
 Inventory Item | Amount |  Last Order

@@ -8,11 +8,11 @@ import logging
 
 class Logger(object):
     
-    LOGGER_NAME="root.pymongodbimport"
-    
+    LOGGER_NAME="pymongodbimport"
     '''
     Logging class that encapsulates logging interface
     '''
+    
     format_string = "%(asctime)s: %(filename)s:%(funcName)s:%(lineno)s: %(levelname)s: %(message)s"
     
     

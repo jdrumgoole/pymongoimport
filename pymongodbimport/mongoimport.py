@@ -8,7 +8,6 @@ Need tests for skip larger than file size.
 '''
 import argparse
 import sys
-import logging
 
 from mongodb_utils.mongodb import MongoDB
 from pymongodbimport.fileprocessor import FileProcessor 
@@ -21,11 +20,11 @@ def mainline_argsparsed( args ):
     Expects the output of parse_args.
     '''
     
-    log = Logger( Logger.LOGGER_NAME, args.loglevel ).log()
-    Logger.add_file_handler( Logger.LOGGER_NAME )
-    Logger.add_stream_handler( Logger.LOGGER_NAME )
+    log = Logger( args.logname, args.loglevel ).log()
+    Logger.add_file_handler( args.logname  )
     
-    
+    if not args.silent:
+        Logger.add_stream_handler( args.logname )
     
     log.info( "Started pymongodbimport")
     client = MongoDB( args.host).client()
