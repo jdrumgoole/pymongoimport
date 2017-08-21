@@ -60,10 +60,12 @@ def mainline_argsparsed( args ):
             log.warn( "exiting due to keyboard interrupt...")
     else:
         log.info( "No input files: Nothing to do") 
+        
+    return 1
 
 def mainline( args ):
     
-    __VERSION__ = "1.4"
+    __VERSION__ = "1.4.1"
     
     '''
     Expect to recieve sys.argv or similar
@@ -95,7 +97,7 @@ def mainline( args ):
     
     parser = argparse.ArgumentParser( parents = pymongodb_arg_parser(), usage=usage_message, version= __VERSION__)
     args= parser.parse_args( args )    
-    mainline_argsparsed( args )
+    return mainline_argsparsed( args )
     
     
 if __name__ == '__main__':

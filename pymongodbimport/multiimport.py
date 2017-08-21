@@ -14,14 +14,25 @@ from pymongodbimport.mongoimport import mainline
 from pymongodbimport.logger import Logger
 
 def main_line( *a ):
+    '''
+    Shim class to allow printing of args during debugging. Just
+    calls mainline from mongoimport
+    '''
     #print( "args: '%s"  % " ".join( a ))
-    mainline( a )
+    return mainline( a )
   
 
 def strip_arg( arg_list, remove_arg, has_trailing=False ):
     '''
     Remove arg and arg argument from a list of args. If has_trailing is true then
     remove --arg value else just remove --arg.
+    
+    Args:
+    
+    arg_list (list) : List of args that we want to remove items from
+    remove_arg (str) : Name of arg to remove. Must match element in `arg_list`.
+    has_trailing (boolean) : If the arg in `remove_arg` has an arg. Then make sure
+    to remove that arg as well
     '''
     try :
         location = arg_list.index( remove_arg )
