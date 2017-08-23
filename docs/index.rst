@@ -9,7 +9,8 @@ Pymongodbimport - Import csv files into MongodDB
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-	     
+
+   readme
 .. automodule:: pymongodbimport
 
 
