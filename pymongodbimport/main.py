@@ -63,7 +63,7 @@ def mainline_argsparsed( args ):
         
     return 1
 
-def mainline( args ):
+def mainline( *args ):
     
     __VERSION__ = "1.4.1"
     

@@ -11,7 +11,7 @@ pyfiles = [ f for f in os.listdir( "." ) if f.endswith( ".py" ) ]
     
 setup(
     name = "pymongoimport",
-    version = "1.3",
+    version = "1.4.2",
     
     author = "Joe Drumgoole",
     author_email = "joe@joedrumgoole.com",
@@ -50,9 +50,13 @@ by the parser.
    
     install_requires = [  "pymongo", "mongodb_utils", "nose" ],
        
-    packages = find_packages(),
+    packages=find_packages(),
     
-    scripts  = [ "bin/pymongoimport" ],
+    entry_points={
+        'console_scripts': [
+            'pymongodbimport= pymongodbimport.main:mainline',
+        ]
+    },
 
     test_suite='nose.collector',
     tests_require=['nose'],
