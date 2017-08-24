@@ -3,7 +3,7 @@
 The Pymongodbimport Module
 ===============================
 
-Usage:
+Usage
 ---------
 pymongodbimport is a python program that will import data into a MongoDB
 database (default 'test' ) and a MongoDB collection (default 'test' ).
@@ -138,11 +138,11 @@ An example run where we want the upload to restart
 Arguments
 ---------------------
 
-Positional arguments:
+Positional arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   *filenames*        : list of files to be processed
 
-Optional arguments:
+Optional arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **-h --help**      : Show the help message and exit.
