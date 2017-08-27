@@ -10,7 +10,7 @@ from collections import OrderedDict
 import time
 
 from pymongodbimport.filesplitter import File_Splitter
-from pymongodbimport.mongoimport import mainline
+from pymongodbimport.main import mainline
 from pymongodbimport.logger import Logger
 
 def main_line( *a ):
@@ -21,7 +21,6 @@ def main_line( *a ):
     #print( "args: '%s"  % " ".join( a ))
     return mainline( a )
   
-
 def strip_arg( arg_list, remove_arg, has_trailing=False ):
     '''
     Remove arg and arg argument from a list of args. If has_trailing is true then
@@ -46,6 +45,7 @@ def strip_arg( arg_list, remove_arg, has_trailing=False ):
     return arg_list       
             
 from pymongodbimport.argparser import pymongodb_arg_parser
+
 if __name__ == '__main__':
     
     __VERSION__ = "0.1"
