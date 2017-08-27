@@ -95,7 +95,7 @@ class File_Splitter( object ):
                     current_split_size = 0
                     self._files[ filename ] = self._files[ filename ] + len( line )
                     output_file.close()
-                    yield filename
+                    yield ( filename, split_size )
                     file_count = file_count + 1
                     ( output_file, filename ) = self.new_file( self._input_filename, file_count )
                     output_file.write( line )
@@ -114,7 +114,7 @@ class File_Splitter( object ):
            
         if current_split_size > 0 and current_split_size  < split_size : 
             output_file.close()
-            yield filename
+            yield ( filename, current_split_size )
            
     @staticmethod
     def get_average_line_size( filename ):
@@ -150,4 +150,4 @@ class File_Splitter( object ):
             
             #print( "Splitting '%s' into at least %i pieces of size %i" %  ( self._input_filename, self._split_count + 1, split_size ))
             for i in self.split_file(  split_size ):
-                yield ( i, split_size )
+                yield i

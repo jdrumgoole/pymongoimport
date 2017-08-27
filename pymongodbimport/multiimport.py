@@ -77,14 +77,14 @@ if __name__ == '__main__':
         if len( args.filenames ) == 0 :
             log.warn( "No input file specified to split")
         elif len( args.filenames) > 1 :
-            log.warn( "More than one input file specified ( '%s' ) only splitting the first file:'%s'" % 
-                   ( " ".join( args.filenames ), args.filenames[ 0 ] ))
+            log.warn( "More than one input file specified ( '%s' ) only splitting the first file:'%s'", 
+                   " ".join( args.filenames ), args.filenames[ 0 ] )
         child_args = strip_arg( child_args, "--autosplit", True)
     else:
         child_args = strip_arg( child_args, "--splitsize", True )
         
-    log.info( "Autosplitting file: '%s'"  % args.filenames[ 0 ])
-    splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
+
+    splitter = File_Splitter( args.filenames[ 0 ], args.hasheader )
     process_count = 0
     
     for i in args.filenames: # get rid of old filenames
@@ -92,8 +92,10 @@ if __name__ == '__main__':
         
     stripped_args = []
     if args.autosplit:
-        files = splitter.autosplit()
+        log.info( "Autosplitting file: '%s' into (approx) %i chunks", args.filenames[ 0 ], args.autosplit )
+        files = splitter.autosplit( args.autosplit )
     elif args.splitsize:
+        log.info( "Splitting file: '%s' into %i line chunks", args.filenames[ 0 ], args.splitsize )
         files = splitter.split_file( args.splitsize )
     else:
         files = args.filenames

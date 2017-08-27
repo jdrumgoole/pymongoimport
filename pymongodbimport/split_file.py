@@ -1,7 +1,18 @@
 '''
+==================================================
+split_file : Split a file into seperate pieces
+==================================================
+Files can be split on
+preset line boundaries using **--splitsize** or split automatically
+into a preset number of pieces using **--autosplit**.
+
+We include the **--hasheader** for use with csv files as we don't want
+to include the header line in any of the input files. 
+
 Created on 11 Aug 2017
 
 @author: jdrumgoole
+
 '''
 import argparse
 import sys
@@ -16,12 +27,15 @@ def multiimport( args ):
     
     usage_message = '''
     
-    split a text file into seperate pieces. if you specify autosplit then the program
-    will use the first ten lines to calcuate an average line size and use that to determine
-    the rough number of splits.
-    
-    if you use --splitsize then the file will be split using --splitsize chunks until it is consumed
-    '''
+Split a text file into seperate pieces. if you specify 
+autosplit then the program will use the first ten lines 
+to calcuate an average line size and use that to 
+determine the rough number of splits.
+
+if you use **--splitsize** then the file will be split 
+using **--splitsize** chunks until it is consumed.
+
+'''
     
     parser = argparse.ArgumentParser( usage=usage_message, version=__VERSION__ )
     
@@ -39,10 +53,10 @@ def multiimport( args ):
         print( "More than one input file specified ( %s ) only splitting the first file:'%s'" % 
                ( " ".join( args.filenames ), args.filenames[ 0 ] ))
     
-    splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
+    splitter = File_Splitter( args.filenames[ 0 ], args.hasheader )
     if args.autosplit:
         print( "Autosplitting: '%s'" % args.filenames[ 0 ] )
-        files = splitter.autosplit()
+        files = splitter.autosplit( args.autosplit )
     else:
         print( "Splitting '%s' using %i splitsize" % ( args.filenames[ 0 ], args.splitsize ))
         files = splitter.split_file( args.splitsize )

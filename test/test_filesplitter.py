@@ -23,14 +23,16 @@ class Test(unittest.TestCase):
 
         #print( "%s has %i lines" % ( "fourlines.txt", line_count ))
         files = list( splitter.split_file( split_lines ))
-        last_file = files[-1]
+        last_file = files[-1][0]
         other_files = files[0:-1]
-        for i in other_files:
+        for ( i, _ ) in other_files:
             #print( "xxx : '%s'" % i )
             self.assertEqual( File_Splitter.count_lines( i ), split_lines )
+            os.unlink( i )
         if split_remainder > 0 :
             #print( "yyy: '%s'" % last_file )
             self.assertEqual( os.path.getsize( last_file ), split_remainder )
+            os.unlink( last_file )
             
     def test_autosplit_file(self):
         splitter = File_Splitter( __file__, hasheader=False )
@@ -48,12 +50,13 @@ class Test(unittest.TestCase):
         line_count = 0
         total_line_count = 0
         files_list=[]
-        for ( i, _ ) in files:
-
-            line_count = File_Splitter.count_lines( i )
+        
+        for i in files:
+            #print( " XXX : %s %s" % ( __name__, i[0]))
+            line_count = File_Splitter.count_lines( i[0] )
             #print( "counting %s, %i" % ( i, line_count ))
             total_line_count = total_line_count + line_count
-            files_list.append( i )
+            files_list.append( i[0] )
             
         self.assertTrue( len( files_list ), 3 )
         self.assertEqual( splitter.data_lines_count(), total_line_count )
@@ -75,7 +78,7 @@ class Test(unittest.TestCase):
         files = splitter.split_file( split_size = 50 )
         files_list = list( files )
 
-        for i in files_list:
+        for ( i, _ ) in files_list:
             os.unlink( i )
             
         self.assertEqual( len( files_list), 5 )
@@ -101,14 +104,15 @@ class Test(unittest.TestCase):
         with  open( filename, "rU") as original_file :
             if splitter.has_header() :
                 _ = original_file.readline()
-            for ( i, _ ) in splitter.autosplit( 4 ):
-                with open( i, "rU") as file_piece:
-                    for i in file_piece:
+            for filename in splitter.autosplit( 4 ):
+                with open( filename[0], "rU") as file_piece:
+                    for line in file_piece:
                         left = original_file.readline()
                         original_count = original_count + 1 
-                        right = i
+                        right = line
                         file_piece_count = file_piece_count + 1 
                         self.assertEqual( left, right )
+                os.unlink( filename[0] )
                         
             
         self.assertEqual( splitter.data_lines_count(), original_count )
