@@ -1,6 +1,6 @@
 '''
 ===============================
-The Pymongodbimport Module
+Pymongodbimport
 ===============================
 
 pymongodbimport is a python program that will import data into a MongoDB
