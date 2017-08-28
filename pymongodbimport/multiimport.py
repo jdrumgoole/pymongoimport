@@ -46,7 +46,7 @@ def strip_arg( arg_list, remove_arg, has_trailing=False ):
             
 from pymongodbimport.argparser import pymongodb_arg_parser
 
-if __name__ == '__main__':
+def multi_import( args ):
     
     __VERSION__ = "0.1"
     
@@ -63,7 +63,7 @@ if __name__ == '__main__':
                          help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument( "--splitsize", type=int, default=10000, help="Split file into chunks of this size [default : %(default)s]" )
  
-    args= parser.parse_args( sys.argv[1:])
+    args= parser.parse_args( args )
     
     log = Logger( "multiimport" ).log()
     
@@ -90,7 +90,6 @@ if __name__ == '__main__':
     for i in args.filenames: # get rid of old filenames
         child_args = strip_arg( child_args, i, False )
         
-    stripped_args = []
     if args.autosplit:
         log.info( "Autosplitting file: '%s' into (approx) %i chunks", args.filenames[ 0 ], args.autosplit )
         files = splitter.autosplit( args.autosplit )
@@ -126,4 +125,7 @@ if __name__ == '__main__':
             
     finish = time.time()
     
-    log.info( "Total elapsed time:%f" % ( finish - start ))
+    log.info( "Total elapsed time:%f", ( finish - start ))
+    
+if __name__ == '__main__':
+    multi_import( sys.argv[1:])

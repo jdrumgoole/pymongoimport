@@ -83,6 +83,10 @@ class Test(unittest.TestCase):
             
         self.assertEqual( len( files_list), 5 )
         
+        splitter = File_Splitter( "mot_test_set_small.csv", hasheader=False )
+        files = splitter.split_file( split_size = 50 )
+        
+        
     def test_split_empty_file(self):
         splitter = File_Splitter( "emptyfile.txt", hasheader=False )
         files = list( splitter.split_file(  10 ))

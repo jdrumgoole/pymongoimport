@@ -83,7 +83,7 @@ class File_Splitter( object ):
                     file_count = file_count + 1
                     ( output_file, filename ) = self.new_file( self._input_filename, file_count )
                     output_file.write( line )
-                    output_file.flush()
+                    #output_file.flush()
                     self._data_lines_count = self._data_lines_count + 1
                     current_split_size = current_split_size + 1
                     self._files[ filename ] = self._files[ filename ] + len( line )
@@ -95,24 +95,26 @@ class File_Splitter( object ):
                     current_split_size = 0
                     self._files[ filename ] = self._files[ filename ] + len( line )
                     output_file.close()
+                    print( "file chunk: %s %i" % ( filename, split_size ))
                     yield ( filename, split_size )
                     file_count = file_count + 1
                     ( output_file, filename ) = self.new_file( self._input_filename, file_count )
                     output_file.write( line )
+                    #output_file.flush()
                     current_split_size = current_split_size + 1
                     self._files[ filename ] = self._files[ filename ] + len( line )
                     #print( "yield at split: %s" % output_files[ -1 ] )
 
                 else:
                     output_file.write( line )
-                    output_file.flush()
+                    #output_file.flush()
                     self._data_lines_count = self._data_lines_count + 1
                     current_split_size = current_split_size + 1
                     self._files[ filename ] = self._files[ filename ] + len( line )
 
                 line = input_file.readline()
            
-        if current_split_size > 0 and current_split_size  < split_size : 
+        if current_split_size > 0 and current_split_size  <= split_size : 
             output_file.close()
             yield ( filename, current_split_size )
            
@@ -135,7 +137,12 @@ class File_Splitter( object ):
             return sample_size / count
         else:
             return 0
-        
+    
+    @staticmethod
+    def shim_names( g ):
+        for i in g :
+            yield i[0]
+            
     def autosplit( self, split_count ):
                 
         average_line_size = File_Splitter.get_average_line_size( self._input_filename )

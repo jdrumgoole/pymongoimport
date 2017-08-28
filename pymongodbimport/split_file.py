@@ -21,9 +21,9 @@ import os
 from pymongodbimport.filesplitter import File_Splitter
 
 
-__VERSION__ = "0.1"
+__VERSION__ = "0.2"
 
-def multiimport( args ):
+def split_file( args ):
     
     usage_message = '''
     
@@ -63,15 +63,18 @@ using **--splitsize** chunks until it is consumed.
     #print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
     count = 1
     total_size = 0
-    for i in files:
+    results = list( files )
+    for ( i, lines ) in results:
         size = os.path.getsize( i )
         total_size = total_size + size
-        print ( "%i. %s : size: %i" % ( count, i, size ))
+        print ( "%i. '%s'. Lines : %i, Size: %i" % ( count, i, lines, size ))
         count = count + 1
     
     if total_size != splitter.no_header_size():
         raise ValueError( "Filesize of original and pieces does not match: total_size: %i, no header split_size: %i" % ( total_size, splitter.no_header_size()))
    
+    return results
+
 if __name__ == '__main__':
-    multiimport( sys.argv[1:] ) 
+    split_file( sys.argv[1:] ) 
     
