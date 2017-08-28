@@ -10,7 +10,7 @@ from collections import OrderedDict
 import time
 
 from pymongodbimport.filesplitter import File_Splitter
-from pymongodbimport.mongoimport import mainline
+from pymongodbimport.main import mainline
 from pymongodbimport.logger import Logger
 
 def main_line( *a ):
@@ -21,7 +21,6 @@ def main_line( *a ):
     #print( "args: '%s"  % " ".join( a ))
     return mainline( a )
   
-
 def strip_arg( arg_list, remove_arg, has_trailing=False ):
     '''
     Remove arg and arg argument from a list of args. If has_trailing is true then
@@ -47,7 +46,8 @@ def strip_arg( arg_list, remove_arg, has_trailing=False ):
             
 from pymongodbimport.argparser import pymongodb_arg_parser
 
-if __name__ == '__main__':
+def multi_import( args ):
+
     
     __VERSION__ = "0.1"
     
@@ -64,7 +64,7 @@ if __name__ == '__main__':
                          help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument( "--splitsize", type=int, default=10000, help="Split file into chunks of this size [default : %(default)s]" )
  
-    args= parser.parse_args( sys.argv[1:])
+    args= parser.parse_args( args )
     
     log = Logger( "multiimport" ).log()
     
@@ -78,23 +78,24 @@ if __name__ == '__main__':
         if len( args.filenames ) == 0 :
             log.warn( "No input file specified to split")
         elif len( args.filenames) > 1 :
-            log.warn( "More than one input file specified ( '%s' ) only splitting the first file:'%s'" % 
-                   ( " ".join( args.filenames ), args.filenames[ 0 ] ))
+            log.warn( "More than one input file specified ( '%s' ) only splitting the first file:'%s'", 
+                   " ".join( args.filenames ), args.filenames[ 0 ] )
         child_args = strip_arg( child_args, "--autosplit", True)
     else:
         child_args = strip_arg( child_args, "--splitsize", True )
         
-    log.info( "Autosplitting file: '%s'"  % args.filenames[ 0 ])
-    splitter = File_Splitter( args.filenames[ 0 ], args.autosplit, args.hasheader )
+
+    splitter = File_Splitter( args.filenames[ 0 ], args.hasheader )
     process_count = 0
     
     for i in args.filenames: # get rid of old filenames
         child_args = strip_arg( child_args, i, False )
         
-    stripped_args = []
     if args.autosplit:
-        files = splitter.autosplit()
+        log.info( "Autosplitting file: '%s' into (approx) %i chunks", args.filenames[ 0 ], args.autosplit )
+        files = splitter.autosplit( args.autosplit )
     elif args.splitsize:
+        log.info( "Splitting file: '%s' into %i line chunks", args.filenames[ 0 ], args.splitsize )
         files = splitter.split_file( args.splitsize )
     else:
         files = args.filenames
@@ -127,6 +128,7 @@ if __name__ == '__main__':
     
     log.info( "Total elapsed time:%f" % ( finish - start ))
     
-if __name__ == "__main__":
     
-    multiimport( sys.argv )
+if __name__ == '__main__':
+    multi_import( sys.argv[1:])
+
