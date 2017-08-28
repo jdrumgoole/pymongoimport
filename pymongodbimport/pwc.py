@@ -12,14 +12,16 @@ in universal mode.
 
 @author: jdrumgoole
 '''
+
+import sys
 import argparse
 from pymongodbimport.filesplitter import File_Splitter
 
-if __name__ == "__main__" :
-    
+
+def pwc( *argv ):
     parser = argparse.ArgumentParser()
     parser.add_argument( "filenames", nargs="*", help='list of files')
-    args= parser.parse_args()
+    args= parser.parse_args( *argv )
     
     line_count = 0
     total_count = 0
@@ -28,10 +30,11 @@ if __name__ == "__main__" :
         total_count = total_count + line_count
         print( "%i\t%s" % ( line_count, filename ))
         
-    print( "%i\ttotal" % total_count )
+    if len( args.filenames ) > 1 :
+        print( "%i\ttotal" % total_count )
             
-        
-    
+if __name__ == "__main__" :
+    pwc( sys.argv[1:])
     
 
     

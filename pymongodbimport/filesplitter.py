@@ -3,7 +3,11 @@ Created on 13 Aug 2017
 
 @author: jdrumgoole
 
-File Splitter is a class that takes a file and splits it into seperate pieces. Its purpose built for
+=====================================
+File_Splitter
+=====================================
+
+File Splitter is a class that takes a file and splits it into separate pieces. Its purpose built for
 use wit pymongodbimport and is expected to be used to split CSV files (which may or may not have
 a header, hence the **hasheader** argument). When splitting a file the output files are produced without
 a header file. 

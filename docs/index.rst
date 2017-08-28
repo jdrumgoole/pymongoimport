@@ -10,7 +10,6 @@ Pymongodbimport - Import csv files into MongoDB
    :maxdepth: 2
    :caption: Contents:
 
-   readme
 .. automodule:: pymongodbimport
 
 

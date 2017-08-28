@@ -4,18 +4,13 @@ Created on 12 Aug 2017
 @author: jdrumgoole
 '''
 
-import argparse
-
 from pymongodbimport.logger import Logger
 
-def pymongodb_arg_parser( parents=None):
+def add_standard_args( parser ):
     '''
     Construct parser for pymongodbimport return it as a list suitable for passing to the parents
     argument of the next parser
     ''' 
-    if parents is None:
-        parents = []  
-    parser = argparse.ArgumentParser( parents=parents, add_help=False )
     parser.add_argument( '--database', default="test", help='specify the database name [default: %(default)s]')
     parser.add_argument( '--collection', default="test", help='specify the collection name [default: %(default)s]')
     parser.add_argument( '--host', default="mongodb://localhost:27017/test", help='mongodb URI. see https://docs.mongodb.com/manual/reference/connection-string/ for details [default: %(default)s]')
@@ -26,7 +21,6 @@ def pymongodb_arg_parser( parents=None):
     parser.add_argument( "--fieldfile", default= None, type=str,  help="Field and type mappings")
     parser.add_argument( "--delimiter", default=",", type=str, help="The delimiter string used to split fields [default: %(default)s]")
     parser.add_argument( "filenames", nargs="*", help='list of files')
-    #parser.add_argument('--version', action='version', version='%(prog)s version:' + version )
     parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry" )
     parser.add_argument('--addtimestamp', default="none", choices=[ "none", "now", "gen" ], help="Add a timestamp to each record [default: %(default)s]" )
     parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names [default: %(default)s]")
@@ -36,6 +30,6 @@ def pymongodb_arg_parser( parents=None):
     parser.add_argument( '--logname', default=Logger.LOGGER_NAME, help="Logfile to write output to [default: %(default)s]")
     parser.add_argument( '--loglevel', default="INFO", choices=[ "CRITICAL", "ERROR", "WARNING", "INFO",  "DEBUG" ], help='Logging level [default: %(default)s]')
     parser.add_argument( '--silent', default=False, action="store_true", help="Suspend output except for log file [default: %(default)s]")
-    parents.append( parser )
-    return parents
+
+    return parser
     

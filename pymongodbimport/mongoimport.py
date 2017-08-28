@@ -12,7 +12,7 @@ import sys
 from mongodb_utils.mongodb import MongoDB
 from pymongodbimport.fileprocessor import FileProcessor 
 from pymongodbimport.fieldconfig import FieldConfig
-from pymongodbimport.argparser import pymongodb_arg_parser
+from pymongodbimport.argparser import add_standard_args
 from pymongodbimport.logger import Logger
 
 def mainline_argsparsed( args ):
@@ -63,7 +63,7 @@ def mainline_argsparsed( args ):
         
     return 1
 
-def mainline( *args ):
+def mongo_import( *argv ):
     
     __VERSION__ = "1.4.1"
     
@@ -95,11 +95,11 @@ def mainline( *args ):
     python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     '''
     
-    parser = argparse.ArgumentParser( parents = pymongodb_arg_parser(), usage=usage_message, version= __VERSION__)
-    args= parser.parse_args( args )    
+    parser = argparse.ArgumentParser( usage=usage_message, version= __VERSION__)
+    parser = add_standard_args( parser )
+    args= parser.parse_args( *argv )    
     return mainline_argsparsed( args )
-    
     
 if __name__ == '__main__':
     
-    mainline( sys.argv[1:] )
+    mongo_import( sys.argv[1:] )

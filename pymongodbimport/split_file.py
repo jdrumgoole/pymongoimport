@@ -23,7 +23,7 @@ from pymongodbimport.filesplitter import File_Splitter
 
 __VERSION__ = "0.2"
 
-def split_file( args ):
+def split_file( *argv ):
     
     usage_message = '''
     
@@ -44,12 +44,12 @@ using **--splitsize** chunks until it is consumed.
     parser.add_argument('--hasheader',  default=False, action="store_true", help="Use header line for column names [default: %(default)s]")
     parser.add_argument( "--splitsize", type=int, help="Split file into chunks of this size")
     parser.add_argument( "filenames", nargs="*", help='list of files')
-    args= parser.parse_args( args )
+    args=parser.parse_args( *argv )
     
-    print( "Splitting file")
     if len( args.filenames ) == 0 :
         print( "No input file specified to split")
-    elif len( args.filenames) > 1 :
+        sys.exit( 0 )
+    elif len( args.filenames ) > 1 : 
         print( "More than one input file specified ( %s ) only splitting the first file:'%s'" % 
                ( " ".join( args.filenames ), args.filenames[ 0 ] ))
     
