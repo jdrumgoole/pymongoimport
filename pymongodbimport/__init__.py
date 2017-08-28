@@ -3,8 +3,6 @@
 The Pymongodbimport Module
 ===============================
 
-Usage
----------
 pymongodbimport is a python program that will import data into a MongoDB
 database (default 'test' ) and a MongoDB collection (default 'test' ).
  

@@ -2,7 +2,11 @@
 '''
 Created on 19 Feb 2016
 
-Need tests for skip larger than file size.
+====================
+Mongoimport
+====================
+
+This is a stub.
 
 @author: jdrumgoole
 '''
