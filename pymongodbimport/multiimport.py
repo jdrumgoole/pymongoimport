@@ -46,6 +46,7 @@ def strip_arg( arg_list, remove_arg, has_trailing=False ):
     return arg_list       
             
 from pymongodbimport.argparser import pymongodb_arg_parser
+
 if __name__ == '__main__':
     
     __VERSION__ = "0.1"
@@ -125,3 +126,7 @@ if __name__ == '__main__':
     finish = time.time()
     
     log.info( "Total elapsed time:%f" % ( finish - start ))
+    
+if __name__ == "__main__":
+    
+    multiimport( sys.argv )
