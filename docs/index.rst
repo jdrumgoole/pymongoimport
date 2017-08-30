@@ -11,6 +11,9 @@ Pymongodbimport - Import csv files into MongoDB
    :caption: Contents:
 
 .. automodule:: pymongodbimport
+
+Commandline Programs
+=======================================================
 .. autofunction:: pymongodbimport.multiimport.multi_import		
 
 
