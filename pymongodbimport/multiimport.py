@@ -39,7 +39,14 @@ def strip_arg( arg_list, remove_arg, has_trailing=False ):
     return arg_list       
 
 def multi_import( *argv ):
+    '''
+.. function:: mutlti_import ( *argv )
 
+   Import CSV files using multiprocessing
+
+   :param argv: list of command lines
+
+   '''
     
     __VERSION__ = "0.1"
     
