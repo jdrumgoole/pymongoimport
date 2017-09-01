@@ -129,9 +129,9 @@ Optional arguments
 
        Specify the URI for connecting to the database. The full connection
        URI syntax is documented on the
-       `MongoDB docs website` <https://docs.mongodb.com/manual/reference/connection-string/)
+       `MongoDB docs website <https://docs.mongodb.com/manual/reference/connection-string/>`_
 
-The default is *mongodb://localhost:27017/test*
+The default is `mongodb://localhost:27017/test`
 
 **--batchsize** *batchsize*
 
