@@ -3,15 +3,16 @@ Created on 23 Jul 2017
 
 @author: jdrumgoole
 '''
-import os
+#import os
 import time
-import pprint
+#import pprint
 import logging
 
 from pymongodbimport.restart import Restarter
 from pymongodbimport.logger import Logger
 
-class BulkWriter(object):
+class File_Writer(object):
+
      
     def __init__(self, collection, fieldConfig, batch_size=500, orderedWrites=None ):
          
@@ -107,62 +108,62 @@ class BulkWriter(object):
         self._logger.info( "Total elapsed time to upload '%s' : %.3f" , filename,finish - start )
         return total_written
     
-    def bulkWrite(self, filename  ):
-        '''
-        Write the contents of the file to MongoDB potentially adding timestamps and file stamps
-        
-        self._totalRead = all the lines read from the file including headers.
-        self._totalWritten = all the lines written to MongoDB. We can't restart bulkWrites because
-        we don't know the id of the last object written.
-        '''
-        with open( filename, "rU") as f :
-            
-            BulkWriter.skipLines( f, self._currentLine )
- 
-            if self._orderedWrites :
-                bulker = self._collection.initialize_ordered_bulk_op()
-            else:
-                bulker = self._collection.initialize_unordered_bulk_op()
-                
-            timeStart = time.time() 
-            bulkerCount = 0
-            insertedThisQuantum = 0
-            totalRead = 0
-    
-            reader = self._fieldConfig.get_dict_reader( f )
-
-            for dictEntry in reader :
-                totalRead = totalRead + 1
-                    
-                d = self._fieldConfig.createDoc( dictEntry )
-                bulker.insert( d )
-                bulkerCount = bulkerCount + 1 
-                if ( bulkerCount == self._batch_size ):
-                    result = bulker.execute()
-                    bulkerCount = 0
-                    self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                    insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
-                    if self._orderedWrites :
-                        bulker = self._collection.initialize_ordered_bulk_op()
-                    else:
-                        bulker = self._collection.initialize_unordered_bulk_op()
-                 
-
-                timeNow = time.time()
-                if timeNow > timeStart + 1  :
-                    self._logger.info( "Input: '%s' : records written per second %i, records read: %i written: %i", filename, insertedThisQuantum, totalRead, self._totalWritten )
-                    insertedThisQuantum = 0
-                    timeStart = timeNow
-             
-            if insertedThisQuantum > 0 :
-                self._logger.info( "Input: '%s' : records written per second %i, records read: %i written: %i", filename, insertedThisQuantum, totalRead, self._totalWritten )
-
-            if ( bulkerCount > 0 ) :
-                result = bulker.execute()
-                self._totalWritten = self._totalWritten + result[ 'nInserted' ]
-                self._logger.info( "Input: '%s' : Inserted last %i records", filename, result[ 'nInserted'] )
- 
-
-            self._logger.info( "Total records read: %i, totalWritten: %i", totalRead, self._totalWritten )
-            return  self._totalWritten
+#     def bulkWrite(self, filename  ):
+#         '''
+#         Write the contents of the file to MongoDB potentially adding timestamps and file stamps
+#         
+#         self._totalRead = all the lines read from the file including headers.
+#         self._totalWritten = all the lines written to MongoDB. We can't restart bulkWrites because
+#         we don't know the id of the last object written.
+#         '''
+#         with open( filename, "rU") as f :
+#             
+#             BulkWriter.skipLines( f, self._currentLine )
+#  
+#             if self._orderedWrites :
+#                 bulker = self._collection.initialize_ordered_bulk_op()
+#             else:
+#                 bulker = self._collection.initialize_unordered_bulk_op()
+#                 
+#             timeStart = time.time() 
+#             bulkerCount = 0
+#             insertedThisQuantum = 0
+#             totalRead = 0
+#     
+#             reader = self._fieldConfig.get_dict_reader( f )
+# 
+#             for dictEntry in reader :
+#                 totalRead = totalRead + 1
+#                     
+#                 d = self._fieldConfig.createDoc( dictEntry )
+#                 bulker.insert( d )
+#                 bulkerCount = bulkerCount + 1 
+#                 if ( bulkerCount == self._batch_size ):
+#                     result = bulker.execute()
+#                     bulkerCount = 0
+#                     self._totalWritten = self._totalWritten + result[ 'nInserted' ]
+#                     insertedThisQuantum = insertedThisQuantum + result[ 'nInserted' ]
+#                     if self._orderedWrites :
+#                         bulker = self._collection.initialize_ordered_bulk_op()
+#                     else:
+#                         bulker = self._collection.initialize_unordered_bulk_op()
+#                  
+# 
+#                 timeNow = time.time()
+#                 if timeNow > timeStart + 1  :
+#                     self._logger.info( "Input: '%s' : records written per second %i, records read: %i written: %i", filename, insertedThisQuantum, totalRead, self._totalWritten )
+#                     insertedThisQuantum = 0
+#                     timeStart = timeNow
+#              
+#             if insertedThisQuantum > 0 :
+#                 self._logger.info( "Input: '%s' : records written per second %i, records read: %i written: %i", filename, insertedThisQuantum, totalRead, self._totalWritten )
+# 
+#             if ( bulkerCount > 0 ) :
+#                 result = bulker.execute()
+#                 self._totalWritten = self._totalWritten + result[ 'nInserted' ]
+#                 self._logger.info( "Input: '%s' : Inserted last %i records", filename, result[ 'nInserted'] )
+#  
+# 
+#             self._logger.info( "Total records read: %i, totalWritten: %i", totalRead, self._totalWritten )
+#             return  self._totalWritten
 
