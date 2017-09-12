@@ -158,7 +158,8 @@ The default is `mongodb://localhost:27017/test`
     imports that are running in parallel will overwrite each others restart logs.
     use record count insert to restart at last write also enable restart logfile [default: False]
 
-
+    Restarts will happen from the last record that was written. You
+    must specify restart when 
 **--drop**                
     drop collection before loading [default: False]
 
