@@ -13,7 +13,7 @@ This is a stub.
 import argparse
 import sys
 
-from mongodb_utils.mongodb import MongoDB
+import pymongo
 from pymongodbimport.fileprocessor import FileProcessor 
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.argparser import add_standard_args
@@ -31,7 +31,7 @@ def mainline_argsparsed( args ):
         Logger.add_stream_handler( args.logname )
     
     log.info( "Started pymongodbimport")
-    client = MongoDB( args.host).client()
+    client = pymongo.MongoClient( args.host)
     database = client[ args.database ]
     collection = database[ args.collection ]
                 

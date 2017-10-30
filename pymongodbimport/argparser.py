@@ -30,6 +30,5 @@ def add_standard_args( parser ):
     parser.add_argument( '--logname', default=Logger.LOGGER_NAME, help="Logfile to write output to [default: %(default)s]")
     parser.add_argument( '--loglevel', default="INFO", choices=[ "CRITICAL", "ERROR", "WARNING", "INFO",  "DEBUG" ], help='Logging level [default: %(default)s]')
     parser.add_argument( '--silent', default=False, action="store_true", help="Suspend output except for log file [default: %(default)s]")
-
     return parser
     
