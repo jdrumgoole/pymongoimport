@@ -33,7 +33,10 @@ def mainline_argsparsed( args ):
     
     log.info( "Started pymongodbimport")
     log.info( "Write concern : %i", args.writeconcern )
-    client = pymongo.MongoClient( args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal )
+    if args.writeconcern == 0 : # pymongo won't allow other args with w=0 even if they are false
+        client = pymongo.MongoClient( args.host, w=args.writeconcern )
+    else:
+        client = pymongo.MongoClient( args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal )
     database = client[ args.database ]
     collection = database[ args.collection ]
                 
