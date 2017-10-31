@@ -30,5 +30,9 @@ def add_standard_args( parser ):
     parser.add_argument( '--logname', default=Logger.LOGGER_NAME, help="Logfile to write output to [default: %(default)s]")
     parser.add_argument( '--loglevel', default="INFO", choices=[ "CRITICAL", "ERROR", "WARNING", "INFO",  "DEBUG" ], help='Logging level [default: %(default)s]')
     parser.add_argument( '--silent', default=False, action="store_true", help="Suspend output except for log file [default: %(default)s]")
+    parser.add_argument( '--writeconcern', default=0, type=int, help="specify write concern for a write operation [default: %(default)s]")
+    parser.add_argument( '--journal', default=False, action="store_true", help="Turn on journaling [default: %(default)s]")
+    parser.add_argument( '--fsync', default=False, action="store_true", help="Sync all nodes to disk [default: %(default)s]")
+
     return parser
     

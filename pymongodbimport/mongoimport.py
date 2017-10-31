@@ -14,6 +14,7 @@ import argparse
 import sys
 
 import pymongo
+from pymongo.write_concern import WriteConcern
 from pymongodbimport.fileprocessor import FileProcessor 
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.argparser import add_standard_args
@@ -31,7 +32,8 @@ def mainline_argsparsed( args ):
         Logger.add_stream_handler( args.logname )
     
     log.info( "Started pymongodbimport")
-    client = pymongo.MongoClient( args.host)
+    log.info( "Write concern : %i", args.writeconcern )
+    client = pymongo.MongoClient( args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal )
     database = client[ args.database ]
     collection = database[ args.collection ]
                 
