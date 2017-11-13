@@ -13,7 +13,8 @@ This is a stub.
 import argparse
 import sys
 
-from mongodb_utils.mongodb import MongoDB
+import pymongo
+from pymongo.write_concern import WriteConcern
 from pymongodbimport.fileprocessor import FileProcessor 
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.argparser import add_standard_args
@@ -31,7 +32,13 @@ def mainline_argsparsed( args ):
         Logger.add_stream_handler( args.logname )
     
     log.info( "Started pymongodbimport")
-    client = MongoDB( args.host).client()
+    log.info( "Write concern : %i", args.writeconcern )
+    log.info( "journal       : %i", args.journal )
+    log.info( "fsync         : %i", args.fsync )
+    if args.writeconcern == 0 : # pymongo won't allow other args with w=0 even if they are false
+        client = pymongo.MongoClient( args.host, w=args.writeconcern )
+    else:
+        client = pymongo.MongoClient( args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal )
     database = client[ args.database ]
     collection = database[ args.collection ]
                 

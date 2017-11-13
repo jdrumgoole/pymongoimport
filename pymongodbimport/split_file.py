@@ -7,7 +7,23 @@ preset line boundaries using **--splitsize** or split automatically
 into a preset number of pieces using **--autosplit**.
 
 We include the **--hasheader** for use with csv files as we don't want
-to include the header line in any of the input files. 
+to include the header line in any of the input files.
+
+**--autosplit** *<number of splits*
+    Split a file into several chunks by looking at the first ten lines
+    and using that to work out the average line size. We then use that size
+    to determine how many lines each chunk needs to have to return *<number of splits>*
+    splits.
+
+**--hasheader**
+    lets the program know this file has a header line. We do not include
+    header lines in any of the split file outputs.
+
+**--splitsize** *<no of lines>*
+    Split a file into a specific number of chunks of size *<no of lines>*.
+
+**filename**
+    Name of file to split
 
 Created on 11 Aug 2017
 
@@ -34,6 +50,8 @@ determine the rough number of splits.
 
 if you use **--splitsize** then the file will be split 
 using **--splitsize** chunks until it is consumed.
+
+
 
 '''
     
