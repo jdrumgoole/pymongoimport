@@ -4,4 +4,3 @@ type=str
 type=int
 [ Last Order]
 type=date
-format=%d-%b-%Y

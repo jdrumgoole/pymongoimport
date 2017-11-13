@@ -96,6 +96,9 @@ class FieldConfig(object):
         return self._delimiter
     
     def read(self, filename):
+        '''
+        Read fieldfile values into a dictionary without type conversion
+        '''
         
         fieldDict = OrderedDict()
         
@@ -201,7 +204,10 @@ class FieldConfig(object):
         conversion to use.
         '''
         v = v.strip()
-        if t == "int" : #Ints can be floats
+        
+        if t == "timestamp" :
+            v = datetime.datetime.fromtimestamp(int( v ))
+        elif t == "int" : #Ints can be floats
             try :
                 v = int( v)
             except ValueError :
@@ -322,6 +328,10 @@ class FieldConfig(object):
                 #print( i )
                 
                 i = i.strip() # strip out white space
+                if i.startswith( '"' ) :
+                    i = i.strip( '"' )
+                if i.startswith( "'" ) :
+                    i = i.strip( "'" )
                 i = i.replace( '$', '_') # not valid keys for mongodb
                 i = i.replace( '.', '_') # not valid keys for mongodb
                 ( _, t ) = FieldConfig.guess_type( value_line[ fieldCount ] )
