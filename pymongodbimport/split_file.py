@@ -37,7 +37,7 @@ import os
 from pymongodbimport.filesplitter import File_Splitter
 
 
-__VERSION__ = "0.2"
+__VERSION__ = "0.3"
 
 def split_file( *argv ):
     
@@ -50,9 +50,6 @@ determine the rough number of splits.
 
 if you use **--splitsize** then the file will be split 
 using **--splitsize** chunks until it is consumed.
-
-
-
 '''
     
     parser = argparse.ArgumentParser( usage=usage_message, version=__VERSION__ )

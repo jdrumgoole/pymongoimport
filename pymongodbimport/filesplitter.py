@@ -99,7 +99,7 @@ class File_Splitter( object ):
                     current_split_size = 0
                     self._files[ filename ] = self._files[ filename ] + len( line )
                     output_file.close()
-                    print( "file chunk: %s %i" % ( filename, split_size ))
+                    #print( "file chunk: %s %i" % ( filename, split_size ))
                     yield ( filename, split_size )
                     file_count = file_count + 1
                     ( output_file, filename ) = self.new_file( self._input_filename, file_count )

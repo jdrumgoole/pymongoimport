@@ -10,7 +10,7 @@ from collections import OrderedDict
 import time
 
 from pymongodbimport.filesplitter import File_Splitter
-from pymongodbimport.mongoimport import mongo_import
+from pymongodbimport.pymongoimport import mongo_import
 from pymongodbimport.logger import Logger
 from pymongodbimport.argparser import add_standard_args
 

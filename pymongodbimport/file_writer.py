@@ -10,6 +10,12 @@ import logging
 
 from pymongodbimport.restart import Restarter
 from pymongodbimport.logger import Logger
+from datetime import datetime, timedelta
+
+def seconds_to_duration( seconds ):
+    delta = timedelta( seconds=seconds )
+    d = datetime(1,1,1) + delta
+    return "%02d:%d:%02d:%02d" % (d.day-1, d.hour, d.minute, d.second)
 
 class File_Writer(object):
 
@@ -90,7 +96,7 @@ class File_Writer(object):
                     insert_list = []
                     timeNow = time.time()
                     if timeNow > timeStart + 1  :
-                        self._logger.info( "Input: '%s' : records written per second %i, records read: %i written: %i", filename, insertedThisQuantum, total_read, total_written )
+                        self._logger.info( "Input: '%s' : records written per second %i, total records written: %i", filename, insertedThisQuantum, total_written )
                         insertedThisQuantum = 0
                         timeStart = timeNow
                         
@@ -105,7 +111,8 @@ class File_Writer(object):
         finish = time.time()
         if restarter :
             restarter.finish()
-        self._logger.info( "Total elapsed time to upload '%s' : %.3f" , filename,finish - start )
+        self._logger.info( "Total elapsed time to upload '%s' : %s" , filename,seconds_to_duration( finish - start ))
+        
         return total_written
     
 #     def bulkWrite(self, filename  ):
