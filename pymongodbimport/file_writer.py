@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 def seconds_to_duration( seconds ):
     delta = timedelta( seconds=seconds )
     d = datetime(1,1,1) + delta
-    return "%02d:%d:%02d:%02d" % (d.day-1, d.hour, d.minute, d.second)
+    return "%02d:%02d:%02d:%02d" % (d.day-1, d.hour, d.minute, d.second)
 
 class File_Writer(object):
 

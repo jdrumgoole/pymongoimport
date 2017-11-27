@@ -108,7 +108,9 @@ def mongo_import( *argv ):
     
     parser = argparse.ArgumentParser( usage=usage_message, version= __VERSION__)
     parser = add_standard_args( parser )
-    args= parser.parse_args( *argv )    
+    print( "Argv: %s" % argv )
+    args= parser.parse_args( *argv )
+    print( "args: %s" % args )   
     return mainline_argsparsed( args )
     
 if __name__ == '__main__':

@@ -108,10 +108,10 @@ def multi_import( *argv ):
 
     try :
         for filename in files:
-            #log.info( "Processing '%s'", filename )
+            log.info( "Processing '%s'", filename[0] )
             process_count = process_count + 1
-            proc_name = filename
-            proc = Process( target=mongo_import, name=proc_name, args=child_args + [ "--logname", filename, "--silent", filename ] )
+            proc_name = filename[0]
+            proc = Process( target=mongo_import, name=proc_name, args=child_args + [ "--logname", filename[0], "--silent", filename[0] ] )
             children[ proc_name ] = { "process" : proc }
             log.info( "starting sub process: %s", proc_name )
             children[ proc_name ][ "start" ] = time.time()

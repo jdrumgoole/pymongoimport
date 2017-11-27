@@ -31,7 +31,7 @@ def pwc( *argv ):
         print( "%i\t%s" % ( line_count, filename ))
         
     if len( args.filenames ) > 1 :
-        print( "%i\ttotal" % total_count )
+        print( "%i\total" % total_count )
             
 if __name__ == "__main__" :
     pwc( sys.argv[1:])
