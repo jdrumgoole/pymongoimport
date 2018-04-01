@@ -8,6 +8,7 @@ from pymongodbimport.version import __VERSION__
 
 from setuptools import setup, find_packages
 import os
+import glob
 
 pyfiles = [ f for f in os.listdir( "." ) if f.endswith( ".py" ) ]
 
@@ -55,7 +56,9 @@ by the parser.
        
     packages=find_packages(),
 
-    data_files = [ ( "test", [ "test/*.ff", "test/*.csv", "test/*.txt"])],
+    data_files = [ ( "test", glob.glob( "test/*.ff" ) +
+                             glob.glob( "test/*.csv" ) +
+                             glob.glob( "test/*.txt" ))],
 
     entry_points={
         'console_scripts': [
