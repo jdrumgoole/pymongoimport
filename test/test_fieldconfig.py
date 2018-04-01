@@ -69,7 +69,9 @@ class Test(unittest.TestCase):
         self.assertEqual( fc_filename, "test/inventory.xx")
         fc_filename = FieldConfig.generate_field_filename( 'test/inventory.csv' )
         self.assertEqual( fc_filename, "test/inventory.ff")
-        
+
+        os.unlink( "test/inventory.ff")
+
     def test_dict_reader(self):
         fc_filename = FieldConfig.generate_field_file( "test/inventory.csv" )
         fc = FieldConfig( fc_filename )

@@ -38,7 +38,10 @@ class Test(unittest.TestCase):
         splitter = File_Splitter( __file__, hasheader=False )
         files = list( splitter.autosplit( 2 ))
         self.assertGreaterEqual( len( files ), 1 )
-            
+        for f in files:
+            os.unlink( f[0] )
+
+
     def test_get_average_line_size(self):
         self.assertEqual( 10, File_Splitter.get_average_line_size( "test/tenlines.txt" ))
         
