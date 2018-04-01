@@ -31,7 +31,7 @@ class FileProcessor( object ):
         if field_filename :
             self._logger.info( "using field file: '%s'", field_filename )
         else:
-            field_filename = os.path.splitext(os.path.basename( input_filename ))[0] + ".ff" 
+            field_filename = os.path.splitext( input_filename )[0] + ".ff"
             
         fieldConfig = FieldConfig( field_filename, self._delimiter, hasheader, self._gen_id, self._onerror )
     

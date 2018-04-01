@@ -20,6 +20,7 @@ class Test(unittest.TestCase):
 
     def tearDown(self):
         self._col.drop()
+        pass
 
 
     def test_fileprocessor(self):
@@ -31,11 +32,11 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         fp = FileProcessor( self._col, ','  )
         try:
-            fp.processOneFile( "uk_property_prices.csv" )
+            fp.processOneFile( "test/uk_property_prices.csv" )
         except pymongo.errors.BulkWriteError as e :
             print( e )
             raise ;
-        lines = File_Splitter.count_lines( "uk_property_prices.csv")
+        lines = File_Splitter.count_lines( "test/uk_property_prices.csv")
         self.assertEqual( lines, self._col.count() - start_count )
 
         self.assertTrue( self._col.find_one( { "Postcode" : "NG10 5NN"}) )
@@ -44,18 +45,18 @@ class Test(unittest.TestCase):
 
         start_count = self._col.count()
         fp=FileProcessor( self._col, '|' )
-        fp.processOneFile("10k.txt")
-        lines = File_Splitter.count_lines( "10k.txt")
+        fp.processOneFile("test/10k.txt")
+        lines = File_Splitter.count_lines( "test/10k.txt")
         self.assertEqual(lines, self._col.count() - start_count)
         self.assertTrue( self._col.find_one({"TestID":114624}))
 
     def test_A_and_E_data(self):
         start_count = self._col.count()
-        fp = FileProcessor(self._col, ',')
-        fp.processOneFile(input_filename = "AandE_Data_2011-04-10.csv", hasheader=True)
-        lines = File_Splitter.count_lines( "AandE_Data_2011-04-10.csv")
+        fp = FileProcessor(self._col, ',', onerror="ignore")
+        fp.processOneFile(input_filename = "test/AandE_Data_2011-04-10.csv", hasheader=True )
+        lines = File_Splitter.count_lines( "test/AandE_Data_2011-04-10.csv")
         self.assertEqual( lines, self._col.count() - start_count + 1)
-        self.assertTrue( self._col.find_one( { "CODE" : "RA4"}) )
+        self.assertTrue( self._col.find_one( { "Code" : "RA4"}) )
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_fileprocessor']

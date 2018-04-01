@@ -15,10 +15,8 @@ class Test_split_file(unittest.TestCase):
     def setUp(self):
         pass
 
-
     def tearDown(self):
         pass
-
 
     def _compare_input_output(self, input_filename, output_filenames ):
         original_count = 0
@@ -35,12 +33,12 @@ class Test_split_file(unittest.TestCase):
                 os.unlink( filename )
                 
     def test_auto_split(self):
-        input_filename = "mot_test_set_small.csv"
+        input_filename = "test/mot_test_set_small.csv"
         filenames = split_file( [ "--autosplit", "2", input_filename ])
         self._compare_input_output(input_filename,  filenames )
         
     def test_split_size(self):
-        input_filename = "mot_test_set_small.csv"
+        input_filename = "test/mot_test_set_small.csv"
         filenames = split_file( [ "--splitsize", "50", input_filename ])
         self._compare_input_output(input_filename,  filenames )
         filenames = split_file( [ "--splitsize", "1", input_filename ])

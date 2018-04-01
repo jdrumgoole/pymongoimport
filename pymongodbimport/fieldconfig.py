@@ -258,7 +258,7 @@ class FieldConfig(object):
                     self._line_count = self._record_count
                 #self._logger.warn( "value for field '%s' at line %i is None which is not valid", k, self._line_count )
                 raise ValueError( "value for field '%s' at line %i is None which is not valid (wrong delimiter?)" % (k, self._line_count))
-            if k.startswith( "blank-" ): #ignore blank- columns
+            if k.startswith( "blank-" ) and self._onerror == "warn" : #ignore blank- columns
                 self._logger.info( "Field %i is blank [blank-] : ignoring", fieldCount )
                 continue
             
@@ -304,7 +304,7 @@ class FieldConfig(object):
         
         if not ext.startswith( '.'):
             ext = "." + ext
-        return os.path.splitext( os.path.basename( path ))[0] + ext
+        return os.path.splitext( path )[0] + ext
         
     @staticmethod
     def generate_field_file( path, delimiter=",", ext=".ff"):

@@ -54,7 +54,9 @@ by the parser.
     install_requires = [  "pymongo", "mongodb_utils", "nose" ],
        
     packages=find_packages(),
-    
+
+    data_files = [ ( "test", [ "test/*.ff", "test/*.csv", "test/*.txt"])],
+
     entry_points={
         'console_scripts': [
             'pymongoimport=pymongodbimport.pymongoimport:mongo_import',

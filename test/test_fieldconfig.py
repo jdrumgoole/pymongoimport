@@ -30,14 +30,14 @@ class Test(unittest.TestCase):
         pass
 
     def test_FieldConfig(self ):
-        fc = FieldConfig( "test_fieldconfig.ff" )
+        fc = FieldConfig( "test/test_fieldconfig.ff" )
         
         self.assertEqual( len( fc.fields()), 4 )
         
         self.assertEqual( fc.fields()[0], "Test 1")
         self.assertEqual( fc.fields()[3], "Test 4")
 
-        fc = FieldConfig( "uk_property_prices.ff")
+        fc = FieldConfig( "test/uk_property_prices.ff")
 
         self.assertEqual(len( fc.fields()), 15)
 
@@ -47,33 +47,33 @@ class Test(unittest.TestCase):
 
     def test_delimiter_no_header(self):
         start_count = self._col.count()
-        fc = FieldConfig( "10k.ff", delimiter='|', hasheader=False )
+        fc = FieldConfig("test/10k.ff", delimiter='|', hasheader=False)
         bw = BulkWriter( self._col, fc )
-        bw.insert_file( "10k.txt" )
+        bw.insert_file( "test/10k.txt" )
         self.assertEqual( self._col.count() - start_count, 10000 )
 
         
     def test_delimiter_header(self):
         start_count = self._col.count()
-        fc = FieldConfig( "AandE_Data_2011-04-10.ff", delimiter=',', hasheader=True )
+        fc = FieldConfig( "test/AandE_Data_2011-04-10.ff", delimiter=',', hasheader=True )
         bw = BulkWriter( self._col, fc )
-        bw.insert_file( "AandE_Data_2011-04-10.csv")
+        bw.insert_file( "test/AandE_Data_2011-04-10.csv")
         self.assertEqual( self._col.count() - start_count, 300 )
         
     def test_generate_field_filename(self):
-        fc_filename = FieldConfig.generate_field_filename( 'inventory.csv' )
-        self.assertEqual( fc_filename, "inventory.ff")
-        fc_filename = FieldConfig.generate_field_filename( 'inventory.csv', ext="xx" )
-        self.assertEqual( fc_filename, "inventory.xx")
-        fc_filename = FieldConfig.generate_field_filename( 'inventory.csv', ext=".xx" )
-        self.assertEqual( fc_filename, "inventory.xx")
-        fc_filename = FieldConfig.generate_field_filename( 'inventory.csv' )
-        self.assertEqual( fc_filename, "inventory.ff")
+        fc_filename = FieldConfig.generate_field_filename( 'test/inventory.csv' )
+        self.assertEqual( fc_filename, "test/inventory.ff")
+        fc_filename = FieldConfig.generate_field_filename( 'test/inventory.csv', ext="xx" )
+        self.assertEqual( fc_filename, "test/inventory.xx")
+        fc_filename = FieldConfig.generate_field_filename( 'test/inventory.csv', ext=".xx" )
+        self.assertEqual( fc_filename, "test/inventory.xx")
+        fc_filename = FieldConfig.generate_field_filename( 'test/inventory.csv' )
+        self.assertEqual( fc_filename, "test/inventory.ff")
         
     def test_dict_reader(self):
-        fc_filename = FieldConfig.generate_field_file( "inventory.csv" )
+        fc_filename = FieldConfig.generate_field_file( "test/inventory.csv" )
         fc = FieldConfig( fc_filename )
-        with open( "inventory.csv", "rU")  as f :
+        with open( "test/inventory.csv", "rU")  as f :
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader( f )
@@ -82,8 +82,8 @@ class Test(unittest.TestCase):
                     self.assertTrue( field in row )
 
 
-        fc = FieldConfig( "uk_property_prices.ff")
-        with open( "uk_property_prices.csv", "rU")  as f :
+        fc = FieldConfig( "test/uk_property_prices.ff")
+        with open( "test/uk_property_prices.csv", "rU")  as f :
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader( f )
@@ -95,19 +95,19 @@ class Test(unittest.TestCase):
                 
     def test_generate_fieldfile(self):
         
-        fc_filename = FieldConfig.generate_field_file( "inventory.csv", ext="testff" )
-        self.assertTrue( os.path.isfile( "inventory.testff"))
+        fc_filename = FieldConfig.generate_field_file( "test/inventory.csv", ext="testff" )
+        self.assertTrue( os.path.isfile( "test/inventory.testff"))
         fc = FieldConfig( fc_filename, hasheader=True)
 
         start_count = self._col.count()
         writer = BulkWriter( self._col, fc )
-        writer.insert_file( "inventory.csv" )
-        line_count = File_Splitter.count_lines( "inventory.csv")
+        writer.insert_file( "test/inventory.csv" )
+        line_count = File_Splitter.count_lines( "test/inventory.csv")
         self.assertEqual(self._col.count() - start_count, line_count -1) # header must be subtracted
 
-        os.unlink( "inventory.testff")
+        os.unlink( "test/inventory.testff")
         
-        with open( "inventory.csv", "rU")  as f :
+        with open( "test/inventory.csv", "rU")  as f :
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader( f )
@@ -122,16 +122,16 @@ class Test(unittest.TestCase):
                     
             
     def test_date(self):
-        fc = FieldConfig( "inventory_dates.ff", hasheader=True)
+        fc = FieldConfig( "test/inventory_dates.ff", hasheader=True)
 
         start_count = self._col.count()
         writer = BulkWriter( self._col, fc )
-        writer.insert_file( "inventory.csv" )
-        line_count = File_Splitter.count_lines( "inventory.csv")
+        writer.insert_file( "test/inventory.csv" )
+        line_count = File_Splitter.count_lines( "test/inventory.csv")
         self.assertEqual( self._col.count() - start_count, line_count -1 ) # header must be subtracted
 
 
-        with open( "inventory.csv", "rU")  as f :
+        with open( "test/inventory.csv", "rU")  as f :
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader( f )
@@ -151,7 +151,7 @@ class Test(unittest.TestCase):
         #print( "fields: %s" % f.fields())
 
     def testFieldDict(self):
-        f = FieldConfig( "testresults.ff", delimiter="|")
+        f = FieldConfig( "test/testresults.ff", delimiter="|")
         d = f.fieldDict()
         self.assertTrue( d.has_key("TestID"))
         self.assertTrue( d.has_key("FirstUseDate"))
