@@ -1,8 +1,6 @@
-'''
-Created on 11 Aug 2017
-
+"""
 @author: jdrumgoole
-'''
+"""
 import argparse
 import sys
 from multiprocessing import Process
@@ -13,6 +11,7 @@ from pymongodbimport.filesplitter import File_Splitter
 from pymongodbimport.pymongoimport import mongo_import
 from pymongodbimport.logger import Logger
 from pymongodbimport.argparser import add_standard_args
+from pymongodbimport.version import __VERSION__
 
   
 def strip_arg( arg_list, remove_arg, has_trailing=False ):
@@ -39,16 +38,14 @@ def strip_arg( arg_list, remove_arg, has_trailing=False ):
     return arg_list       
 
 def multi_import( *argv ):
-    '''
+    """
 .. function:: mutlti_import ( *argv )
 
    Import CSV files using multiprocessing
 
    :param argv: list of command lines
 
-   '''
-    
-    __VERSION__ = "0.1"
+   """
     
     usage_message = '''
     
@@ -111,7 +108,10 @@ def multi_import( *argv ):
             log.info( "Processing '%s'", filename[0] )
             process_count = process_count + 1
             proc_name = filename[0]
-            proc = Process( target=mongo_import, name=proc_name, args=child_args + [ "--logname", filename[0], "--silent", filename[0] ] )
+            # need to turn args to Process into a tuple )
+            child_args.extend( [ "--logname", filename[0], "--silent", filename[0] ] )
+
+            proc = Process( target=mongo_import, name=proc_name, args=tuple( child_args ))
             children[ proc_name ] = { "process" : proc }
             log.info( "starting sub process: %s", proc_name )
             children[ proc_name ][ "start" ] = time.time()

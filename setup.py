@@ -3,6 +3,9 @@ Created on 25 Jul 2017
 
 @author: jdrumgoole
 '''
+
+from pymongodbimport.version import __VERSION__
+
 from setuptools import setup, find_packages
 import os
 
@@ -11,7 +14,7 @@ pyfiles = [ f for f in os.listdir( "." ) if f.endswith( ".py" ) ]
     
 setup(
     name = "pymongoimport",
-    version = "1.4.2",
+    version =__VERSION__,
     
     author = "Joe Drumgoole",
     author_email = "joe@joedrumgoole.com",

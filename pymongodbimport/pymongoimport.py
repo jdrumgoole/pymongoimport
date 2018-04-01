@@ -15,69 +15,69 @@ import sys
 
 import pymongo
 from pymongo.write_concern import WriteConcern
-from pymongodbimport.fileprocessor import FileProcessor 
+from pymongodbimport.fileprocessor import FileProcessor
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.argparser import add_standard_args
 from pymongodbimport.logger import Logger
+from pymongodbimport.version import __VERSION__
 
-def mainline_argsparsed( args ):
+
+def mainline_argsparsed(args):
     '''
     Expects the output of parse_args.
     '''
-    
-    log = Logger( args.logname, args.loglevel ).log()
-    Logger.add_file_handler( args.logname  )
-    
+
+    log = Logger(args.logname, args.loglevel).log()
+    Logger.add_file_handler(args.logname)
+
     if not args.silent:
-        Logger.add_stream_handler( args.logname )
-    
-    log.info( "Started pymongodbimport")
-    log.info( "Write concern : %i", args.writeconcern )
-    log.info( "journal       : %i", args.journal )
-    log.info( "fsync         : %i", args.fsync )
-    if args.writeconcern == 0 : # pymongo won't allow other args with w=0 even if they are false
-        client = pymongo.MongoClient( args.host, w=args.writeconcern )
+        Logger.add_stream_handler(args.logname)
+
+    log.info("Started pymongodbimport")
+    log.info("Write concern : %i", args.writeconcern)
+    log.info("journal       : %i", args.journal)
+    log.info("fsync         : %i", args.fsync)
+    if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
+        client = pymongo.MongoClient(args.host, w=args.writeconcern)
     else:
-        client = pymongo.MongoClient( args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal )
-    database = client[ args.database ]
-    collection = database[ args.collection ]
-                
-    if args.genfieldfile :
+        client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
+    database = client[args.database]
+    collection = database[args.collection]
+
+    if args.genfieldfile:
         args.hasheader = True
-        
-    if args.drop :
-        if args.restart :
-            log.info( "Warning --restart overrides --drop ignoring drop commmand")
+
+    if args.drop:
+        if args.restart:
+            log.info("Warning --restart overrides --drop ignoring drop commmand")
         else:
-            database.drop_collection( args.collection )
-            log.info( "dropped collection: %s.%s", args.database, args.collection )
-         
-    if args.genfieldfile :
-        for i in args.filenames :
-            fc_filename = FieldConfig.generate_field_file( i, args.delimiter )
-            log.info( "Creating '%s' from '%s'", fc_filename, i )
-        sys.exit( 0 )
-    elif args.filenames:   
-        log.info(  "Using database: %s, collection: %s", args.database, args.collection )
-        #log.info( "processing %i files", len( args.filenames ))
-    
-        if args.batchsize < 1 :
-            log.warn( "Chunksize must be 1 or more. Chunksize : %i", args.batchsize )
-            sys.exit( 1 )
-        try :
-            file_processor = FileProcessor( collection, args.delimiter, args.onerror, args.id, args.batchsize )
-            file_processor.processFiles( args.filenames, args.hasheader, args.fieldfile, args.restart )
-        except KeyboardInterrupt :
-            log.warn( "exiting due to keyboard interrupt...")
+            database.drop_collection(args.collection)
+            log.info("dropped collection: %s.%s", args.database, args.collection)
+
+    if args.genfieldfile:
+        for i in args.filenames:
+            fc_filename = FieldConfig.generate_field_file(i, args.delimiter)
+            log.info("Creating '%s' from '%s'", fc_filename, i)
+        sys.exit(0)
+    elif args.filenames:
+        log.info("Using database: %s, collection: %s", args.database, args.collection)
+        # log.info( "processing %i files", len( args.filenames ))
+
+        if args.batchsize < 1:
+            log.warn("Chunksize must be 1 or more. Chunksize : %i", args.batchsize)
+            sys.exit(1)
+        try:
+            file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)
+            file_processor.processFiles(args.filenames, args.hasheader, args.fieldfile, args.restart)
+        except KeyboardInterrupt:
+            log.warn("exiting due to keyboard interrupt...")
     else:
-        log.info( "No input files: Nothing to do") 
-        
+        log.info("No input files: Nothing to do")
+
     return 1
 
-def mongo_import( *argv ):
-    
-    __VERSION__ = "1.4.1"
-    
+
+def mongo_import(*argv):
     '''
     Expect to recieve sys.argv or similar
     
@@ -91,7 +91,7 @@ def mongo_import( *argv ):
     Completed processing : test_set_small.txt, (100 records)
     Processed test_set_small.txt
     '''
-    
+
     usage_message = '''
     
     pymongodbimport is a python program that will import data into a mongodb
@@ -105,14 +105,15 @@ def mongo_import( *argv ):
     
     python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     '''
-    
-    parser = argparse.ArgumentParser( usage=usage_message, version= __VERSION__)
-    parser = add_standard_args( parser )
-    print( "Argv: %s" % argv )
-    args= parser.parse_args( *argv )
-    print( "args: %s" % args )   
-    return mainline_argsparsed( args )
-    
+
+    parser = argparse.ArgumentParser(usage=usage_message, version=__VERSION__)
+    parser = add_standard_args(parser)
+    # print( "Argv: %s" % argv )
+    #print(argv)
+    args = parser.parse_args(*argv)
+    #print("args: %s" % args)
+    return mainline_argsparsed(args)
+
+
 if __name__ == '__main__':
-    
-    mongo_import( sys.argv[1:] )
+    mongo_import(tuple( sys.argv[1:]))

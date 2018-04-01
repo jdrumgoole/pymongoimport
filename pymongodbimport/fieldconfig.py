@@ -187,7 +187,7 @@ class FieldConfig(object):
             pass
         
         try :
-            v = parse( s )
+            v = parse( s ) #dateutil.parse.parser
             return ( v, "datetime" )
         except ValueError:
             pass
@@ -209,7 +209,8 @@ class FieldConfig(object):
             v = datetime.datetime.fromtimestamp(int( v ))
         elif t == "int" : #Ints can be floats
             try :
-                v = int( v)
+                #print( "converting : '%s' to int" % v )
+                v = int(v)
             except ValueError :
                 v = float( v )
         elif t == "float" :
@@ -226,7 +227,7 @@ class FieldConfig(object):
         
         return v
     
-    def createDoc( self, dictEntry  ):
+    def createDoc(self, dictEntry):
         
         '''
         WIP
@@ -243,10 +244,11 @@ class FieldConfig(object):
         if self._timestamp == "gen" :
             doc[ 'timestamp' ] = datetime.utcnow()
             
-        #print( dictEntry )
+        #print( "dictEntry: %s" % dictEntry )
         fieldCount = 0
         for k in self.fields() :
-            #print( k )
+            #print( "field: %s" % k )
+            #print( "value: %s" % dictEntry[ k ])
             fieldCount = fieldCount + 1
             
             if dictEntry[ k ] is None:

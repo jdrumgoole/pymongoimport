@@ -26,7 +26,7 @@ class FileProcessor( object ):
         self._gen_id = gen_id
         self._batchsize = batchsize 
         
-    def processOneFile( self, input_filename, field_filename, hasheader, restart ):
+    def processOneFile( self, input_filename, field_filename=None, hasheader=False, restart=False ):
             
         if field_filename :
             self._logger.info( "using field file: '%s'", field_filename )
@@ -39,7 +39,7 @@ class FileProcessor( object ):
         totalWritten = fw.insert_file( input_filename, restart )
         return totalWritten 
     
-    def processFiles( self, filenames, hasheader, field_filename, restart ):
+    def processFiles( self, filenames, field_filename=None, hasheader=False, restart=False ):
         
         totalCount = 0
         lineCount = 0
