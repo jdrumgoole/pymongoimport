@@ -6,6 +6,10 @@ import sys
 from multiprocessing import Process
 from collections import OrderedDict
 import time
+import copy
+import os
+import pymongo
+
 
 from pymongodbimport.filesplitter import File_Splitter
 from pymongodbimport.pymongoimport import mongo_import
@@ -57,10 +61,10 @@ def multi_import( *argv ):
     
     parser = argparse.ArgumentParser( usage=usage_message, version=__VERSION__ )
     parser = add_standard_args( parser )
-    parser.add_argument( "--autosplit", type=int, default=1,
+    parser.add_argument( "--autosplit", type=int,
                          help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
-    parser.add_argument( "--splitsize", type=int, default=10000, help="Split file into chunks of this size [default : %(default)s]" )
- 
+    parser.add_argument( "--splitsize", type=int, help="Split file into chunks of this size [default : %(default)s]" )
+
     args= parser.parse_args( *argv )
     
     log = Logger( "multiimport" ).log()
@@ -76,7 +80,7 @@ def multi_import( *argv ):
         log.info( "no input file to split")
         sys.exit( 0 )
     
-    if args.autosplit or args.split_size :    
+    if args.autosplit or args.splitsize :
         if len( args.filenames) > 1 :
                 log.warn( "More than one input file specified ( '%s' ) only splitting the first file:'%s'", 
                        " ".join( args.filenames ), args.filenames[ 0 ] )
@@ -86,39 +90,51 @@ def multi_import( *argv ):
             child_args = strip_arg( child_args, "--splitsize", True )
         
 
-            splitter = File_Splitter( args.filenames[ 0 ], args.hasheader )
-            process_count = 0
-    
-        for i in args.filenames: # get rid of old filenames
-            child_args = strip_arg( child_args, i, False )
-        
+        splitter = File_Splitter( args.filenames[ 0 ], args.hasheader )
+
+    for i in args.filenames: # get rid of old filenames
+        child_args = strip_arg( child_args, i, False )
+
     if args.autosplit:
         log.info( "Autosplitting file: '%s' into (approx) %i chunks", args.filenames[ 0 ], args.autosplit )
         files = splitter.autosplit( args.autosplit )
-    elif args.splitsize:
+    elif args.splitsize > 0 :
         log.info( "Splitting file: '%s' into %i line chunks", args.filenames[ 0 ], args.splitsize )
         files = splitter.split_file( args.splitsize )
     else:
-        files = args.filenames
-        
+        files=[]
+        for i in args.filenames :
+            files.append( ( i, os.path.getsize( i )))
+
+    if args.restart:
+        log.info( "Ignoring --drop overridden by --restart")
+    elif args.drop:
+        client = pymongo.MongoClient(args.host )
+        log.info( "Dropping database : %s", args.database )
+        client.drop_database(  args.database )
+        child_args = strip_arg( child_args, args.drop )
+
     start = time.time()
 
+    process_count=0
     try :
         for filename in files:
             log.info( "Processing '%s'", filename[0] )
             process_count = process_count + 1
             proc_name = filename[0]
             # need to turn args to Process into a tuple )
-            child_args.extend( [ "--logname", filename[0], "--silent", filename[0] ] )
-
-            proc = Process( target=mongo_import, name=proc_name, args=tuple( child_args ))
+            new_args = copy.deepcopy( child_args )
+            #new_args.extend( [ "--logname", filename[0], filename[0] ] )
+            new_args.extend([filename[0]])
+            proc = Process( target=mongo_import, name=proc_name, args=(new_args, ))
+            proc.daemon = True
             children[ proc_name ] = { "process" : proc }
             log.info( "starting sub process: %s", proc_name )
             children[ proc_name ][ "start" ] = time.time()
             proc.start()
             
         for i in children.keys():
-            #log.info( "Waiting for process: '%s' to complete" , i )
+            log.info( "Waiting for process: '%s' to complete" , i )
             children[ i ][ "process" ].join()
             children[ i ][ "end" ] = time.time()
             log.info( "elapsed time for process %s : %f", i, children[ i ][ "end" ] - children[ i ][ "start"])

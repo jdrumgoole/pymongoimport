@@ -37,6 +37,11 @@ def mainline_argsparsed(args):
     log.info("Write concern : %i", args.writeconcern)
     log.info("journal       : %i", args.journal)
     log.info("fsync         : %i", args.fsync)
+    log.info("genfieldfile  : %s", args.genfieldfile )
+    if args.genfieldfile:
+        args.hasheader = True
+        log.info( "Forcing hasheader true for --genfieldfile")
+    log.info("hasheader     : %s", args.hasheader)
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
         client = pymongo.MongoClient(args.host, w=args.writeconcern)
     else:
@@ -44,8 +49,7 @@ def mainline_argsparsed(args):
     database = client[args.database]
     collection = database[args.collection]
 
-    if args.genfieldfile:
-        args.hasheader = True
+
 
     if args.drop:
         if args.restart:
@@ -68,7 +72,10 @@ def mainline_argsparsed(args):
             sys.exit(1)
         try:
             file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)
-            file_processor.processFiles(args.filenames, args.hasheader, args.fieldfile, args.restart)
+            file_processor.processFiles( filenames=args.filenames,
+                                         field_filename=args.fieldfile,
+                                         hasheader=args.hasheader,
+                                         restart=args.restart)
         except KeyboardInterrupt:
             log.warn("exiting due to keyboard interrupt...")
     else:
@@ -77,9 +84,9 @@ def mainline_argsparsed(args):
     return 1
 
 
-def mongo_import(*argv):
+def mongo_import(arglist):
     '''
-    Expect to recieve sys.argv or similar
+    Expect to recieve an array of args
     
     1.3 : Added lots of support for the NHS Public Data sets project. --addfilename and --addtimestamp.
     Also we now fail back to string when type conversions fail.
@@ -106,11 +113,13 @@ def mongo_import(*argv):
     python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     '''
 
+    if arglist:
+        print( "args %s" % str(arglist))
     parser = argparse.ArgumentParser(usage=usage_message, version=__VERSION__)
     parser = add_standard_args(parser)
     # print( "Argv: %s" % argv )
     #print(argv)
-    args = parser.parse_args(*argv)
+    args = parser.parse_args(arglist)
     #print("args: %s" % args)
     return mainline_argsparsed(args)
 
