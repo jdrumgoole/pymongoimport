@@ -119,7 +119,6 @@ def multi_import( *argv ):
     process_count=0
     try :
         for filename in files:
-            log.info( "Processing '%s'", filename[0] )
             process_count = process_count + 1
             proc_name = filename[0]
             # need to turn args to Process into a tuple )
@@ -127,6 +126,7 @@ def multi_import( *argv ):
             #new_args.extend( [ "--logname", filename[0], filename[0] ] )
             new_args.extend([filename[0]])
             proc = Process( target=mongo_import, name=proc_name, args=(new_args, ))
+            log.info( "Processing '%s'", filename[0] )
             proc.daemon = True
             children[ proc_name ] = { "process" : proc }
             log.info( "starting sub process: %s", proc_name )
