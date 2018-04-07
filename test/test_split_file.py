@@ -21,9 +21,9 @@ class Test_split_file(unittest.TestCase):
     def _compare_input_output(self, input_filename, output_filenames ):
         original_count = 0
         file_piece_count = 0
-        with  open( input_filename, "rU") as original_file :
+        with  open( input_filename, "r") as original_file :
             for filename in File_Splitter.shim_names( output_filenames ):
-                with open( filename, "rU") as file_piece:
+                with open( filename, "r") as file_piece:
                     for line in file_piece:
                         left = original_file.readline()
                         original_count = original_count + 1 

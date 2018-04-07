@@ -59,7 +59,7 @@ class File_Writer(object):
         start = time.time()
         total_written = 0
         results = None
-        with open( filename, "rU") as f :
+        with open( filename, "r") as f :
             
             timeStart = time.time() 
             insertedThisQuantum = 0
@@ -123,7 +123,7 @@ class File_Writer(object):
 #         self._totalWritten = all the lines written to MongoDB. We can't restart bulkWrites because
 #         we don't know the id of the last object written.
 #         '''
-#         with open( filename, "rU") as f :
+#         with open( filename, "r") as f :
 #             
 #             BulkWriter.skipLines( f, self._currentLine )
 #  

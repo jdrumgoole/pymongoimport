@@ -18,9 +18,9 @@ type=int
 type=int
 [Type 1 Departments - Major A&E | A&E attendances > 4 hours from arrival to admission transfer or discharge]
 type=int
-[Type 2 Departments - Single Specialty]
+[Type 2 Departments  2 - Single Specialty]
 type=int
-[Type 3 Departments - Other A&E/Minor Injury Unit]
+[Type 3 Departments  2 - Other A&E/Minor Injury Unit]
 type=int
 [Percentage in 4 hours or less (type 1)]
 type=float

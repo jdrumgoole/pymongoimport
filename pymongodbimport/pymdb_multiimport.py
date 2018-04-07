@@ -12,7 +12,7 @@ import pymongo
 
 
 from pymongodbimport.filesplitter import File_Splitter
-from pymongodbimport.pymongoimport import mongo_import
+from pymongodbimport.pymdb_import import mongo_import
 from pymongodbimport.logger import Logger
 from pymongodbimport.argparser import add_standard_args
 from pymongodbimport.version import __VERSION__
@@ -59,7 +59,7 @@ def multi_import( *argv ):
     Each file is uplaoded by a separate pymongoimport subprocess. 
     '''
     
-    parser = argparse.ArgumentParser( usage=usage_message, version=__VERSION__ )
+    parser = argparse.ArgumentParser( usage=usage_message)
     parser = add_standard_args( parser )
     parser.add_argument( "--autosplit", type=int,
                          help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")

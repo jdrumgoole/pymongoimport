@@ -8,7 +8,7 @@ import os
 
 import pymongo
 from pymongodbimport.restart import Restarter
-from pymongodbimport.bulkwriter import BulkWriter
+from pymongodbimport.file_writer import File_Writer
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.root import Root
 
@@ -34,7 +34,7 @@ class Test(unittest.TestCase):
     def test_Restart(self):
         batch_size = 500
         fc = FieldConfig( self._root.root_path( "test", "10k.ff"), hasheader=False, delimiter="|")
-        bw = BulkWriter( self._collection, fc, batch_size = batch_size )
+        bw = File_Writer( self._collection, fc, batch_size = batch_size )
         bw.insert_file( self._root.root_path( "test", "10k.txt"), restart=True )
         audit = self._db[ "audit"]
         self.assertEqual( audit.count(), 1 )

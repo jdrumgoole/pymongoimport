@@ -4,7 +4,7 @@ Created on 2 Mar 2016
 @author: jdrumgoole
 '''
 
-from ConfigParser import RawConfigParser
+from configparser import RawConfigParser
 from datetime import datetime
 import os
 import csv
@@ -317,7 +317,7 @@ class FieldConfig(object):
         
         with open( genfilename, "w") as genfile :
             #print( "The field file will be '%s'" % genfilename )
-            with open( path, "rU") as inputfile :
+            with open( path, "r") as inputfile :
                 header_line = inputfile.readline().rstrip().split( delimiter ) #strip newline
                 value_line  = inputfile.readline().rstrip().split( delimiter )
                 if len( header_line ) != len( value_line ):
