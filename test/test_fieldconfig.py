@@ -103,7 +103,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("test/inventory.csv")
-        line_count = File_Splitter.count_lines("test/inventory.csv")
+        line_count = File_Splitter("test/inventory.csv").count_lines()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
         os.unlink("test/inventory.testff")
@@ -127,7 +127,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("test/inventory.csv")
-        line_count = File_Splitter.count_lines("test/inventory.csv")
+        line_count = File_Splitter("test/inventory.csv").count_lines()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
         with open("test/inventory.csv", "r")  as f:

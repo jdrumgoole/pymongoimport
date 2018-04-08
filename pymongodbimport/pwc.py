@@ -25,13 +25,18 @@ def pwc( *argv ):
     
     line_count = 0
     total_count = 0
+    total_size = 0
+    size = 0
+    if args.filenames:
+        print( "lines\tbytes\tfilename")
     for filename in args.filenames:
-        line_count = File_Splitter.count_lines( filename )
+        (line_count, size) = File_Splitter.wc( filename )
         total_count = total_count + line_count
-        print( "%i\t%s" % ( line_count, filename ))
-        
+        total_size  = total_size  + size
+        print( "%i\t%i\t%s" % ( line_count, size, filename ))
     if len( args.filenames ) > 1 :
-        print( "%i\total" % total_count )
+
+        print( "%i\t%i\ttotal" % (total_count, total_size ))
             
 if __name__ == "__main__" :
     pwc( sys.argv[1:])
