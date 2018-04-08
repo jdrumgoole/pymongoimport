@@ -202,22 +202,22 @@ class File_Splitter(object):
                 self._header_line = input_file.readline()
 
             line = input_file.readline()
-            print( "Line type:%s" % repr(input_file.newlines))
+            #print( "Line type:%s" % repr(input_file.newlines))
             while line != "":
                 if current_split_size < split_size:
                     if current_split_size == 0:
                         file_count = file_count + 1
                         (output_file, filename) = self.new_file(self._input_filename, file_count)
-                        print( "init open:%s" % filename)
+                        #print( "init open:%s" % filename)
                 else:
                     assert current_split_size == split_size
                     output_file.close()
-                    print( "std close:%s" % filename)
+                    #print( "std close:%s" % filename)
                     yield (filename, current_split_size)
                     current_split_size = 0
                     file_count = file_count + 1
                     (output_file, filename) = self.new_file(self._input_filename, file_count)
-                    print("std open:%s" % filename)
+                    #print("std open:%s" % filename)
                 output_file.write(line)
                 current_split_size = current_split_size + 1
                 line = input_file.readline()
@@ -229,10 +229,10 @@ class File_Splitter(object):
 
         if current_split_size > 0: # if its zero we just closed the file and did a yield
             output_file.close()
-            print("final close:%s" % filename)
+            #print("final close:%s" % filename)
             yield (filename, current_split_size)
 
-        print("Exited: current_split_size: %i split_size: %i" % (current_split_size, split_size))
+        #print("Exited: current_split_size: %i split_size: %i" % (current_split_size, split_size))
 
     def file_type(self):
         return self._file_type
@@ -301,7 +301,7 @@ class File_Splitter(object):
 
                 self._split_size = int(round(total_lines / split_count))
 
-                print("Splitting '%s' into at least %i pieces of size %i" % (
+                #print("Splitting '%s' into at least %i pieces of size %i" % (
                 self._input_filename, split_count + 1, self._split_size))
                 for i in self.split_file(self._split_size):
                     yield i
