@@ -50,9 +50,9 @@ by the parser.
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2.7' ],
+        'Programming Language :: Python :: 3.6' ],
    
-    install_requires = [  "pymongo", "mongodb_utils", "nose" ],
+    install_requires = [  "pymongo", "mongodb_utils", "nose", "dnspython" ],
        
     packages=find_packages(),
 
@@ -60,6 +60,7 @@ by the parser.
                              glob.glob( "test/*.csv" ) +
                              glob.glob( "test/*.txt" ))],
 
+    scripts=[],
     entry_points={
         'console_scripts': [
             'pymdb_import=pymongodbimport.pymdb_import:mongo_import',

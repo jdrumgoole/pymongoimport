@@ -302,6 +302,6 @@ class File_Splitter(object):
                 self._split_size = int(round(total_lines / split_count))
 
                 #print("Splitting '%s' into at least %i pieces of size %i" % (
-                self._input_filename, split_count + 1, self._split_size))
+                #self._input_filename, split_count + 1, self._split_size))
                 for i in self.split_file(self._split_size):
                     yield i

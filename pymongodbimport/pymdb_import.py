@@ -21,12 +21,51 @@ from pymongodbimport.argparser import add_standard_args
 from pymongodbimport.logger import Logger
 
 
-def mainline_argsparsed(args):
+
+def mongo_import(input_args=None):
     """
-    Expects the output of parse_args.
+    Expect to recieve an array of args
+    
+    1.3 : Added lots of support for the NHS Public Data sets project. --addfilename and --addtimestamp.
+    Also we now fail back to string when type conversions fail.
+    
+    >>> mongo_import( [ 'test_set_small.txt' ] )
+    database: test, collection: test
+    files ['test_set_small.txt']
+    Processing : test_set_small.txt
+    Completed processing : test_set_small.txt, (100 records)
+    Processed test_set_small.txt
     """
 
+    usage_message = '''
+    
+    pymongodbimport is a python program that will import data into a mongodb
+    database (default 'test' ) and a mongodb collection (default 'test' ).
+    
+    Each file in the input list must correspond to a fieldfile format that is
+    common across all the files. The fieldfile is specified by the 
+    --fieldfile parameter.
+    
+    An example run:
+    
+    python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
+    '''
+
+    # if arglist:
+    #     print("args %s" % str(arglist))
+    parser = argparse.ArgumentParser(usage=usage_message)
+    parser = add_standard_args(parser)
+    # print( "Argv: %s" % argv )
+    # print(argv)
+
+    if input_args :
+        args = parser.parse_args( input_args )
+    else:
+        args = parser.parse_args(tuple(sys.argv[1:]))
+    # print("args: %s" % args)
+
     log = Logger(args.logname, args.loglevel).log()
+
     Logger.add_file_handler(args.logname)
 
     if not args.silent:
@@ -81,45 +120,5 @@ def mainline_argsparsed(args):
     return 1
 
 
-def mongo_import(arglist):
-    """
-    Expect to recieve an array of args
-    
-    1.3 : Added lots of support for the NHS Public Data sets project. --addfilename and --addtimestamp.
-    Also we now fail back to string when type conversions fail.
-    
-    >>> mainline_argsparsed( [ 'test_set_small.txt' ] )
-    database: test, collection: test
-    files ['test_set_small.txt']
-    Processing : test_set_small.txt
-    Completed processing : test_set_small.txt, (100 records)
-    Processed test_set_small.txt
-    """
-
-    usage_message = '''
-    
-    pymongodbimport is a python program that will import data into a mongodb
-    database (default 'test' ) and a mongodb collection (default 'test' ).
-    
-    Each file in the input list must correspond to a fieldfile format that is
-    common across all the files. The fieldfile is specified by the 
-    --fieldfile parameter.
-    
-    An example run:
-    
-    python pymongodbimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
-    '''
-
-    # if arglist:
-    #     print("args %s" % str(arglist))
-    parser = argparse.ArgumentParser(usage=usage_message)
-    parser = add_standard_args(parser)
-    # print( "Argv: %s" % argv )
-    # print(argv)
-    args = parser.parse_args(arglist)
-    # print("args: %s" % args)
-    return mainline_argsparsed(args)
-
-
 if __name__ == '__main__':
-    mongo_import(tuple(sys.argv[1:]))
+    mongo_import()
