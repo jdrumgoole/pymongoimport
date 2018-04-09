@@ -33,9 +33,9 @@ class Test(unittest.TestCase):
         
     def test_Restart(self):
         batch_size = 500
-        fc = FieldConfig( self._root.root_path( "test", "10k.ff"), hasheader=False, delimiter="|")
+        fc = FieldConfig( self._root.root_path( "data", "10k.ff"), hasheader=False, delimiter="|")
         bw = File_Writer( self._collection, fc, batch_size = batch_size )
-        bw.insert_file( self._root.root_path( "test", "10k.txt"), restart=True )
+        bw.insert_file( self._root.root_path( "data", "10k.txt"), restart=True )
         audit = self._db[ "audit"]
         self.assertEqual( audit.count(), 1 )
         audit_doc = audit.find_one()
@@ -46,7 +46,7 @@ class Test(unittest.TestCase):
         self.assertEqual( audit_doc[ "last_doc_id"], last_doc[ "_id"])
         self.assertEqual( audit_doc[ "count"], 10000 )
             
-        bw.insert_file( self._root.root_path( "test", "10k.txt"), restart=True )
+        bw.insert_file( self._root.root_path( "data", "10k.txt"), restart=True )
         
         
         self.assertEqual( audit.count(), 2 )

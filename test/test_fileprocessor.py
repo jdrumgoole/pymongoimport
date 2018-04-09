@@ -32,11 +32,11 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         fp = FileProcessor( self._col, ','  )
         try:
-            fp.processOneFile( "test/uk_property_prices.csv" )
+            fp.processOneFile( "data/uk_property_prices.csv" )
         except pymongo.errors.BulkWriteError as e :
             print( e )
             raise ;
-        lines = File_Splitter( "test/uk_property_prices.csv").count_lines()
+        lines = File_Splitter( "data/uk_property_prices.csv").count_lines()
         self.assertEqual( lines, self._col.count() - start_count )
 
         self.assertTrue( self._col.find_one( { "Postcode" : "NG10 5NN"}) )
@@ -45,16 +45,16 @@ class Test(unittest.TestCase):
 
         start_count = self._col.count()
         fp=FileProcessor( self._col, '|' )
-        fp.processOneFile("test/10k.txt")
-        lines = File_Splitter( "test/10k.txt").count_lines()
+        fp.processOneFile("data/10k.txt")
+        lines = File_Splitter( "data/10k.txt").count_lines()
         self.assertEqual(lines, self._col.count() - start_count)
         self.assertTrue( self._col.find_one({"TestID":114624}))
 
     def test_A_and_E_data(self):
         start_count = self._col.count()
         fp = FileProcessor(self._col, ',', onerror="ignore")
-        fp.processOneFile(input_filename = "test/AandE_Data_2011-04-10.csv", hasheader=True )
-        lines = File_Splitter( "test/AandE_Data_2011-04-10.csv").count_lines()
+        fp.processOneFile(input_filename = "data/AandE_Data_2011-04-10.csv", hasheader=True )
+        lines = File_Splitter( "data/AandE_Data_2011-04-10.csv").count_lines()
         self.assertEqual( lines, self._col.count() - start_count + 1)
         self.assertTrue( self._col.find_one( { "Code" : "RA4"}) )
 

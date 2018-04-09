@@ -56,9 +56,9 @@ by the parser.
        
     packages=find_packages(),
 
-    data_files = [ ( "test", glob.glob( "test/*.ff" ) +
-                             glob.glob( "test/*.csv" ) +
-                             glob.glob( "test/*.txt" ))],
+    data_files = [ ( "test", glob.glob( "data/*.ff" ) +
+                             glob.glob( "data/*.csv" ) +
+                             glob.glob( "data/*.txt" ))],
 
     scripts=[],
     entry_points={
