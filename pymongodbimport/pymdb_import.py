@@ -19,8 +19,7 @@ from pymongodbimport.fileprocessor import FileProcessor
 from pymongodbimport.fieldconfig import FieldConfig
 from pymongodbimport.argparser import add_standard_args
 from pymongodbimport.logger import Logger
-
-
+from pymongodbimport.audit import Audit
 
 def mongo_import(input_args=None):
     """
@@ -107,6 +106,10 @@ def mongo_import(input_args=None):
             log.warn("Chunksize must be 1 or more. Chunksize : %i", args.batchsize)
             sys.exit(1)
         try:
+            if args.audit:
+                audit = Audit(client)
+                audit.start_batch({ ""})
+
             file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)
             file_processor.processFiles(filenames=args.filenames,
                                         field_filename=args.fieldfile,
@@ -118,7 +121,6 @@ def mongo_import(input_args=None):
         log.info("No input files: Nothing to do")
 
     return 1
-
 
 if __name__ == '__main__':
     mongo_import()

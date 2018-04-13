@@ -52,5 +52,6 @@ def add_standard_args(parser):
                         help="Turn on journaling [default: %(default)s]")
     parser.add_argument('--fsync', default=False, action="store_true",
                         help="Sync all nodes to disk [default: %(default)s]")
+    parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
 
     return parser

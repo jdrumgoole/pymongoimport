@@ -52,7 +52,7 @@ by the parser.
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.6' ],
    
-    install_requires = [  "pymongo", "mongodb_utils", "nose", "dnspython" ],
+    install_requires = [  "pymongo", "mongodb_utils", "nose", "dnspython", "dateutils" ],
        
     packages=find_packages(),
 
