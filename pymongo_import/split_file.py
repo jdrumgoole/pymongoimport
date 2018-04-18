@@ -57,7 +57,7 @@ using **--splitsize** chunks until it is consumed.
     parser.add_argument("--autosplit", type=int,
                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
-                        help="Use header line for column names [default: %(default)s]")
+                        help="Ignore header when calculating splits")
     parser.add_argument("--splitsize", type=int, help="Split file into chunks of this size")
     parser.add_argument("filenames", nargs="*", help='list of files')
     args = parser.parse_args(*argv)

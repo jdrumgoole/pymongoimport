@@ -19,10 +19,10 @@ setup(
     
     author = "Joe Drumgoole",
     author_email = "joe@joedrumgoole.com",
-    description = "pymongoimport - a program for reading CSV files into mongodb",
+    description = "pymongo_import - a program for reading CSV files into mongodb",
     long_description =
     '''
-Pymongoimport is a program that can parse a csv file from its header and first line to
+Pymongo_import is a program that can parse a csv file from its header and first line to
 create an automated type conversion file (a .ff file) to control how types in the CSV
 file are converted. This file can be edited once created (it is a ConfigParser format file).
 For types that fail conversion the type conversion will fail back on string conversion.
@@ -67,9 +67,9 @@ by the parser.
     scripts=[],
     entry_points={
         'console_scripts': [
-            'pymongo_import=pymongo_import.pymdb_import:mongo_import',
+            'pymongo_import=pymongo_import.pymongo_import:mongo_import',
             'splitfile=pymongo_import.split_file:split_file',
-            'pymongo_multiimport=pymongo_import.pymdb_multiimport:multi_import',
+            'pymongo_multiimport=pymongo_import.pymongo_multiimport:multi_import',
             'pwc=pymongo_import.pwc:pwc',
         ]
     },
