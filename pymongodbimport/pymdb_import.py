@@ -58,9 +58,11 @@ def mongo_import(input_args=None):
     # print(argv)
 
     if input_args :
-        args = parser.parse_args( input_args )
+        cmd = input_args
+        args = parser.parse_args(cmd)
     else:
-        args = parser.parse_args(tuple(sys.argv[1:]))
+        cmd = tuple(sys.argv[1:])
+        args = parser.parse_args(cmd)
     # print("args: %s" % args)
 
     log = Logger(args.logname, args.loglevel).log()
@@ -79,6 +81,7 @@ def mongo_import(input_args=None):
         args.hasheader = True
         log.info("Forcing hasheader true for --genfieldfile")
     log.info("hasheader     : %s", args.hasheader)
+
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
         client = pymongo.MongoClient(args.host, w=args.writeconcern)
     else:
@@ -107,14 +110,19 @@ def mongo_import(input_args=None):
             sys.exit(1)
         try:
             if args.audit:
-                audit = Audit(client)
-                audit.start_batch({ ""})
+                log.info( "Auditing output")
+                audit = Audit(database)
+                batchID = audit.start_batch({"cmd" : str(cmd)})
 
             file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)
             file_processor.processFiles(filenames=args.filenames,
                                         field_filename=args.fieldfile,
                                         hasheader=args.hasheader,
                                         restart=args.restart)
+
+            if args.audit:
+                audit.end_batch(batchID)
+
         except KeyboardInterrupt:
             log.warn("exiting due to keyboard interrupt...")
     else:

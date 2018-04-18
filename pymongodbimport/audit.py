@@ -39,7 +39,7 @@ class Audit(object):
 
         self._lock = Lock()
         self._database = database
-        self._auditCollection = database[ "audit"]
+        self._auditCollection = self._database[ "audit"]
         self._open_batch_count = 0
 
     def collection(self):
@@ -55,7 +55,7 @@ class Audit(object):
                 continue
             yield i['batchID']
 
-    def start_batch(self, doc, name=None):
+    def start_batch(self, doc ):
         '''
         The hack at the start is just a way to handle the old an new way of counting batches
         once all the audit collections are past 100 we can remove this code.
