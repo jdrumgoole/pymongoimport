@@ -23,7 +23,7 @@ with each section defined by a name inside square brackets ( ``[`` and ``]`` ) a
 the section defined by ``key=value`` pairs.
 
 Here is an example CSV file 
-`inventory.csv <https://github.com/jdrumgoole/pymongodbimport/blob/master/test/inventory.csv>`_
+`inventory.csv <https://github.com/jdrumgoole/pymongo_import/blob/master/test/inventory.csv>`_
 defined by the following format,
 
 +-----------------+---------+---------------+

@@ -12,7 +12,7 @@ import logging
 import textwrap
 from dateutil.parser import parse
 
-from pymongodbimport.logger import Logger
+from pymongo_import.logger import Logger
 
 
 from collections import OrderedDict

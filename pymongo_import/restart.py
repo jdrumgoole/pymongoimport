@@ -7,7 +7,7 @@ from datetime import datetime
 import socket
 import sys
 
-from pymongodbimport.canonical_path import Canonical_Path
+from pymongo_import.canonical_path import Canonical_Path
 
 class Restarter(object):
     '''

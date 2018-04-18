@@ -9,10 +9,10 @@ import datetime
 
 import pymongo
 
-from pymongodbimport.fieldconfig import FieldConfig, FieldConfigException
-from pymongodbimport.logger import Logger
-from pymongodbimport.file_writer import File_Writer
-from pymongodbimport.filesplitter import File_Splitter
+from pymongo_import.fieldconfig import FieldConfig, FieldConfigException
+from pymongo_import.logger import Logger
+from pymongo_import.file_writer import File_Writer
+from pymongo_import.filesplitter import File_Splitter
 
 
 class Test(unittest.TestCase):

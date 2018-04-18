@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=pymongodbimport
+set SPHINXPROJ=pymongo_import
 
 if "%1" == "" goto help
 

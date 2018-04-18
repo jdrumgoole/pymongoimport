@@ -8,8 +8,8 @@ import time
 #import pprint
 import logging
 
-from pymongodbimport.restart import Restarter
-from pymongodbimport.logger import Logger
+from pymongo_import.restart import Restarter
+from pymongo_import.logger import Logger
 from datetime import datetime, timedelta
 
 def seconds_to_duration( seconds ):

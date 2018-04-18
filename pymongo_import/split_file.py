@@ -34,7 +34,7 @@ import argparse
 import sys
 import os
 
-from pymongodbimport.filesplitter import File_Splitter
+from pymongo_import.filesplitter import File_Splitter
 
 __VERSION__ = "0.3"
 

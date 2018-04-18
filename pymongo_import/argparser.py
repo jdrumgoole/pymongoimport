@@ -3,13 +3,13 @@ Created on 12 Aug 2017
 
 @author: jdrumgoole
 """
-from pymongodbimport.version import __VERSION__
-from pymongodbimport.logger import Logger
+from pymongo_import.version import __VERSION__
+from pymongo_import.logger import Logger
 
 
 def add_standard_args(parser):
     """
-    Construct parser for pymongodbimport return it as a list suitable for passing to the parents
+    Construct parser for pymongo_import return it as a list suitable for passing to the parents
     argument of the next parser
     """
 

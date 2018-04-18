@@ -6,7 +6,7 @@ Created on 13 Aug 2017
 import unittest
 import os
 
-from pymongodbimport.filesplitter import File_Splitter, File_Type
+from pymongo_import.filesplitter import File_Splitter, File_Type
 
 
 class Test(unittest.TestCase):

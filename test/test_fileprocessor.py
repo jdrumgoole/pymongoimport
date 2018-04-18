@@ -7,9 +7,9 @@ import unittest
 import pymongo
 import pymongo.errors
 
-from pymongodbimport.filesplitter import File_Splitter
+from pymongo_import.filesplitter import File_Splitter
 
-from pymongodbimport.fileprocessor import FileProcessor
+from pymongo_import.fileprocessor import FileProcessor
 
 class Test(unittest.TestCase):
 

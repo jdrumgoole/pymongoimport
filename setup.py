@@ -4,7 +4,7 @@ Created on 25 Jul 2017
 @author: jdrumgoole
 '''
 
-from pymongodbimport.version import __VERSION__
+from pymongo_import.version import __VERSION__
 
 from setuptools import setup, find_packages
 import os
@@ -14,7 +14,7 @@ pyfiles = [ f for f in os.listdir( "." ) if f.endswith( ".py" ) ]
 
     
 setup(
-    name = "pymongoimport",
+    name = "pymongo_import",
     version =__VERSION__,
     
     author = "Joe Drumgoole",
@@ -32,7 +32,7 @@ by the parser.
 
     license = "AGPL",
     keywords = "MongoDB import csv",
-    url = "https://github.com/jdrumgoole/pymongodbimport",
+    url = "https://github.com/jdrumgoole/pymongo_import",
     
     classifiers=[
         # How mature is this project? Common values are
@@ -67,10 +67,10 @@ by the parser.
     scripts=[],
     entry_points={
         'console_scripts': [
-            'pymdb_import=pymongodbimport.pymdb_import:mongo_import',
-            'splitfile=pymongodbimport.split_file:split_file',
-            'pymdb_multiimport=pymongodbimport.pymdb_multiimport:multi_import',
-            'pwc=pymongodbimport.pwc:pwc',
+            'pymdb_import=pymongo_import.pymdb_import:mongo_import',
+            'splitfile=pymongo_import.split_file:split_file',
+            'pymdb_multiimport=pymongo_import.pymdb_multiimport:multi_import',
+            'pwc=pymongo_import.pwc:pwc',
         ]
     },
 

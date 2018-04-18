@@ -15,7 +15,7 @@ in universal mode.
 
 import sys
 import argparse
-from pymongodbimport.filesplitter import File_Splitter
+from pymongo_import.filesplitter import File_Splitter
 
 
 def pwc( *argv ):

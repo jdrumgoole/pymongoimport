@@ -4,8 +4,8 @@ Created on 27 Aug 2017
 @author: jdrumgoole
 '''
 import unittest
-from pymongodbimport.split_file import split_file
-from pymongodbimport.filesplitter import File_Splitter
+from pymongo_import.split_file import split_file
+from pymongo_import.filesplitter import File_Splitter
 
 import os
 

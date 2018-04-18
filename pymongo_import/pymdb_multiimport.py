@@ -11,11 +11,10 @@ import os
 import pymongo
 
 
-from pymongodbimport.filesplitter import File_Splitter
-from pymongodbimport.pymdb_import import mongo_import
-from pymongodbimport.logger import Logger
-from pymongodbimport.argparser import add_standard_args
-from pymongodbimport.version import __VERSION__
+from pymongo_import.filesplitter import File_Splitter
+from pymongo_import.pymdb_import import mongo_import
+from pymongo_import.logger import Logger
+from pymongo_import.argparser import add_standard_args
 
   
 def strip_arg( arg_list, remove_arg, has_trailing=False ):

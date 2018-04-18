@@ -4,7 +4,7 @@ Created on 13-Apr-2018
 @author: jdrumgoole
 '''
 import pymongo
-from pymongodbimport.audit import Audit
+from pymongo_import.audit import Audit
 import unittest
 from dateutil.parser import parse
 

@@ -1,12 +1,12 @@
 '''
 ===============================
-Pymongodbimport
+pymongo_import
 ===============================
 
-pymongodbimport is a python program that will import data into a MongoDB
+pymongo_import is a python program that will import data into a MongoDB
 database (default 'test' ) and a MongoDB collection (default 'test' ).
  
-Why do we have pymongodbimport? 
+Why do we have pymongo_import?
 
 MongoDB already has a perfectly good (and much faster)
 `mongoimport <https://docs.mongodb.com/manual/reference/program/mongoimport/>`_ program 
@@ -14,18 +14,18 @@ that is available for free in the standard MongoDB `community download <https://
 
 Well pymonogodbimport does a few things that mongoimport doesn't do (yet). For people
 with new CSV files there is the ``--genfieldfile`` option which will automatically
-generate a typed field file for the specified input file. Even with a field file pymongodbimport
+generate a typed field file for the specified input file. Even with a field file pymongo_import
 will fall back to the string type if type conversion fails on any
 input column.
 
-Pymongodbimport also has the ability to restart  an upload from the
+pymongo_import also has the ability to restart  an upload from the
 point where is finished. This restart capability is recorded in an
 ``audit`` collection in the current database. And audit record is
 stored for each upload in progress and each completed upload. Thus the
 audit collection gives you a record of all uploads by filename and
 date time.
 
-Finally pymongodbimport is more forgiving of *dirty* data. So if your
+Finally pymongo_import is more forgiving of *dirty* data. So if your
 actual data doesn't match your field type definitions then the type
 converter will fall back to using a string type.
 
@@ -55,7 +55,7 @@ with each section defined by a name inside square brackets ( ``[`` and ``]`` ) a
 the section defined by ``key=value`` pairs.
 
 Here is an example CSV file 
-`inventory.csv <https://github.com/jdrumgoole/pymongodbimport/blob/master/test/inventory.csv>`_
+`inventory.csv <https://github.com/jdrumgoole/pymongo_import/blob/master/test/inventory.csv>`_
 defined by the following format,
 
 +-----------------+---------+---------------+

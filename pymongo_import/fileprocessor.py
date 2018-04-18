@@ -7,9 +7,9 @@ Created on 24 Jul 2017
 import os
 import logging
 
-from pymongodbimport.fieldconfig import FieldConfigException, FieldConfig
-from pymongodbimport.file_writer import File_Writer
-from pymongodbimport.logger import Logger
+from pymongo_import.fieldconfig import FieldConfigException, FieldConfig
+from pymongo_import.file_writer import File_Writer
+from pymongo_import.logger import Logger
 
 
 class InputFileException(Exception):

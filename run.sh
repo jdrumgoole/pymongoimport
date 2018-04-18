@@ -1,2 +1,2 @@
-export PROJECT_ROOT=$HOME/GIT/pymongodbimport
+export PROJECT_ROOT=$HOME/GIT/pymongo_import
 "$@"

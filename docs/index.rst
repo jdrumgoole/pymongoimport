@@ -1,17 +1,17 @@
-.. pymongodbimport documentation master file, created by
+.. pymongo_import documentation master file, created by
    sphinx-quickstart on Sun Aug 20 15:41:21 2017.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 ========================================================
-Pymongodbimport - Import csv files into MongoDB
+pymongo_import - Import csv files into MongoDB
 ========================================================
 
-Pymongodbimport is a collection of python programs for importing CSV
+pymongo_import is a collection of python programs for importing CSV
 files into `MongoDB <http://mongodb.com/>`_.
 
  
-Why do we have pymongodbimport? 
+Why do we have pymongo_import?
 
 MongoDB already has a perfectly good (and much faster)
 `mongoimport <https://docs.mongodb.com/manual/reference/program/mongoimport/>`_ program 
@@ -19,18 +19,18 @@ that is available for free in the standard MongoDB `community download <https://
 
 Well pymonogodbimport does a few things that mongoimport doesn't do (yet). For people
 with new CSV files there is the ``--genfieldfile`` option which will automatically
-generate a typed field file for the specified input file. Even with a field file pymongodbimport
+generate a typed field file for the specified input file. Even with a field file pymongo_import
 will fall back to the string type if type conversion fails on any
 input column.
 
-Pymongodbimport also has the ability to restart  an upload from the
+pymongo_import also has the ability to restart  an upload from the
 point where is finished. This restart capability is recorded in an
 ``audit`` collection in the current database. An audit record is
 stored for each upload in progress and each completed upload. Thus the
 audit collection gives you a record of all uploads by filename and
 date time.
 
-Finally pymongodbimport is more forgiving of *dirty* data. So if your
+Finally pymongo_import is more forgiving of *dirty* data. So if your
 actual data doesn't match your field type definitions then the type
 converter will fall back to using a string type.
 
@@ -43,7 +43,7 @@ product and because it is written in `Go <https://golang.org/>`_ it can use thre
 
 .. toctree::
    :maxdepth: 2
-   :caption: Pymongodbimport command-line programs:
+   :caption: pymongo_import command-line programs:
 	     
    mongoimport
    multiimport
