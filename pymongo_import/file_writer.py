@@ -81,26 +81,30 @@ class File_Writer(object):
                   
             reader = self._fieldConfig.get_dict_reader( f )
 
-            for dictEntry in reader :
-                total_read = total_read + 1 
-                if len( dictEntry ) == 1 :
-                    self._logger.warn( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')", self._fieldConfig.delimiter())
-                    self._logger.warn( "input line : '%s'", "".join( dictEntry.values()))
+            try:
+                for dictEntry in reader :
+                    total_read = total_read + 1
+                    if len( dictEntry ) == 1 :
+                        self._logger.warning( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')", self._fieldConfig.delimiter())
+                        self._logger.warning( "input line : '%s'", "".join( dictEntry.values()))
 
-                d = self._fieldConfig.createDoc( dictEntry )
-                insert_list.append( d )
-                if total_read % self._batch_size == 0 :
-                    results = self._collection.insert_many( insert_list )
-                    total_written = total_written + len( results.inserted_ids )
-                    insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
-                    if restarter :
-                        restarter.update( results.inserted_ids[ -1], total_written )
-                    insert_list = []
-                    timeNow = time.time()
-                    if timeNow > timeStart + 1  :
-                        self._logger.info( "Input: '%s' : records written per second %i, total records written: %i", filename, insertedThisQuantum, total_written )
-                        insertedThisQuantum = 0
-                        timeStart = timeNow
+                    d = self._fieldConfig.createDoc( dictEntry )
+                    insert_list.append( d )
+                    if total_read % self._batch_size == 0 :
+                        results = self._collection.insert_many( insert_list )
+                        total_written = total_written + len( results.inserted_ids )
+                        insertedThisQuantum = insertedThisQuantum + len( results.inserted_ids )
+                        if restarter :
+                            restarter.update( results.inserted_ids[ -1], total_written )
+                        insert_list = []
+                        timeNow = time.time()
+                        if timeNow > timeStart + 1  :
+                            self._logger.info( "Input: '%s' : records written per second %i, total records written: %i", filename, insertedThisQuantum, total_written )
+                            insertedThisQuantum = 0
+                            timeStart = timeNow
+            except UnicodeDecodeError as exp:
+                self._logger.error(exp)
+                self._logger.error( "Error on line:", total_read + 1 )
                         
             if len( insert_list ) > 0  :
                 results = self._collection.insert_many( insert_list )
