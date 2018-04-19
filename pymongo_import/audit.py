@@ -30,6 +30,7 @@ There is an index on batchID.
 import pymongo
 from datetime import datetime
 from threading import Lock
+import getpass
 
 
 class Audit(object):
@@ -67,12 +68,14 @@ class Audit(object):
                                                                 upsert=True,
                                                                 return_document=pymongo.ReturnDocument.AFTER)
 
+        assert(updated_doc)
         #         if doc[ "currentID"] < 100 :
         #             raise ValueError( "BatchIDs must be greated than 100: (current value: %i" % doc[ "currentID"])
         self._open_batch_count = self._open_batch_count + 1
-        self._auditCollection.insert_one({"batchID": updated_doc["currentID"],
-                                          "start": datetime.utcnow(),
-                                          "info": doc})
+        self._auditCollection.insert_one({"batchID"  : updated_doc["currentID"],
+                                          "username" : getpass.getuser(),
+                                          "start"    : datetime.utcnow(),
+                                          "info"     : doc})
 
         return updated_doc["currentID"]
 
@@ -81,12 +84,13 @@ class Audit(object):
         if not self.is_batch(batchID):
             raise ValueError("BatchID does not exist: %s" % batchID)
 
-        start = self._auditCollection.find_one({"batchID": batchID,
-                                                "start": {"$type": 9}}) #is a timestamp
+        start = self._auditCollection.find_one({"batchID"  : batchID,
+                                                "start"    : {"$type": 9}}) #is a timestamp
 
+        assert(start)
         self._auditCollection.insert_one({"batchID": batchID,
-                                          "start": start["start"],
-                                          "end": datetime.utcnow()})
+                                          "start"  : start["start"],
+                                          "end"    : datetime.utcnow()})
 
         self._open_batch_count = self._open_batch_count - 1
         return batchID

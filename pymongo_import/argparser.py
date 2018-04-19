@@ -53,5 +53,5 @@ def add_standard_args(parser):
     parser.add_argument('--fsync', default=False, action="store_true",
                         help="Sync all nodes to disk [default: %(default)s]")
     parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
-
+    parser.add_argument('--info', default="", help="Info string to be added to audit record")
     return parser

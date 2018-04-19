@@ -112,7 +112,8 @@ def mongo_import(input_args=None):
             if args.audit:
                 log.info( "Auditing output")
                 audit = Audit(database)
-                batchID = audit.start_batch({"cmd" : str(cmd)})
+                batchID = audit.start_batch({"cmd"  : str(cmd),
+                                             "info" : args.info })
 
             file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)
             file_processor.processFiles(filenames=args.filenames,
