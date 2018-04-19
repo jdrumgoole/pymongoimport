@@ -22,7 +22,7 @@ def seconds_to_duration( seconds ):
 class File_Writer(object):
 
      
-    def __init__(self, collection, fieldConfig, batch_size=500, orderedWrites=None ):
+    def __init__(self, collection, fieldConfig, encoding="utf-8", batch_size=500, orderedWrites=None ):
          
         self._logger = logging.getLogger( Logger.LOGGER_NAME )
         self._collection = collection
@@ -30,7 +30,7 @@ class File_Writer(object):
         self._fieldConfig = None
         self._batch_size = batch_size
         self._totalWritten = 0
-
+        self._encoding = encoding
         self._currentLine = 0
         self._fieldConfig = fieldConfig
         if fieldConfig.hasheader() :
@@ -61,7 +61,7 @@ class File_Writer(object):
         start = time.time()
         total_written = 0
         results = None
-        with open( filename, "r") as f :
+        with open( filename, "r", encoding = "ISO-8859-1") as f :
             
             timeStart = time.time() 
             insertedThisQuantum = 0
@@ -104,7 +104,8 @@ class File_Writer(object):
                             timeStart = timeNow
             except UnicodeDecodeError as exp:
                 self._logger.error(exp)
-                self._logger.error( "Error on line:", total_read + 1 )
+                self._logger.error( "Error on line:%i", total_read + 1 )
+                raise;
                         
             if len( insert_list ) > 0  :
                 results = self._collection.insert_many( insert_list )

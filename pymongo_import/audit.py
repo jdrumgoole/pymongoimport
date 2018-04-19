@@ -36,10 +36,15 @@ import getpass
 class Audit(object):
     name = "audit"
 
-    def __init__(self, database):
+    def __init__(self, client, database=None):
 
         self._lock = Lock()
-        self._database = database
+
+        if database:
+            self._database = database
+        else:
+            self._database =client[ "AUDIT"]
+
         self._auditCollection = self._database[ "audit"]
         self._open_batch_count = 0
 

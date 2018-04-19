@@ -111,8 +111,8 @@ def mongo_import(input_args=None):
         try:
             if args.audit:
                 log.info( "Auditing output")
-                audit = Audit(database)
-                batchID = audit.start_batch({"cmd"  : str(cmd),
+                audit = Audit(client)
+                batchID = audit.start_batch({"cmd"  : cmd,
                                              "info" : args.info })
 
             file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)

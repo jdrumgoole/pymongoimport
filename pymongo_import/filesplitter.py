@@ -34,7 +34,6 @@ class File_Type(Enum):
 class File_Splitter(object):
 
 
-
     def __init__(self, input_filename, has_header=False):
         """
 
@@ -129,8 +128,8 @@ class File_Splitter(object):
         else:
             return self._line_count - 1
 
-    def wc(self):
-        return (self.no_of_lines(), self.size)
+    def wc(self, hasheader=True, dosadjust=False):
+        return self.count_lines(), self.size(hasheader, dosadjust)
 
     def copy_file(self, rhs, ignore_header=True):
         """
