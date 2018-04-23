@@ -3,7 +3,7 @@
 """
 import argparse
 import sys
-from multiprocessing import Process
+from multiprocessing import Pool
 from collections import OrderedDict
 import time
 import copy
@@ -65,7 +65,7 @@ def multi_import(*argv):
                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument("--splitsize", type=int, help="Split file into chunks of this size [default : %(default)s]")
     parser.add_argument("--usesplits", action="store_true", default=False, help="Use the split files already created by by a previous autosplit")
-
+    parser.add_argument("--poolsize", type=int, default=2, help="The number of parallel processes to run")
     args = parser.parse_args(*argv)
 
     log = Logger("multi_import").log()
@@ -81,7 +81,7 @@ def multi_import(*argv):
         log.info("no input file to split")
         sys.exit(0)
 
-    if args.autosplit or args.splitsize or args.usesplits:
+    if args.autosplit or args.splitsize or args.usesplits or args.poolsize:
         if len(args.filenames) > 1:
             log.warn("More than one input file specified ( '%s' ) only splitting the first file:'%s'",
                      " ".join(args.filenames), args.filenames[0])
@@ -91,6 +91,8 @@ def multi_import(*argv):
             child_args = strip_arg(child_args, "--splitsize", True)
         if args.usesplits:
             child_args = strip_arg(child_args, "--usesplits", False)
+        if args.poolsize:
+            child_args = strip_arg(child_args, "--poolsize", True)
 
         splitter = File_Splitter(args.filenames[0], args.hasheader)
 
@@ -122,6 +124,7 @@ def multi_import(*argv):
     start = time.time()
 
     process_count = 0
+    process_pool = Pool(processes=args.poolsize)
     try:
         for filename in files:
             process_count = process_count + 1
@@ -130,24 +133,17 @@ def multi_import(*argv):
             new_args = copy.deepcopy(child_args)
             # new_args.extend( [ "--logname", filename[0], filename[0] ] )
             new_args.extend([filename[0]])
-            proc = Process(target=mongo_import, name=proc_name, args=(new_args,))
+            process_pool.apply_async(func=mongo_import, args=(new_args,))
             log.info("Processing '%s'", filename[0])
-            proc.daemon = True
-            children[proc_name] = {"process": proc}
-            log.info("starting sub process: %s", proc_name)
-            children[proc_name]["start"] = time.time()
-            proc.start()
 
-        for i in children.keys():
-            log.info("Waiting for process: '%s' to complete", i)
-            children[i]["process"].join()
-            children[i]["end"] = time.time()
-            log.info("elapsed time for process %s : %f", i, children[i]["end"] - children[i]["start"])
+        process_pool.close()
+        process_pool.join()
+        #log.info("elapsed time for process %s : %f", i, children[i]["end"] - children[i]["start"])
 
     except KeyboardInterrupt:
         for i in children.keys():
-            log.info("terminating process: '%s'", i)
-            children[i]["process"].terminate()
+            log.info("terminating pool: '%s'", i)
+            process_pool.terminate()
 
     finish = time.time()
 

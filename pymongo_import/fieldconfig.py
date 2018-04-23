@@ -321,6 +321,7 @@ class FieldConfig(object):
                 header_line = inputfile.readline().rstrip().split( delimiter ) #strip newline
                 value_line  = inputfile.readline().rstrip().split( delimiter )
                 if len( header_line ) != len( value_line ):
+
                     raise ValueError( "Header line and next line have different numbers of columns: %i, %i" % ( len( header_line ), len( value_line )))
             fieldCount = 0
             for i in header_line :
