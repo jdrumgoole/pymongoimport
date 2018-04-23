@@ -63,7 +63,7 @@ def multi_import(*argv):
     parser = add_standard_args(parser)
     parser.add_argument("--autosplit", type=int,
                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
-    parser.add_argument("--splitsize", type=int, help="Split file into chunks of this size [default : %(default)s]")
+    parser.add_argument("--splitsize", type=int, default=0, help="Split file into chunks of this size [default : %(default)s]")
     parser.add_argument("--usesplits", action="store_true", default=False, help="Use the split files already created by by a previous autosplit")
     parser.add_argument("--poolsize", type=int, default=2, help="The number of parallel processes to run")
     args = parser.parse_args(*argv)
