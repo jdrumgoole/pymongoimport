@@ -97,11 +97,12 @@ class File_Writer(object):
                         if restarter :
                             restarter.update( results.inserted_ids[ -1], total_written )
                         insert_list = []
-                        timeNow = time.time()
-                        if timeNow > timeStart + 1  :
-                            self._logger.info( "Input: '%s' : records written per second %i, total records written: %i", filename, insertedThisQuantum, total_written )
-                            insertedThisQuantum = 0
-                            timeStart = timeNow
+                        time_now = time.time()
+                        elapsed = time_now - timeStart
+                        docs_per_second = self._batch_size/elapsed
+                        timeStart = time_now
+                        self._logger.info( "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format( filename, docs_per_second, total_written ))
+
             except UnicodeDecodeError as exp:
                 self._logger.error(exp)
                 self._logger.error( "Error on line:%i", total_read + 1 )
