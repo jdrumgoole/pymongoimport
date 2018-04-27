@@ -32,7 +32,11 @@ class FileProcessor( object ):
             self._logger.info( "using field file: '%s'", field_filename )
         else:
             field_filename = os.path.splitext( input_filename )[0] + ".ff"
-            
+
+        if not os.path.isfile( field_filename):
+            self._logger.error( "The fieldfile '%s' does not exit")
+            raise ValueError( "No such field file: %s" % field_filename)
+
         fieldConfig = FieldConfig( field_filename, self._delimiter, hasheader, self._gen_id, self._onerror )
     
         fw = File_Writer( self._collection, fieldConfig, self._batchsize )

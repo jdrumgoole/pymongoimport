@@ -50,8 +50,8 @@ def mongo_import(input_args=None):
     python pymongo_import.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     '''
 
-    # if arglist:
-    #     print("args %s" % str(arglist))
+    if input_args:
+        print("args %s" % str(input_args))
     parser = argparse.ArgumentParser(usage=usage_message)
     parser = add_standard_args(parser)
     # print( "Argv: %s" % argv )
@@ -83,11 +83,15 @@ def mongo_import(input_args=None):
     log.info("hasheader     : %s", args.hasheader)
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
-        client = pymongo.MongoClient(args.host, w=args.writeconcern)
+        c = pymongo.MongoClient(args.host, w=args.writeconcern)
     else:
         client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
-    database = client[args.database]
+
+    database = c[args.database]
+    print( "Progress")
     collection = database[args.collection]
+
+
 
     if args.drop:
         if args.restart:
