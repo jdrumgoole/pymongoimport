@@ -62,7 +62,7 @@ class Test(unittest.TestCase):
 
     def test_generate_field_filename(self):
         fc_filename = FieldConfig.generate_field_filename('data/inventory.csv')
-        self.assertEqual(fc_filename, "data/inventory.ff")
+        self.assertEqual(fc_filename, "data/inventory.ff", fc_filename)
         fc_filename = FieldConfig.generate_field_filename('data/inventory.csv', ext="xx")
         self.assertEqual(fc_filename, "data/inventory.xx")
         fc_filename = FieldConfig.generate_field_filename('data/inventory.csv', ext=".xx")
@@ -70,6 +70,8 @@ class Test(unittest.TestCase):
         fc_filename = FieldConfig.generate_field_filename('data/inventory.csv')
         self.assertEqual(fc_filename, "data/inventory.ff")
 
+        fc_filename = FieldConfig.generate_field_filename('data/inventory.csv.1')
+        self.assertEqual(fc_filename, "data/inventory.ff", fc_filename)
         os.unlink("data/inventory.ff")
 
     def test_dict_reader(self):

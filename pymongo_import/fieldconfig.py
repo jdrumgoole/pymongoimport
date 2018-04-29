@@ -307,7 +307,7 @@ class FieldConfig(object):
     def generate_field_filename(path, ext=".ff"):
 
         newpath = ""
-        if re.match(r"\.csv\.[0-9]+$", path):
+        if re.match(r"^.*\.csv\.[0-9]+$", path):
             pieces = path.split( ".")
             newpath = "{}.{}".format( pieces[0], pieces[1] )
         else:

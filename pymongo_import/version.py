@@ -11,4 +11,4 @@ Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 during auditing.
 
 """
-__VERSION__="1.5a3"  # type: str
+__VERSION__="1.5a4"  # type: str
