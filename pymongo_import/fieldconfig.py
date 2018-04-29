@@ -306,19 +306,17 @@ class FieldConfig(object):
     @staticmethod
     def generate_field_filename(path, ext=".ff"):
 
+        if not ext.startswith('.'):
+            ext = "." + ext
+
         newpath = ""
         if re.match(r"^.*\.csv\.[0-9]+$", path):
             pieces = path.split( ".")
-            newpath = "{}.{}".format( pieces[0], pieces[1] )
+            newpath = "{}{}".format( pieces[0], ext )
         else:
-            newpath = path
+            newpath = os.path.splitext(path)[0] + ext
 
-        if not os.path.isfile(newpath):
-            raise OSError("no such field file '%s'" % path)
-
-        if not ext.startswith('.'):
-            ext = "." + ext
-        return os.path.splitext(newpath)[0] + ext
+        return newpath
 
     @staticmethod
     def generate_field_file(path, delimiter=",", ext=".ff"):

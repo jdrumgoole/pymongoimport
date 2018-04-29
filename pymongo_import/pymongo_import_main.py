@@ -51,7 +51,8 @@ def mongo_import(input_args=None):
     '''
 
     if input_args:
-        print("args %s" % str(input_args))
+        print("args: {}".format( " ".join(input_args)))
+
     parser = argparse.ArgumentParser(usage=usage_message)
     parser = add_standard_args(parser)
     # print( "Argv: %s" % argv )
@@ -90,8 +91,6 @@ def mongo_import(input_args=None):
     database = client[args.database]
     collection = database[args.collection]
 
-
-
     if args.drop:
         if args.restart:
             log.info("Warning --restart overrides --drop ignoring drop commmand")
@@ -117,6 +116,9 @@ def mongo_import(input_args=None):
                 audit = Audit(client)
                 batchID = audit.start_batch({"cmd"  : cmd,
                                              "info" : args.info })
+            else:
+                audit=None
+                batchID=None
 
             file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize)
             file_processor.processFiles(filenames=args.filenames,

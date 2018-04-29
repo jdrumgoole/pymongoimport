@@ -72,6 +72,13 @@ class Test(unittest.TestCase):
 
         fc_filename = FieldConfig.generate_field_filename('data/inventory.csv.1')
         self.assertEqual(fc_filename, "data/inventory.ff", fc_filename)
+
+        fc_filename = FieldConfig.generate_field_filename('data/yellow_tripdata_2015-01-06-200k.csv.1')
+        self.assertEqual(fc_filename, "data/yellow_tripdata_2015-01-06-200k.ff", fc_filename)
+
+        fc_filename = FieldConfig.generate_field_filename('data/yellow_tripdata_2015-01-06-200k.csv.10')
+        self.assertEqual(fc_filename, "data/yellow_tripdata_2015-01-06-200k.ff", fc_filename)
+
         os.unlink("data/inventory.ff")
 
     def test_dict_reader(self):
