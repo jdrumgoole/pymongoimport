@@ -1,8 +1,8 @@
-'''
+"""
 Created on 2 Mar 2016
 
 @author: jdrumgoole
-'''
+"""
 
 from configparser import RawConfigParser
 from datetime import datetime
@@ -15,7 +15,7 @@ from dateutil.parser import parse
 from pymongo_import.logger import Logger
 
 from collections import OrderedDict
-
+import re
 
 class FieldConfigException(Exception):
     def __init__(self, *args, **kwargs):
@@ -305,12 +305,20 @@ class FieldConfig(object):
 
     @staticmethod
     def generate_field_filename(path, ext=".ff"):
-        if not os.path.isfile(path):
+
+        newpath = ""
+        if re.match(r"\.csv\.[0-9]+$", path):
+            pieces = path.split( ".")
+            newpath = "{}.{}".format( pieces[0], pieces[1] )
+        else:
+            newpath = path
+
+        if not os.path.isfile(newpath):
             raise OSError("no such field file '%s'" % path)
 
         if not ext.startswith('.'):
             ext = "." + ext
-        return os.path.splitext(path)[0] + ext
+        return os.path.splitext(newpath)[0] + ext
 
     @staticmethod
     def generate_field_file(path, delimiter=",", ext=".ff"):

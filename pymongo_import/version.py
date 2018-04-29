@@ -1,5 +1,6 @@
 """
 Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
+1.5a3   : 29-Apr-2018 : Fixed field file name generation to work with autosplit files (hack)
 1.5a2   : 29-Apr-2018 : Added additional audit data.
 1.4.9a5 : 27-Apr-2018 : Now allow csv files with trailing empty fields that mean their are more fields than header line columns
 1.4.9a4 : 23-Ape-2018 : Fixed stats reporting for per second record updates
@@ -10,4 +11,4 @@ Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 during auditing.
 
 """
-__VERSION__="1.5a2"  # type: str
+__VERSION__="1.5a3"  # type: str

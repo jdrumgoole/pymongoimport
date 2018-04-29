@@ -35,8 +35,8 @@ class FileProcessor( object ):
             field_filename = os.path.splitext( input_filename )[0] + ".ff"
 
         if not os.path.isfile( field_filename):
-            self._logger.error( "The fieldfile '%s' does not exit")
-            raise ValueError( "No such field file: %s" % field_filename)
+            self._logger.error( "The fieldfile '{}' does not exit".format( field_filename))
+            raise ValueError( "No such field file: '{}".format(field_filename))
 
         fieldConfig = FieldConfig( field_filename, self._delimiter, hasheader, self._gen_id, self._onerror )
     

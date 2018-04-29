@@ -81,37 +81,34 @@ def multi_import(*argv):
         log.info("no input file to split")
         sys.exit(0)
 
-    if args.autosplit or args.splitsize or args.usesplits or args.poolsize:
-        if len(args.filenames) > 1:
-            log.warn("More than one input file specified ( '%s' ) only splitting the first file:'%s'",
-                     " ".join(args.filenames), args.filenames[0])
-        if args.autosplit:
-            child_args = strip_arg(child_args, "--autosplit", True)
-        if args.splitsize:
-            child_args = strip_arg(child_args, "--splitsize", True)
-        if args.usesplits:
-            child_args = strip_arg(child_args, "--usesplits", False)
-        if args.poolsize:
-            child_args = strip_arg(child_args, "--poolsize", True)
 
-        splitter = File_Splitter(args.filenames[0], args.hasheader)
+    if args.autosplit:
+        child_args = strip_arg(child_args, "--autosplit", True)
+    if args.splitsize:
+        child_args = strip_arg(child_args, "--splitsize", True)
+    if args.usesplits:
+        child_args = strip_arg(child_args, "--usesplits", False)
+    if args.poolsize:
+        child_args = strip_arg(child_args, "--poolsize", True)
 
-    for i in args.filenames:  # get rid of old filenames
-        child_args = strip_arg(child_args, i, False)
 
+    files=[]
     if args.usesplits:
         files = glob.glob( "*.[123456789]*" )
         files.sort()
         files = [ ( i, os.path.getsize(i)) for i in files]
-        #print("usesplits:%s" % files)
-    elif args.autosplit:
-        log.info("Autosplitting file: '%s' into (approx) %i chunks", args.filenames[0], args.autosplit)
-        files = splitter.autosplit(args.autosplit)
-    elif args.splitsize > 0:
-        log.info("Splitting file: '%s' into %i line chunks", args.filenames[0], args.splitsize)
-        files = splitter.split_file(args.splitsize)
     else:
-        files = [ ( i, os.path.getsize(i)) for i in args.filenames]
+        for i in args.filenames:  # get rid of old filenames
+            child_args = strip_arg(child_args, i, False)
+            splitter = File_Splitter(i, args.hasheader)
+            if args.autosplit:
+                log.info("Autosplitting file: '%s' into (approx) %i chunks", i, args.autosplit)
+                files.extend(splitter.autosplit(args.autosplit))
+            elif args.splitsize > 0:
+                log.info("Splitting file: '%s' into %i line chunks", args.filenames[0], args.splitsize)
+                files.extend(splitter.split_file(args.splitsize))
+            else:
+                files = [ ( i, os.path.getsize(i)) for i in args.filenames]
 
     if args.restart:
         log.info("Ignoring --drop overridden by --restart")
