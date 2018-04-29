@@ -13,6 +13,7 @@ import logging
 from pymongo_import.restart import Restarter
 from pymongo_import.logger import Logger
 from datetime import datetime, timedelta
+import os
 
 def seconds_to_duration( seconds ):
     delta = timedelta( seconds=seconds )
@@ -87,8 +88,13 @@ class File_Writer(object):
                     if len( dictEntry ) == 1 :
                         self._logger.warning( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')", self._fieldConfig.delimiter())
                         self._logger.warning( "input line : '%s'", "".join( dictEntry.values()))
+                    #
+                    # if self._tag :
+                    #     tag_string = "{}:{}".format( filename, total_read)
+                    else:
+                        tag_string = None
 
-                    d = self._fieldConfig.createDoc( dictEntry )
+                    d = self._fieldConfig.createDoc( dictEntry, tag= tag_string )
                     insert_list.append( d )
                     if total_read % self._batch_size == 0 :
                         results = self._collection.insert_many( insert_list )
@@ -120,7 +126,8 @@ class File_Writer(object):
         if restarter :
             restarter.finish()
         self._logger.info( "Total elapsed time to upload '%s' : %s" , filename,seconds_to_duration( finish - start ))
-        
+
+
         return total_written
     
 #     def bulkWrite(self, filename  ):

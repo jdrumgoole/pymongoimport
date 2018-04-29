@@ -54,6 +54,7 @@ def add_standard_args(parser):
                         help="Sync all nodes to disk [default: %(default)s]")
     parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
+    parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
     #
     # Also try ISO-8859-1
     #

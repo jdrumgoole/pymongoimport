@@ -39,7 +39,7 @@ class FieldConfig(object):
       
     '''
 
-    def __init__(self, cfgFilename, delimiter=",", hasheader=True, gen_id="mongodb", onerror="warn"):
+    def __init__(self, cfgFilename, delimiter=",", hasheader=True, gen_id="mongodb", onerror="warn", tag=None):
         '''
         Constructor
         '''
@@ -58,6 +58,7 @@ class FieldConfig(object):
         self._pid = os.getpid()
         self._onerror = onerror
         self._hasheader = hasheader
+        self._tag = tag
 
         if cfgFilename:
             self._fieldDict = self.read(cfgFilename)
@@ -226,7 +227,7 @@ class FieldConfig(object):
 
         return v
 
-    def createDoc(self, dictEntry):
+    def createDoc(self, dictEntry, tag):
 
         '''
         WIP
@@ -242,6 +243,10 @@ class FieldConfig(object):
 
         if self._timestamp == "gen":
             doc['timestamp'] = datetime.utcnow()
+
+        if tag:
+            doc['tag'] = tag
+
 
         # print( "dictEntry: %s" % dictEntry )
         fieldCount = 0

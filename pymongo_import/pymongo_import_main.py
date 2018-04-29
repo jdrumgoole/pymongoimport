@@ -83,12 +83,11 @@ def mongo_import(input_args=None):
     log.info("hasheader     : %s", args.hasheader)
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
-        c = pymongo.MongoClient(args.host, w=args.writeconcern)
+        client = pymongo.MongoClient(args.host, w=args.writeconcern)
     else:
         client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
 
-    database = c[args.database]
-    print( "Progress")
+    database = client[args.database]
     collection = database[args.collection]
 
 
@@ -123,7 +122,8 @@ def mongo_import(input_args=None):
             file_processor.processFiles(filenames=args.filenames,
                                         field_filename=args.fieldfile,
                                         hasheader=args.hasheader,
-                                        restart=args.restart)
+                                        restart=args.restart,
+                                        audit=audit, batchID=batchID)
 
             if args.audit:
                 audit.end_batch(batchID)

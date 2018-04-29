@@ -84,6 +84,12 @@ class Audit(object):
 
         return updated_doc["currentID"]
 
+    def add_batch_info(self, batchID, field_name, doc):
+
+        self._auditCollection.insert_one({"batchID": batchID,
+                                          "timestamp"  : datetime.utcnow(),
+                                          field_name   : doc })
+
     def end_batch(self, batchID):
 
         if not self.is_batch(batchID):
