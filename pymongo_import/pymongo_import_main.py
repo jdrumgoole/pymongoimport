@@ -73,7 +73,7 @@ def mongo_import(input_args=None):
 
     log = Logger(args.logname, args.loglevel).log()
 
-    Logger.add_file_handler(args.logname)
+    #Logger.add_file_handler(args.logname)
 
 
     if not args.silent:

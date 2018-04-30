@@ -15,6 +15,7 @@ test_build:
 
 test_scripts:
 	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_import_main.py -h > /dev/null)
+	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_import_main.py --delimiter '|' data/10k.txt &> /dev/null)
 	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_multiimport_main.py -h > /dev/null)
 	(export PYTHONPATH=`pwd` && python pymongo_import/pwc.py -h > /dev/null)
 	(export PYTHONPATH=`pwd` && python pymongo_import/split_file.py -h > /dev/null)
