@@ -31,6 +31,8 @@ import pymongo
 from datetime import datetime
 from threading import Lock
 import getpass
+import socket
+import os
 
 
 class Audit(object):
@@ -80,6 +82,8 @@ class Audit(object):
         self._auditCollection.insert_one({"batchID"  : updated_doc["currentID"],
                                           "username" : getpass.getuser(),
                                           "start"    : datetime.utcnow(),
+                                          "host"     : socket.getfqdn(),
+                                          "pid"      : os.getpid(),
                                           "info"     : doc})
 
         return updated_doc["currentID"]

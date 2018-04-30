@@ -84,10 +84,13 @@ def multi_import(*argv):
 
     if args.autosplit:
         child_args = strip_arg(child_args, "--autosplit", True)
+        child_args = strip_arg(child_args, "--hasheader", False)
     if args.splitsize:
         child_args = strip_arg(child_args, "--splitsize", True)
+        child_args = strip_arg(child_args, "--hasheader", False)
     if args.usesplits:
         child_args = strip_arg(child_args, "--usesplits", False)
+        child_args = strip_arg(child_args, "--hasheader", False)
     if args.poolsize:
         child_args = strip_arg(child_args, "--poolsize", True)
 

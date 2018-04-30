@@ -13,6 +13,8 @@ Created on 19 Feb 2016
 
 import argparse
 import sys
+import socket
+import os
 
 import pymongo
 from pymongo_import.fileprocessor import FileProcessor
@@ -64,6 +66,7 @@ def mongo_import(input_args=None):
     else:
         cmd = tuple(sys.argv[1:])
         args = parser.parse_args(cmd)
+        cmd_args = cmd.join( " ")
     # print("args: %s" % args)
 
     log = Logger(args.logname, args.loglevel).log()
@@ -114,8 +117,7 @@ def mongo_import(input_args=None):
             if args.audit:
                 log.info( "Auditing output")
                 audit = Audit(client)
-                batchID = audit.start_batch({"cmd"  : cmd,
-                                             "info" : args.info })
+                batchID = audit.start_batch({"cmd"  : cmd_args})
             else:
                 audit=None
                 batchID=None
