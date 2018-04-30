@@ -22,6 +22,8 @@ from pymongo_import.fieldconfig import FieldConfig
 from pymongo_import.argparser import add_standard_args
 from pymongo_import.logger import Logger
 from pymongo_import.audit import Audit
+#from monglog import MongoHandler
+
 
 def mongo_import(input_args=None):
     """
@@ -66,12 +68,13 @@ def mongo_import(input_args=None):
     else:
         cmd = tuple(sys.argv[1:])
         args = parser.parse_args(cmd)
-        cmd_args = cmd.join( " ")
+        cmd_args = " ".join(cmd)
     # print("args: %s" % args)
 
     log = Logger(args.logname, args.loglevel).log()
 
     Logger.add_file_handler(args.logname)
+
 
     if not args.silent:
         Logger.add_stream_handler(args.logname)
@@ -118,6 +121,7 @@ def mongo_import(input_args=None):
                 log.info( "Auditing output")
                 audit = Audit(client)
                 batchID = audit.start_batch({"cmd"  : cmd_args})
+                log.addHandler(MongoHandler.to( database='AUDIT', collection='log'))
             else:
                 audit=None
                 batchID=None

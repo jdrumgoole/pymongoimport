@@ -13,8 +13,14 @@ pip:clean test build
 test_build:
 	sh test-twine.sh
 
-test:
+test_scripts:
+	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_import_main.py -h > /dev/null)
+	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_multiimport_main.py -h > /dev/null)
+	(export PYTHONPATH=`pwd` && python pymongo_import/pwc.py -h > /dev/null)
+	(export PYTHONPATH=`pwd` && python pymongo_import/split_file.py -h > /dev/null)
+test_all: test_scripts
 	${BINDIR}/python setup.py test
+
 
 build:
 	${BINDIR}/python setup.py sdist

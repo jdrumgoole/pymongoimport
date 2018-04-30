@@ -3,6 +3,7 @@
 """
 import argparse
 import sys
+import multiprocessing
 from multiprocessing import Pool
 from collections import OrderedDict
 import time
@@ -65,7 +66,7 @@ def multi_import(*argv):
                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument("--splitsize", type=int, default=0, help="Split file into chunks of this size [default : %(default)s]")
     parser.add_argument("--usesplits", action="store_true", default=False, help="Use the split files already created by by a previous autosplit")
-    parser.add_argument("--poolsize", type=int, default=2, help="The number of parallel processes to run")
+    parser.add_argument("--poolsize", type=int, default=multiprocessing.cpu_count(), help="The number of parallel processes to run")
     args = parser.parse_args(*argv)
 
     log = Logger("multi_import").log()
