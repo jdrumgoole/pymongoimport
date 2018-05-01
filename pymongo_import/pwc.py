@@ -15,7 +15,9 @@ in universal mode.
 
 import sys
 import argparse
-from pymongo_import.filesplitter import File_Splitter
+import os
+
+from pymongo_import.filesplitter import Line_Counter
 
 
 def pwc( *argv ):
@@ -30,7 +32,8 @@ def pwc( *argv ):
     if args.filenames:
         print( "lines\tbytes\tfilename")
     for filename in args.filenames:
-        (line_count, size) = File_Splitter(filename).wc()
+        line_count= Line_Counter(filename).count()
+        size = os.path.getsize(filename)
         total_count = total_count + line_count
         total_size  = total_size  + size
         print( "%i\t%i\t%s" % ( line_count, size, filename ))

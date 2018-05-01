@@ -62,10 +62,6 @@ def multi_import(*argv):
 
     parser = argparse.ArgumentParser(usage=usage_message)
     parser = add_standard_args(parser)
-    parser.add_argument("--autosplit", type=int,
-                        help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
-    parser.add_argument("--splitsize", type=int, default=0, help="Split file into chunks of this size [default : %(default)s]")
-    parser.add_argument("--usesplits", action="store_true", default=False, help="Use the split files already created by by a previous autosplit")
     parser.add_argument("--poolsize", type=int, default=multiprocessing.cpu_count(), help="The number of parallel processes to run")
     args = parser.parse_args(*argv)
 
@@ -82,37 +78,12 @@ def multi_import(*argv):
         log.info("no input file to split")
         sys.exit(0)
 
-
-    if args.autosplit:
-        child_args = strip_arg(child_args, "--autosplit", True)
-        child_args = strip_arg(child_args, "--hasheader", False)
-    if args.splitsize:
-        child_args = strip_arg(child_args, "--splitsize", True)
-        child_args = strip_arg(child_args, "--hasheader", False)
-    if args.usesplits:
-        child_args = strip_arg(child_args, "--usesplits", False)
-        child_args = strip_arg(child_args, "--hasheader", False)
     if args.poolsize:
         child_args = strip_arg(child_args, "--poolsize", True)
 
 
-    files=[]
-    if args.usesplits:
-        files = glob.glob( "*.[123456789]*" )
-        files.sort()
-        files = [ ( i, os.path.getsize(i)) for i in files]
-    else:
-        for i in args.filenames:  # get rid of old filenames
-            child_args = strip_arg(child_args, i, False)
-            splitter = File_Splitter(i, args.hasheader)
-            if args.autosplit:
-                log.info("Autosplitting file: '%s' into (approx) %i chunks", i, args.autosplit)
-                files.extend(splitter.autosplit(args.autosplit))
-            elif args.splitsize > 0:
-                log.info("Splitting file: '%s' into %i line chunks", args.filenames[0], args.splitsize)
-                files.extend(splitter.split_file(args.splitsize))
-            else:
-                files = [ ( i, os.path.getsize(i)) for i in args.filenames]
+
+    for i in args.filenames:  # get rid of old filenames
 
     if args.restart:
         log.info("Ignoring --drop overridden by --restart")
@@ -127,15 +98,13 @@ def multi_import(*argv):
     process_count = 0
     process_pool = Pool(processes=args.poolsize)
     try:
-        for filename in files:
-            process_count = process_count + 1
-            proc_name = filename[0]
-            # need to turn args to Process into a tuple )
-            new_args = copy.deepcopy(child_args)
-            # new_args.extend( [ "--logname", filename[0], filename[0] ] )
-            new_args.extend([filename[0]])
-            process_pool.apply_async(func=mongo_import, args=(new_args,))
-            log.info("Processing '%s'", filename[0])
+
+        process_count = process_count + 1
+        # need to turn args to Process into a tuple )
+        new_args = copy.deepcopy(child_args)
+        new_args.extend(i)
+        process_pool.apply_async(func=mongo_import, args=(new_args,))
+        log.info("Processing '{}'".format(i))
 
         process_pool.close()
         process_pool.join()

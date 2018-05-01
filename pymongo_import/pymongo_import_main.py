@@ -121,7 +121,7 @@ def mongo_import(input_args=None):
                 log.info( "Auditing output")
                 audit = Audit(client)
                 batchID = audit.start_batch({"cmd"  : cmd_args})
-                log.addHandler(MongoHandler.to( database='AUDIT', collection='log'))
+                #log.addHandler(MongoHandler.to( database='AUDIT', collection='log'))
             else:
                 audit=None
                 batchID=None

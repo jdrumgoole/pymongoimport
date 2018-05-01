@@ -8,7 +8,7 @@ File_Splitter
 =====================================
 
 File Splitter is a class that takes a file and splits it into separate pieces. Its purpose built for
-use wit pymongo_import and is expected to be used to split CSV files (which may or may not have
+use with pymongo_import and is expected to be used to split CSV files (which may or may not have
 a header, hence the **hasheader** argument). When splitting a file the output files are produced without
 a header file. 
 
@@ -31,6 +31,36 @@ class File_Type(Enum):
     DOS = 1
     UNIX = 2
 
+class Line_Counter(object):
+
+    def __init__(self, filename):
+
+        self._line_count =Line_Counter.count_now(filename)
+
+    def count(self):
+        return self._line_count
+
+    @staticmethod
+    def blocks(file, size=1024 * 64):
+        while True:
+            b = file.read(size)
+            if not b: break
+            yield b
+
+    @staticmethod
+    def count_now(filename):
+        line_count=0
+        block = None
+        with open(filename, "r", encoding="utf-8", errors='ignore') as f:
+            for block in Line_Counter.blocks(f):
+                line_count = line_count + block.count("\n")
+
+        if block and block[-1:] != '\n' : #file doesn't end with a newline but its still a line
+            line_count = line_count + 1
+
+        return line_count
+
+
 class File_Splitter(object):
 
 
@@ -47,9 +77,11 @@ class File_Splitter(object):
         """
         self._input_filename = input_filename
         self._has_header = has_header
-        self._line_count = None
+        self._line_count = Line_Counter( self._input_filename).count()
         self._header_line = ""  # Not none so len does something sensible when has_header is false
         self._size = os.path.getsize(self._input_filename)
+        if self._size > 0 and self._has_header :
+            self._header_line = self._check_file_type()
         # self._data_lines_count = 0
         self._size_threshold = 1024 * 10
         self._split_size = None
@@ -59,77 +91,50 @@ class File_Splitter(object):
 
         self._check_file_type()
 
-
     def _check_file_type(self):
-        line=None
+        line=""
         with open( self._input_filename, "r") as f:
             line = f.readline()
             if f.newlines and f.newlines == '\r\n':
                 self._file_type = File_Type.DOS
             else:
                 self._file_type = File_Type.UNIX
+        return line
 
     def new_file(self, filename, ext):
         basename = os.path.basename(filename)
-        filename = "%s.%i" % (basename, ext)
+        filename = "{}.{}".format(basename, ext)
         # self._files[filename] = 0
         newfile = open(filename, "w")
         return (newfile, filename)
 
-    def size(self, include_header=True, dos_adjust=False):
-        """
+    def size(self):
+        return self._size
 
-        :param include_header: Include header size in size otherwise subtract
-        :param dos_adjust: For DOS files deduct size increment due to extra LF characters
-        :return: file size
-        """
-
-        file_size = None
-        if include_header:
-            file_size = self._size
-        else:
-            file_size = self._size - len( self._header_line)
-
-        if dos_adjust:
-            file_size = file_size - self.no_of_lines( include_header)
-
-        return file_size
-
-    @staticmethod
-    def blocks(files, size=1024 * 64):
-        while True:
-            b = files.read(size)
-            if not b: break
-            yield b
-
-    def count_lines(self):
-        """
-        Count all the lines in a file including the header if present.
-        :param filename: The filename to count the lines for
-        :return int : Number of lines in the file:
-        """
-        self._line_count=0
-        block = None
-        with open(self._input_filename, "r", encoding="utf-8", errors='ignore') as f:
-            for block in File_Splitter.blocks(f):
-                self._line_count = self._line_count + block.count("\n")
-
-        if block and block[-1:] != '\n' : #file doesn't end with a newline but its still a line
-            self._line_count = self._line_count + 1
-
+    def line_count(self):
         return self._line_count
 
-    def no_of_lines(self, include_header=True):
-
-        if self._line_count is None:
-            self.count_lines()
-        if include_header:
-            return self._line_count
-        else:
-            return self._line_count - 1
+    # def size(self, include_header=True, dos_adjust=False):
+    #     """
+    #
+    #     :param include_header: Include header size in size otherwise subtract
+    #     :param dos_adjust: For DOS files deduct size increment due to extra LF characters
+    #     :return: file size
+    #     """
+    #
+    #     file_size = None
+    #     if include_header:
+    #         file_size = self._size
+    #     else:
+    #         file_size = self._size - len( self._header_line)
+    #
+    #     if dos_adjust:
+    #         file_size = file_size - self._line_count
+    #
+    #     return file_size
 
     def wc(self, hasheader=True, dosadjust=False):
-        return self.count_lines(), self.size(hasheader, dosadjust)
+        return self._line_count, os.path.getsize( self._input_filename)
 
     def copy_file(self, rhs, ignore_header=True):
         """
@@ -148,17 +153,12 @@ class File_Splitter(object):
                 self._header_line=input.readline()
 
             with open(rhs, "w", encoding="utf-8", errors='ignore') as output:
-                for i in File_Splitter.blocks(input):
+                for i in Line_Counter.blocks(input):
                     total_lines = total_lines + i.count("\n")
                     output.write(i)
 
             if i and i[-1:] != '\n' : #file doesn't end with a newline but its still a line
                 total_lines = total_lines + 1
-
-            if repr( input.newlines ) == "\r\n":
-                self._file_type = File_Type.DOS
-            else:
-                self._file_type = File_Type.UNIX
 
         return (rhs, total_lines)
 
@@ -223,11 +223,6 @@ class File_Splitter(object):
                     output_file.write(line)
                     current_split_size = current_split_size + 1
                     line = input_file.readline()
-
-                if repr(input_file.newlines) == "\r\n":
-                    self._file_type = File_Type.DOS
-                else:
-                    self._file_type = File_Type.UNIX
 
             if current_split_size > 0: # if its zero we just closed the file and did a yield
                 output_file.close()

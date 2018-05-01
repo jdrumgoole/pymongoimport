@@ -1,5 +1,6 @@
 """
-1.5a8   : 30-Ar-2018  : For multi-processing disable hasheader as an arg if we are splitting files
+1.6a3   : 01-May-2018 : Allow processing to continue when records are corrupt if onerror setting allow
+1.5a8   : 30-Apr-2018 : For multi-processing disable hasheader as an arg if we are splitting files
 1.5a3   : 29-Apr-2018 : Fixed field file name generation to work with autosplit files (hack)
 1.5a2   : 29-Apr-2018 : Added additional audit data.
 1.4.9a5 : 27-Apr-2018 : Now allow csv files with trailing empty fields that mean their are more fields than header line columns
@@ -11,4 +12,4 @@
 Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 
 """
-__VERSION__="1.5a8"  # type: str
+__VERSION__="1.6a2"  # type: str

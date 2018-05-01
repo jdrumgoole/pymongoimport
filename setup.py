@@ -63,7 +63,7 @@ by the parser.
     data_files = [ ( "test", glob.glob( "data/*.ff" ) +
                              glob.glob( "data/*.csv" ) +
                              glob.glob( "data/*.txt" ))],
-
+    python_requires='>3.6',
     scripts=[],
     entry_points={
         'console_scripts': [

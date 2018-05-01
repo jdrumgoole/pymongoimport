@@ -13,6 +13,7 @@ import textwrap
 from dateutil.parser import parse
 
 from pymongo_import.logger import Logger
+from enum import Enum
 
 from collections import OrderedDict
 import re
@@ -260,9 +261,19 @@ class FieldConfig(object):
                     self._line_count = self._record_count + 1
                 else:
                     self._line_count = self._record_count
-                # self._logger.warn( "value for field '%s' at line %i is None which is not valid", k, self._line_count )
-                raise ValueError("value for field '%s' at line %i is None which is not valid (wrong delimiter?)" % (
-                k, self._line_count))
+
+                msg = "Value for field '{}' at line {} is 'None' which is not valid\n".format( k, self._line_count )
+                #print(dictEntry)
+                msg = msg + "\t\t\tline:{}:'{}'".format( self._record_count, self._delimiter.join( [ str(v) for v in dictEntry.values()]))
+                if self._onerror == "fail" :
+                    self._logger.error( msg)
+                    raise ValueError(msg)
+                elif self._onerror == "warn":
+                    self._logger.warning(msg)
+                    continue
+                else:
+                    continue
+
             if k.startswith("blank-") and self._onerror == "warn":  # ignore blank- columns
                 self._logger.info("Field %i is blank [blank-] : ignoring", fieldCount)
                 continue
@@ -280,9 +291,12 @@ class FieldConfig(object):
                                        type_field)
                     raise
                 elif self._onerror == "warn":
-                    self._logger.info("Parse failure at line %i at field '%s'", self._record_count, k)
-                    self._logger.info("type conversion error: Cannot convert '%s' to type %s", dictEntry[k], type_field)
-                    self._logger.info("Using string type instead")
+                    msg = "Parse failure at line {} at field '{}'".format( self._record_count, k )
+                    msg = msg + " type conversion error: Cannot convert '{}' to type {} using string type instead".format(dictEntry[k], type_field)
+                    self._logger.warning(msg)
+                    # self._logger.warning("Parse failure at line %i at field '%s'", self._record_count, k)
+                    # self._logger.warning("type conversion error: Cannot convert '%s' to type %s", dictEntry[k], type_field)
+                    # self._logger.warning("Using string type instead")
                     v = str(dictEntry[k])
                 elif self._onerror == "ignore":
                     v = str(dictEntry[k])

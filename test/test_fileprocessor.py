@@ -7,7 +7,7 @@ import unittest
 import pymongo
 import pymongo.errors
 
-from pymongo_import.filesplitter import File_Splitter
+from pymongo_import.filesplitter import Line_Counter
 
 from pymongo_import.fileprocessor import FileProcessor
 
@@ -36,7 +36,7 @@ class Test(unittest.TestCase):
         except pymongo.errors.BulkWriteError as e :
             print( e )
             raise ;
-        lines = File_Splitter( "data/uk_property_prices.csv").count_lines()
+        lines = Line_Counter( "data/uk_property_prices.csv").count()
         self.assertEqual( lines, self._col.count() - start_count )
 
         self.assertTrue( self._col.find_one( { "Postcode" : "NG10 5NN"}) )
@@ -46,7 +46,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         fp=FileProcessor( self._col, '|' )
         fp.processOneFile("data/10k.txt")
-        lines = File_Splitter( "data/10k.txt").count_lines()
+        lines = Line_Counter( "data/10k.txt").count()
         self.assertEqual(lines, self._col.count() - start_count)
         self.assertTrue( self._col.find_one({"TestID":114624}))
 
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         fp = FileProcessor(self._col, ',', onerror="ignore")
         fp.processOneFile(input_filename = "data/AandE_Data_2011-04-10.csv", hasheader=True )
-        lines = File_Splitter( "data/AandE_Data_2011-04-10.csv").count_lines()
+        lines = Line_Counter( "data/AandE_Data_2011-04-10.csv").count()
         self.assertEqual( lines, self._col.count() - start_count + 1)
         self.assertTrue( self._col.find_one( { "Code" : "RA4"}) )
 

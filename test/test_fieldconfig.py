@@ -12,7 +12,7 @@ import pymongo
 from pymongo_import.fieldconfig import FieldConfig, FieldConfigException
 from pymongo_import.logger import Logger
 from pymongo_import.file_writer import File_Writer
-from pymongo_import.filesplitter import File_Splitter
+from pymongo_import.filesplitter import File_Splitter, Line_Counter
 
 
 class Test(unittest.TestCase):
@@ -79,8 +79,6 @@ class Test(unittest.TestCase):
         fc_filename = FieldConfig.generate_field_filename('data/yellow_tripdata_2015-01-06-200k.csv.10')
         self.assertEqual(fc_filename, "data/yellow_tripdata_2015-01-06-200k.ff", fc_filename)
 
-        os.unlink("data/inventory.ff")
-
     def test_dict_reader(self):
         fc_filename = FieldConfig.generate_field_file("data/inventory.csv")
         fc = FieldConfig(fc_filename)
@@ -112,7 +110,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("data/inventory.csv")
-        line_count = File_Splitter("data/inventory.csv").count_lines()
+        line_count = Line_Counter("data/inventory.csv").count()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
         os.unlink("data/inventory.testff")
@@ -136,7 +134,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("data/inventory.csv")
-        line_count = File_Splitter("data/inventory.csv").count_lines()
+        line_count = Line_Counter("data/inventory.csv").count()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
         with open("data/inventory.csv", "r")  as f:
