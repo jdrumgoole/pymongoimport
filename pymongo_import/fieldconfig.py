@@ -319,7 +319,7 @@ class FieldConfig(object):
             ext = "." + ext
 
         newpath = ""
-        if re.match(r"^.*\.csv\.[0-9]+$", path):
+        if re.match(r"^.*\.*\.[0-9]+$", path):
             pieces = path.split( ".")
             newpath = "{}{}".format( pieces[0], ext )
         else:
