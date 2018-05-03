@@ -96,17 +96,16 @@ def mongo_import(input_args=None):
 
     if args.database:
         database_name= args.database
-    else
+    else:
         database_name = "PYIM"
-        database = client[ "PYIM" ]
 
     if args.collection:
         collection_name = args.collection
     else:
-        collection = "ported"
+        collection_name = "ported"
 
     database = client[database_name]
-    collection = database[database_name]
+    collection = database[collection_name]
 
     if args.drop:
         if args.restart:

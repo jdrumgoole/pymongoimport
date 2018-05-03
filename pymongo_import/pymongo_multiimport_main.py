@@ -81,10 +81,6 @@ def multi_import(*argv):
     if args.poolsize:
         child_args = strip_arg(child_args, "--poolsize", True)
 
-
-
-    for i in args.filenames:  # get rid of old filenames
-
     if args.restart:
         log.info("Ignoring --drop overridden by --restart")
     elif args.drop:
@@ -98,13 +94,14 @@ def multi_import(*argv):
     process_count = 0
     process_pool = Pool(processes=args.poolsize)
     try:
-
-        process_count = process_count + 1
-        # need to turn args to Process into a tuple )
-        new_args = copy.deepcopy(child_args)
-        new_args.extend(i)
-        process_pool.apply_async(func=mongo_import, args=(new_args,))
-        log.info("Processing '{}'".format(i))
+        for filename in args.filenames:
+            process_count = process_count + 1
+            # need to turn args to Process into a tuple )
+            new_args = copy.deepcopy(child_args)
+            # new_args.extend( [ "--logname", filename[0], filename[0] ] )
+            new_args.extend(filename)
+            process_pool.apply_async(func=mongo_import, args=(new_args,))
+            log.info("Processing '%s'", filename)
 
         process_pool.close()
         process_pool.join()
