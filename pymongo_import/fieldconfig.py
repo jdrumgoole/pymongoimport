@@ -228,7 +228,7 @@ class FieldConfig(object):
 
         return v
 
-    def createDoc(self, dictEntry, tag):
+    def createDoc(self, doc, dictEntry):
 
         '''
         WIP
@@ -236,17 +236,12 @@ class FieldConfig(object):
         '''
         self._record_count = self._record_count + 1
 
-        doc = {}
-        doc.update(self._doc_template)
-
         if self._id == "gen":
             doc["_id"] = "%i-%i" % (self._pid, self._record_count)
 
         if self._timestamp == "gen":
             doc['timestamp'] = datetime.utcnow()
 
-        if tag:
-            doc['tag'] = tag
 
 
         # print( "dictEntry: %s" % dictEntry )

@@ -13,7 +13,8 @@ import logging
 from pymongo_import.restart import Restarter
 from pymongo_import.logger import Logger
 from datetime import datetime, timedelta
-import os
+
+from collections import OrderedDict
 
 def seconds_to_duration( seconds ):
     delta = timedelta( seconds=seconds )
@@ -57,13 +58,31 @@ class File_Writer(object):
                 
         return lineCount 
 
+    def has_locator(self, collection, filename):
+
+        result = collection.find_one({ "locator" : { "f": filename}})
+        return result
+
+    def add_locator(self, collection, doc, filename, record_number):
+
+        if filename and record_number:
+            doc['locator'] = { "f":filename, "n":record_number}
+        elif filename:
+            doc['locator'] = {"f": filename}
+        elif record_number:
+            doc['locator'] = {"n": record_number}
+
+        return doc
+
     def insert_file(self, filename, restart=False ):
         
         start = time.time()
         total_written = 0
         results = None
-        with open( filename, "r", encoding = "ISO-8859-1") as f :
-            
+
+        #with open( filename, "r", encoding = "ISO-8859-1") as f :
+
+        with open(filename, "r" ) as f:
             timeStart = time.time() 
             insertedThisQuantum = 0
             total_read = 0
@@ -88,13 +107,12 @@ class File_Writer(object):
                     if len( dictEntry ) == 1 :
                         self._logger.warning( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')", self._fieldConfig.delimiter())
                         self._logger.warning( "input line : '%s'", "".join( dictEntry.values()))
-                    #
-                    # if self._tag :
-                    #     tag_string = "{}:{}".format( filename, total_read)
-                    else:
-                        tag_string = None
 
-                    d = self._fieldConfig.createDoc( dictEntry, tag= tag_string )
+
+                    d = self._fieldConfig.createDoc(OrderedDict(), dictEntry)
+
+                    d = self.add_locator( self._collection, d, filename, total_read)
+
                     insert_list.append( d )
                     if total_read % self._batch_size == 0 :
                         results = self._collection.insert_many( insert_list )

@@ -9,6 +9,7 @@ import sys
 
 from pymongo_import.canonical_path import Canonical_Path
 
+
 class Restarter(object):
     '''
     Track insertion of a collection of docs by adding the last inserted
@@ -31,28 +32,27 @@ class Restarter(object):
 
     '''
 
-
-    def __init__(self, database, input_filename, batch_size, cmd=None ):
+    def __init__(self, database, input_filename, batch_size, cmd=None):
         '''
         Constructor
         '''
-        self._audit = database[ "audit" ]
-        self._name = Canonical_Path( input_filename )
+        self._audit = database["AUDIT"]
+        self._name = Canonical_Path(input_filename)
         self._batch_size = batch_size
-        self._hostname =  socket.gethostname()
+        self._hostname = socket.gethostname()
         if cmd is None:
-            self._cmd = " ".join( sys.argv )
+            self._cmd = " ".join(sys.argv)
         else:
             self._cmd = cmd
 
-        self._restartDoc = self._audit.find_one( { "name" : self._name(),
-                                                   "state" : "inprogress" })
-        
-        if self._restartDoc is None :
+        self._restartDoc = self._audit.find_one({"name": self._name(),
+                                                 "state": "inprogress"})
+
+        if self._restartDoc is None:
             self.start()
-        
+
     @staticmethod
-    def split_ID( doc_id ):
+    def split_ID(doc_id):
         '''
         Split a MongoDB Object ID
         a 4-byte value representing the seconds since the Unix epoch,
@@ -60,73 +60,72 @@ class Restarter(object):
         a 2-byte process id, and
         A 3-byte counter, starting with a random value.
         '''
-        id_str     = str( doc_id )
+        id_str = str(doc_id)
         #        epoch 0        machine   1    process ID  2    counter 3
-        return ( id_str[ 0:8 ],id_str[ 8:14],id_str[ 14:18], id_str[ 18:24]  )
-    
+        return (id_str[0:8], id_str[8:14], id_str[14:18], id_str[18:24])
 
-    def start(self ):
-        self._audit.insert_one( { "name"       : self._name(),
-                                  "start"      : datetime.utcnow(),
-                                  "last_doc_id"     : None,
-                                  "count"      : 0,
-                                  "batch_size" : self._batch_size,
-                                  "command"    : self._cmd,
-                                  "state"      : "inprogress"})
-    
-    def update(self, doc_id, count ):
-        
-        self._audit.find_one_and_update( { "name"      : self._name(),
-                                           "state"     : "inprogress" },
-                                         { "$set"      : { "count"     : count,
-                                                           "end"       : datetime.utcnow(),
-                                                           "last_doc_id"    : doc_id,
-                                                           "state"     : "inprogress"}})
-        
-    def restart(self, collection ):
+    def start(self):
+        self._audit.insert_one({"name": self._name(),
+                                "start": datetime.utcnow(),
+                                "last_doc_id": None,
+                                "count": 0,
+                                "batch_size": self._batch_size,
+                                "command": self._cmd,
+                                "state": "inprogress"})
+
+    def update(self, doc_id, count):
+
+        self._audit.find_one_and_update({"name": self._name(),
+                                         "state": "inprogress"},
+                                        {"$set": {"count": count,
+                                                  "end": datetime.utcnow(),
+                                                  "last_doc_id": doc_id,
+                                                  "state": "inprogress"}})
+
+    def restart(self, collection):
         '''
         Get the restart doc. Now find any docs created after the restart doc was created
         within the same process and machine. Count those so we know where we are.
         Return the new doc count that we can skip too.
         '''
-        
-        self._restartDoc = self._audit.find_one( { "name"  : self._name(),
-                                                   "state" : "inprogress" })
-        
-        if self._restartDoc is None: # skip nothing, nothing to restart
+
+        self._restartDoc = self._audit.find_one({"name": self._name(),
+                                                 "state": "inprogress"})
+
+        if self._restartDoc is None:  # skip nothing, nothing to restart
             return 0
-        
-        count = self._restartDoc[ "count"]
-        ( _, machine, pid, _ ) = Restarter.split_ID( self._restartDoc[ "last_doc_id"])
-        
-        cursor = collection.find( { "_id" : { "$gt" : self._restartDoc[ "last_doc_id" ]}})
-        
+
+        count = self._restartDoc["count"]
+        (_, machine, pid, _) = Restarter.split_ID(self._restartDoc["last_doc_id"])
+
+        cursor = collection.find({"_id": {"$gt": self._restartDoc["last_doc_id"]}})
+
         for i in cursor:
-            ( _, i_machine, i_pid, _ ) = Restarter.split_ID( i[ "_id"])
-              
-            if i_machine == machine and i_pid == pid :
+            (_, i_machine, i_pid, _) = Restarter.split_ID(i["_id"])
+
+            if i_machine == machine and i_pid == pid:
                 count = count + 1
-                
-            if count == self._restartDoc[ "batch_size"]:
+
+            if count == self._restartDoc["batch_size"]:
                 # we have the full batch, we can't have inserted more than 
                 # this before updating the restart doc
                 break
-            
+
         return count
-            
-    def finish(self ):
-        
-        self._restartDoc = self._audit.find_one_and_update( 
-            { "name"      : self._name(),
-              "state"     : "inprogress" },
-            { "$set" : { "end"      : datetime.utcnow(),
-                         "state"          : "completed" }} )
-        
-    def reset(self ):
-        
-        self._restartDoc = self._audit.find_one_and_update( { "name"      : self._name() },
-                                                                 { "$set" : { "timestamp"      : datetime.utcnow(),
-                                                                              "batch_size"     : self._batch_size,
-                                                                              "count"          : 0,
-                                                                              "last_doc_id"         : 0,
-                                                                              "state"          : "inprogress" }} )
+
+    def finish(self):
+
+        self._restartDoc = self._audit.find_one_and_update(
+            {"name": self._name(),
+             "state": "inprogress"},
+            {"$set": {"end": datetime.utcnow(),
+                      "state": "completed"}})
+
+    def reset(self):
+
+        self._restartDoc = self._audit.find_one_and_update({"name": self._name()},
+                                                           {"$set": {"timestamp": datetime.utcnow(),
+                                                                     "batch_size": self._batch_size,
+                                                                     "count": 0,
+                                                                     "last_doc_id": 0,
+                                                                     "state": "inprogress"}})

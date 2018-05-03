@@ -94,8 +94,19 @@ def mongo_import(input_args=None):
     else:
         client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
 
-    database = client[args.database]
-    collection = database[args.collection]
+    if args.database:
+        database_name= args.database
+    else
+        database_name = "PYIM"
+        database = client[ "PYIM" ]
+
+    if args.collection:
+        collection_name = args.collection
+    else:
+        collection = "ported"
+
+    database = client[database_name]
+    collection = database[database_name]
 
     if args.drop:
         if args.restart:
@@ -110,7 +121,7 @@ def mongo_import(input_args=None):
             log.info("Creating '%s' from '%s'", fc_filename, i)
         sys.exit(0)
     elif args.filenames:
-        log.info("Using database: %s, collection: %s", args.database, args.collection)
+        log.info("Using database: '{}', collection: '{}'".format( database_name, collection_name))
         # log.info( "processing %i files", len( args.filenames ))
 
         if args.batchsize < 1:

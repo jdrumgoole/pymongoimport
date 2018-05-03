@@ -60,6 +60,25 @@ class Line_Counter(object):
 
         return line_count
 
+    @staticmethod
+    def skipLines(f, skipCount):
+        '''
+        >>> f = open( "test_set_small.txt", "r" )
+        >>> skipLines( f , 20 )
+        20
+        '''
+
+        lineCount = 0
+        if (skipCount > 0):
+            # print( "Skipping")
+            dummy = f.readline()  # skicaount may be bigger than the number of lines i  the file
+            while dummy:
+                lineCount = lineCount + 1
+                if (lineCount == skipCount):
+                    break
+                dummy = f.readline()
+
+        return lineCount
 
 class File_Splitter(object):
 

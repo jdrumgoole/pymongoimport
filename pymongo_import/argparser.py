@@ -14,8 +14,8 @@ def add_standard_args(parser):
     """
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
-    parser.add_argument('--database', default="test", help='specify the database name [default: %(default)s]')
-    parser.add_argument('--collection', default="test", help='specify the collection name [default: %(default)s]')
+    parser.add_argument('--database', help='specify the database name [default: %(default)s]')
+    parser.add_argument('--collection', help='specify the collection name [default: %(default)s]')
     parser.add_argument('--host', default="mongodb://localhost:27017/test",
                         help='mongodb URI. [default: %(default)s]')
     parser.add_argument('--batchsize', type=int, default=500,
