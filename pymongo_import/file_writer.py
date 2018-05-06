@@ -24,7 +24,7 @@ def seconds_to_duration( seconds ):
 class File_Writer(object):
 
      
-    def __init__(self, log, collection, fieldConfig, limit=0):
+    def __init__(self, collection, fieldConfig, limit=0, log=None):
          
         self._logger = log
         self._collection = collection
@@ -110,8 +110,9 @@ class File_Writer(object):
                         if total_read > self._limit:
                             break
                     if len( dictEntry ) == 1 :
-                        self._logger.warning( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')", self._fieldConfig.delimiter())
-                        self._logger.warning( "input line : '%s'", "".join( dictEntry.values()))
+                        if self._logger:
+                            self._logger.warning( "Warning: only one field in input line. Do you have the right delimiter set ? ( current delimiter is : '%s')", self._fieldConfig.delimiter())
+                            self._logger.warning( "input line : '%s'", "".join( dictEntry.values()))
 
 
                     d = self._fieldConfig.createDoc(OrderedDict(), dictEntry)
@@ -132,16 +133,19 @@ class File_Writer(object):
                             self._logger.info( "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format( filename, docs_per_second, total_written ))
 
             except UnicodeDecodeError as exp:
-                self._logger.error(exp)
-                self._logger.error( "Error on line:%i", total_read + 1 )
+                if self._logger:
+                    self._logger.error(exp)
+                    self._logger.error( "Error on line:%i", total_read + 1 )
                 raise;
                         
             if len( insert_list ) > 0  :
                 results = self._collection.insert_many( insert_list )
                 total_written = total_written + len( results.inserted_ids )
                 insert_list = []
-                self._logger.info( "Input: '%s' : Inserted %i records", filename, total_written )
+                if self._logger:
+                    self._logger.info( "Input: '%s' : Inserted %i records", filename, total_written )
                 
         finish = time.time()
-        self._logger.info( "Total elapsed time to upload '%s' : %s" , filename,seconds_to_duration( finish - start ))
+        if self._logger:
+            self._logger.info( "Total elapsed time to upload '%s' : %s" , filename,seconds_to_duration( finish - start ))
         return total_written

@@ -129,7 +129,7 @@ class Import_Command(Command):
                                   self._hasheader,
                                   self._onerror)
 
-        fw = File_Writer( self._log, self._collection, fieldConfig, self._limit)
+        fw = File_Writer(self._collection, fieldConfig, self._limit, self._log)
         self._total_written = self._total_written + fw.insert_file(arg)
 
         return self._total_written
