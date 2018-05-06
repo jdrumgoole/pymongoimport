@@ -1,4 +1,6 @@
 """
+1.7a1   : 06-May-2018 : Refactored commands into a command class. Removed the mapping for multiprocessing.
+                        Changed the default forking model to "spawn" which dramatically improved performance.
 1.6a6   : 03-May-2018 : Bug fix
 1.6a4   : 02-May-2018 : Added locator field for files
 1.6a3   : 01-May-2018 : Allow processing to continue when records are corrupt if onerror setting allow
@@ -14,4 +16,4 @@
 Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 
 """
-__VERSION__="1.6a6"  # type: str
+__VERSION__="1.7a1"  # type: str

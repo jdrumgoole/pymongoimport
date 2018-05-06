@@ -92,17 +92,20 @@ class Import_Command(Command):
         self._limit = limit
         self._total_written = 0
 
-        self._log.info("Auditing output")
+        if self._log:
+            self._log.info("Auditing output")
 
     def pre_execute(self, arg):
         super().pre_execute(arg)
-        self._log.info("Using collection:'{}'".format(self._collection.full_name))
+        if self._log:
+            self._log.info("Using collection:'{}'".format(self._collection.full_name))
 
         if not self._field_filename:
             #print( "arg:'{}".format(arg))
             self._field_filename = FieldConfig.generate_field_filename(arg)
 
-        self._log.info("Using field file:'{}'".format(self._field_filename))
+        if self._log:
+            self._log.info("Using field file:'{}'".format(self._field_filename))
 
         if not os.path.isfile(self._field_filename):
             raise OSError( "No such field file:'{}'".format( self._field_filename))
@@ -119,7 +122,8 @@ class Import_Command(Command):
             self._log.error(error_msg)
             raise ValueError(error_msg)
 
-        self._log.info("using field file: '%s'", field_filename)
+        if self._log:
+            self._log.info("using field file: '%s'", field_filename)
         fieldConfig = FieldConfig(field_filename,
                                   self._delimiter,
                                   self._hasheader,
@@ -137,4 +141,6 @@ class Import_Command(Command):
         super().post_execute(arg)
         if self._audit:
             self._audit.add_command( self._id, self.name(),  { "filename": arg})
-        self._log.info("imported file: '%s'", arg)
+
+        if self._log:
+            self._log.info("imported file: '%s'", arg)

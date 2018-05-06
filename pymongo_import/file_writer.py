@@ -128,7 +128,8 @@ class File_Writer(object):
                         elapsed = time_now - timeStart
                         docs_per_second = self._batch_size/elapsed
                         timeStart = time_now
-                        self._logger.info( "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format( filename, docs_per_second, total_written ))
+                        if self._logger:
+                            self._logger.info( "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format( filename, docs_per_second, total_written ))
 
             except UnicodeDecodeError as exp:
                 self._logger.error(exp)

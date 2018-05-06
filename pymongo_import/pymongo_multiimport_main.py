@@ -65,7 +65,12 @@ def multi_import(*argv):
     parser = argparse.ArgumentParser(usage=usage_message)
     parser = add_standard_args(parser)
     parser.add_argument("--poolsize", type=int, default=multiprocessing.cpu_count(), help="The number of parallel processes to run")
+    parser.add_argument("--forkmodel", choices=["spawn", "fork", "forkserver"], default="spawn",
+                        help="The model used to define how we create subprocesses (default:'spawn')")
+
     args = parser.parse_args(*argv)
+
+    multiprocessing.set_start_method(args.forkmodel)
 
     log = Logger("multi_import").log()
 
@@ -97,9 +102,8 @@ def multi_import(*argv):
 
     process_count = 0
     log.info( "Poolsize:{}".format(poolsize))
-    process_pool = Pool(poolsize)
 
-    subprocess = Sub_Process( log=log, audit=None, batch_ID=None, args=args)
+    subprocess = Sub_Process( log=None, audit=None, batch_ID=None, args=args)
     subprocess.setup_log_handlers()
 
     # with Pool(poolsize) as p :
@@ -119,6 +123,8 @@ def multi_import(*argv):
         # ugly.
         #
         proc_list=[]
+
+
         for arg_list in chunker( args.filenames, poolsize):
 
             proc_list=[]
@@ -142,6 +148,7 @@ def multi_import(*argv):
     log.info("Total elapsed time:%f" % (finish - start))
 
 if __name__ == '__main__':
+
     multi_import(sys.argv[1:])
 
     # with Pool(poolsize) as p:

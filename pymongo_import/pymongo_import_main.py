@@ -90,17 +90,19 @@ class Sub_Process(object):
         self._args               = args
 
     def setup_log_handlers(self):
-        self._log = Logger(self._args.logname, self._args.loglevel).log()
+        if self._log:
+            self._log = Logger(self._args.logname, self._args.loglevel).log()
 
         # Logger.add_file_handler(args.logname)
 
-        if not self._args.silent:
-            Logger.add_stream_handler(self._args.logname)
+            if not self._args.silent:
+                Logger.add_stream_handler(self._args.logname)
 
     def run(self, filename):
 
         print( "run:", filename)
-        self._log.info("Started pymongo_import")
+        if self._log:
+            self._log.info("Started pymongo_import")
 
         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
             client = pymongo.MongoClient(self._host, w=self._write_concern)
@@ -117,10 +119,11 @@ class Sub_Process(object):
         database = client[self._database_name]
         self._collection = database[self._collection_name]
 
-        self._log.info("Write concern : %i", self._write_concern)
-        self._log.info("journal       : %i", self._journal)
-        self._log.info("fsync         : %i", self._fsync)
-        self._log.info("hasheader     : %s", self._hasheader)
+        if self._log:
+            self._log.info("Write concern : %i", self._write_concern)
+            self._log.info("journal       : %i", self._journal)
+            self._log.info("fsync         : %i", self._fsync)
+            self._log.info("hasheader     : %s", self._hasheader)
 
         cmd = Import_Command(log=self._log,
                              collection=self._collection,
