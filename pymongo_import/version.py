@@ -1,5 +1,5 @@
 """
-1.6a5   : 03-May-2018 : Bug fix
+1.6a6   : 03-May-2018 : Bug fix
 1.6a4   : 02-May-2018 : Added locator field for files
 1.6a3   : 01-May-2018 : Allow processing to continue when records are corrupt if onerror setting allow
 1.5a8   : 30-Apr-2018 : For multi-processing disable hasheader as an arg if we are splitting files
@@ -14,4 +14,4 @@
 Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 
 """
-__VERSION__="1.6a5"  # type: str
+__VERSION__="1.6a6"  # type: str

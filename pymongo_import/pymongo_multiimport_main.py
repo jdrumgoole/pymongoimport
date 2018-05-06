@@ -13,10 +13,10 @@ import pymongo
 import glob
 
 from pymongo_import.filesplitter import File_Splitter
-from pymongo_import.pymongo_import_main import mongo_import
+
 from pymongo_import.logger import Logger
 from pymongo_import.argparser import add_standard_args
-
+from pymongo_import.pymongo_import_main import Sub_Process
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
     '''
@@ -41,6 +41,10 @@ def strip_arg(arg_list, remove_arg, has_trailing=False):
 
     return arg_list
 
+
+
+def print_name(n):
+    print(n)
 
 def multi_import(*argv):
     """
@@ -68,17 +72,22 @@ def multi_import(*argv):
     log = Logger("multi_import").log()
 
     Logger.add_file_handler("multi_import")
-    Logger.add_stream_handler("mult_iimport")
+    Logger.add_stream_handler("multi_import")
 
     child_args = sys.argv[1:]
     children = OrderedDict()
 
-    print(args.filenames)
+    log.info("filenames:%s", args.filenames)
     if len(args.filenames) == 0:
         log.info("no input file to split")
         sys.exit(0)
 
     if args.poolsize:
+        poolsize = args.poolsize
+        child_args = strip_arg(child_args, "--poolsize", True)
+
+    if args.filenames:
+        filenames = args.filenames
         child_args = strip_arg(child_args, "--poolsize", True)
 
     if args.restart:
@@ -89,19 +98,33 @@ def multi_import(*argv):
         client.drop_database(args.database)
         child_args = strip_arg(child_args, args.drop)
 
+
     start = time.time()
 
     process_count = 0
-    process_pool = Pool(processes=args.poolsize)
+    log.info( "Poolsize:%s" % poolsize)
+    process_pool = Pool(poolsize)
+
+    subprocess = Sub_Process( log=log, audit=None, batch_ID=None, args=args)
+
     try:
-        for filename in args.filenames:
-            process_count = process_count + 1
-            # need to turn args to Process into a tuple )
-            new_args = copy.deepcopy(child_args)
-            # new_args.extend( [ "--logname", filename[0], filename[0] ] )
-            new_args.extend(filename)
-            process_pool.apply_async(func=mongo_import, args=(new_args,))
-            log.info("Processing '%s'", filename)
+        log.info( "processing args:%s", args.filenames)
+
+        for i in args.filenames:
+            print( "processing: {}".format(i))
+            process_pool.apply_async(func=subprocess.run, args=(i,))
+            #subprocess.run(i)
+        # for filename in args.filenames:
+        #
+        #     process_count = process_count + 1
+        #     # need to turn args to Process into a tuple )
+        #     new_args = copy.deepcopy(child_args)
+        #     # new_args.extend( [ "--logname", filename[0], filename[0] ] )
+        #     new_args.append(filename)
+        #     log.info("Processing '%s'", filename)
+        #     log.info("args:%s", new_args)
+        #     process_pool.apply_async(func=shim, args=(new_args,))
+
 
         process_pool.close()
         process_pool.join()

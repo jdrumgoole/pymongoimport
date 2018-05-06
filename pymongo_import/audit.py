@@ -38,16 +38,18 @@ import os
 class Audit(object):
     name = "audit"
 
-    def __init__(self, client, database=None):
+    def __init__(self, client=None, database=None, collection="audit"):
 
         self._lock = Lock()
 
         if database:
             self._database = database
-        else:
+        elif client:
             self._database =client[ "AUDIT"]
+        else:
+            raise ValueError( "Neither database nor client defined")
 
-        self._auditCollection = self._database[ "audit"]
+        self._auditCollection = self._database[collection]
         self._open_batch_count = 0
 
     def collection(self):
@@ -93,6 +95,12 @@ class Audit(object):
         self._auditCollection.insert_one({"batchID": batchID,
                                           "timestamp"  : datetime.utcnow(),
                                           field_name   : doc })
+
+
+    def add_command(self, batchID, cmd_name, args):
+
+        self.add_batch_info( batchID, "command", { "name" : cmd_name,
+                                                   "args" : args })
 
     def end_batch(self, batchID):
 

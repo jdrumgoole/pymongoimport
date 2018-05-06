@@ -40,7 +40,7 @@ class FieldConfig(object):
       
     '''
 
-    def __init__(self, cfgFilename, delimiter=",", hasheader=True, gen_id="mongodb", onerror="warn", tag=None):
+    def __init__(self, cfgFilename, delimiter=",", hasheader=True, onerror="warn" ):
         '''
         Constructor
         '''
@@ -51,7 +51,6 @@ class FieldConfig(object):
         self._fieldDict = OrderedDict()
         self._names = OrderedDict()
         self._doc_template = OrderedDict()
-        self._id = gen_id
         self._delimiter = delimiter
         self._record_count = 0
         self._line_count = 0
@@ -59,7 +58,6 @@ class FieldConfig(object):
         self._pid = os.getpid()
         self._onerror = onerror
         self._hasheader = hasheader
-        self._tag = tag
 
         if cfgFilename:
             self._fieldDict = self.read(cfgFilename)
@@ -199,6 +197,29 @@ class FieldConfig(object):
     def doc_template(self):
         return self._doc_template
 
+    class Converter(object):
+
+        @staticmethod
+        def _ts( v ):
+            return datetime.datetime.fromtimestamp(int(v))
+
+        @staticmethod
+        def _int(v):
+            try:
+                # print( "converting : '%s' to int" % v )
+                v = int(v)
+            except ValueError:
+                v = float(v)
+
+            return v
+
+        def __init__(self):
+
+            self._converter = { "timestamp" : Converter._ts,
+                                "int" :  Converter._int }
+
+
+
     def type_convert(self, v, t):
         '''
         Use type entry for the field in the fieldConfig file (.ff) to determine what type
@@ -235,9 +256,6 @@ class FieldConfig(object):
         Do we make gen id generate a compound key or another field instead of ID
         '''
         self._record_count = self._record_count + 1
-
-        if self._id == "gen":
-            doc["_id"] = "%i-%i" % (self._pid, self._record_count)
 
         if self._timestamp == "gen":
             doc['timestamp'] = datetime.utcnow()

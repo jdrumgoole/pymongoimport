@@ -32,9 +32,8 @@ class Test(unittest.TestCase):
             return i
         
     def test_Restart(self):
-        batch_size = 500
         fc = FieldConfig( self._root.root_path( "data", "10k.ff"), hasheader=False, delimiter="|")
-        bw = File_Writer( self._collection, fc, batch_size = batch_size )
+        bw = File_Writer( self._collection, fc)
         bw.insert_file( self._root.root_path( "data", "10k.txt"), restart=True )
         audit = self._db[ "audit"]
         self.assertEqual( audit.count(), 1 )

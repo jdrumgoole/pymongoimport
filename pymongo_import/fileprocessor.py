@@ -10,6 +10,8 @@ import logging
 from pymongo_import.fieldconfig import FieldConfigException, FieldConfig
 from pymongo_import.file_writer import File_Writer
 from pymongo_import.logger import Logger
+from pymongo_import.command import Import_Command
+
 from datetime import datetime
 
 class InputFileException(Exception):
@@ -18,7 +20,7 @@ class InputFileException(Exception):
         
 class FileProcessor( object ):
     
-    def __init__(self, collection, delimiter, onerror="warn", gen_id="mongodb", batchsize=500):
+    def __init__(self, collection, delimiter, onerror="warn", gen_id="mongodb", batchsize=500, limit=0):
         self._logger = logging.getLogger( Logger.LOGGER_NAME  )
         self._collection = collection
         self._delimiter = delimiter
@@ -26,22 +28,22 @@ class FileProcessor( object ):
         self._gen_id = gen_id
         self._batchsize = batchsize
         self._files = []
-        
+        self._limit = limit
+
     def processOneFile( self, input_filename, field_filename=None, hasheader=False, restart=False,batchID=None ):
-            
+
         if not field_filename:
             field_filename = FieldConfig.generate_field_filename(input_filename)
+        cmd = Import_Command( log=self._logger,
+                              collection=self._collection,
+                              field_filename=field_filename,
+                              delimiter=self._delimiter,
+                              hasheader=hasheader,
+                              onerror=self._onerror,
+                              limit=self._limit)
 
-        if not os.path.isfile(field_filename):
-            self._logger.error( "The fieldfile '{}' does not exit".format( field_filename))
-            raise ValueError( "No such field file: '{}".format(field_filename))
-
-        self._logger.info("using field file: '%s'", field_filename)
-        fieldConfig = FieldConfig( field_filename, self._delimiter, hasheader, self._gen_id, self._onerror )
-    
-        fw = File_Writer( self._collection, fieldConfig, self._batchsize )
-        totalWritten = fw.insert_file( input_filename, restart)
-        return totalWritten 
+        cmd.run(input_filename)
+        return cmd.total_written()
 
     def get_files(self):
         return self._files
@@ -53,7 +55,7 @@ class FileProcessor( object ):
         results=[]
         failures=[]
         new_name = None
-        
+
         for i in filenames :
             self._files.append(i)
             try:
