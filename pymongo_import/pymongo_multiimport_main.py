@@ -4,7 +4,7 @@
 import argparse
 import sys
 import multiprocessing
-from multiprocessing import Pool
+from multiprocessing import Pool, Process
 from collections import OrderedDict
 import time
 import copy
@@ -41,10 +41,8 @@ def strip_arg(arg_list, remove_arg, has_trailing=False):
 
     return arg_list
 
-
-
-def print_name(n):
-    print(n)
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
 def multi_import(*argv):
     """
@@ -79,15 +77,11 @@ def multi_import(*argv):
 
     log.info("filenames:%s", args.filenames)
     if len(args.filenames) == 0:
-        log.info("no input file to split")
+        log.info("no input files")
         sys.exit(0)
 
     if args.poolsize:
         poolsize = args.poolsize
-        child_args = strip_arg(child_args, "--poolsize", True)
-
-    if args.filenames:
-        filenames = args.filenames
         child_args = strip_arg(child_args, "--poolsize", True)
 
     if args.restart:
@@ -102,43 +96,77 @@ def multi_import(*argv):
     start = time.time()
 
     process_count = 0
-    log.info( "Poolsize:%s" % poolsize)
+    log.info( "Poolsize:{}".format(poolsize))
     process_pool = Pool(poolsize)
 
     subprocess = Sub_Process( log=log, audit=None, batch_ID=None, args=args)
+    subprocess.setup_log_handlers()
+
+    # with Pool(poolsize) as p :
+    #
+    #     for i in args.filenames:
+    #         print("Pool")
+    #         p.apply_async(func=subprocess.run, args=(i,), callback=success_callback,
+    #                       error_callback=fail_callback )
+    #
+    #     #results = [p.apply_async(subprocess.run, (i,)) for i in args.filenames]
+
 
     try:
-        log.info( "processing args:%s", args.filenames)
 
-        for i in args.filenames:
-            print( "processing: {}".format(i))
-            process_pool.apply_async(func=subprocess.run, args=(i,))
-            #subprocess.run(i)
-        # for filename in args.filenames:
         #
-        #     process_count = process_count + 1
-        #     # need to turn args to Process into a tuple )
-        #     new_args = copy.deepcopy(child_args)
-        #     # new_args.extend( [ "--logname", filename[0], filename[0] ] )
-        #     new_args.append(filename)
-        #     log.info("Processing '%s'", filename)
-        #     log.info("args:%s", new_args)
-        #     process_pool.apply_async(func=shim, args=(new_args,))
+        # Should use a Pool here but Pools need top level functions which is
+        # ugly.
+        #
+        proc_list=[]
+        for arg_list in chunker( args.filenames, poolsize):
 
+            proc_list=[]
+            for i in arg_list:
+                    log.info("Processing:'%s'", i)
+                    proc = Process(target=subprocess.run, args=(i,), name=i)
+                    proc.start()
+                    proc_list.append(proc)
 
-        process_pool.close()
-        process_pool.join()
-        #log.info("elapsed time for process %s : %f", i, children[i]["end"] - children[i]["start"])
+            for proc in proc_list:
+                proc.join()
 
     except KeyboardInterrupt:
-        for i in children.keys():
-            log.info("terminating pool: '%s'", i)
-            process_pool.terminate()
+        log.info( "Keyboard interrupt...")
+        for i in proc_list:
+            log.info("terminating process: '%s'", proc_list[i].name)
+            proc_list[i].terminate()
 
     finish = time.time()
 
     log.info("Total elapsed time:%f" % (finish - start))
 
-
 if __name__ == '__main__':
     multi_import(sys.argv[1:])
+
+    # with Pool(poolsize) as p:
+    #     try:
+    #         log.info( "processing args:%s", args.filenames)
+
+            #for i in args.filenames:
+            #print( "processing: {}".format(i))
+            #p.map(subprocess.run, ['test_result_2016.txt.1', 'test_result_2016.txt.2', 'test_result_2016.txt.3', 'test_result_2016.txt.4', 'test_result_2016.txt.5'])
+            #p.map(print_name, list(args.filenames))
+                #subprocess.run(i)
+            # for filename in args.filenames:
+            #
+            #     process_count = process_count + 1
+            #     # need to turn args to Process into a tuple )
+            #     new_args = copy.deepcopy(child_args)
+            #     # new_args.extend( [ "--logname", filename[0], filename[0] ] )
+            #     new_args.append(filename)
+            #     log.info("Processing '%s'", filename)
+            #     log.info("args:%s", new_args)
+            #     process_pool.apply_async(func=shim, args=(new_args,))
+
+
+            #log.info("elapsed time for process %s : %f", i, children[i]["end"] - children[i]["start"])
+
+
+
+

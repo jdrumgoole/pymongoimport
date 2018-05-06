@@ -15,6 +15,7 @@ import argparse
 import sys
 import socket
 import os
+from multiprocessing import Process
 
 import pymongo
 from pymongo_import.fileprocessor import FileProcessor
@@ -86,9 +87,19 @@ class Sub_Process(object):
         self._onerror            = args.onerror
         self._limit              = args.limit
         self._limit              = args.limit
+        self._args               = args
+
+    def setup_log_handlers(self):
+        self._log = Logger(self._args.logname, self._args.loglevel).log()
+
+        # Logger.add_file_handler(args.logname)
+
+        if not self._args.silent:
+            Logger.add_stream_handler(self._args.logname)
 
     def run(self, filename):
 
+        print( "run:", filename)
         self._log.info("Started pymongo_import")
 
         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
@@ -125,6 +136,19 @@ class Sub_Process(object):
 
         return 1
 
+    def process_batch(self, pool_size, files):
+
+        procs=[]
+        for f in files[:pool_size]:
+            self._log.info("Processing:'%s'", f)
+            proc = Process(target=self.run, args=(f,), name=f)
+            proc.start()
+            procs.append(proc)
+
+        for p in procs:
+            p.join()
+
+        return files[pool_size:]
 
 def mongo_import_main(input_args=None):
     """
