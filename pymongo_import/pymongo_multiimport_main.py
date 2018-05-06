@@ -7,10 +7,8 @@ import multiprocessing
 from multiprocessing import Pool, Process
 from collections import OrderedDict
 import time
-import copy
-import os
 import pymongo
-import glob
+import logging
 
 from pymongo_import.filesplitter import File_Splitter
 
@@ -65,12 +63,12 @@ def multi_import(*argv):
     parser = argparse.ArgumentParser(usage=usage_message)
     parser = add_standard_args(parser)
     parser.add_argument("--poolsize", type=int, default=multiprocessing.cpu_count(), help="The number of parallel processes to run")
-    parser.add_argument("--forkmodel", choices=["spawn", "fork", "forkserver"], default="spawn",
+    parser.add_argument("--forkmethod", choices=["spawn", "fork", "forkserver"], default="spawn",
                         help="The model used to define how we create subprocesses (default:'spawn')")
 
     args = parser.parse_args(*argv)
 
-    multiprocessing.set_start_method(args.forkmodel)
+    multiprocessing.set_start_method(args.forkmethod)
 
     log = Logger("multi_import").log()
 
@@ -103,7 +101,13 @@ def multi_import(*argv):
     process_count = 0
     log.info( "Poolsize:{}".format(poolsize))
 
-    subprocess = Sub_Process( log=None, audit=None, batch_ID=None, args=args)
+    if args.forkmethod == "fork":
+        subprocess = Sub_Process(log=log, audit=None, batch_ID=None, args=args)
+    elif args.forkmethod == "spawn":
+        subprocess = Sub_Process(log=None, audit=None, batch_ID=None, args=args)
+    elif args.forkmethod == "forkserver":
+        subprocess = Sub_Process(log=None, audit=None, batch_ID=None, args=args)
+
     subprocess.setup_log_handlers()
 
     # with Pool(poolsize) as p :
