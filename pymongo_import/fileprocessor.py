@@ -7,7 +7,7 @@ Created on 24 Jul 2017
 import os
 import logging
 
-from pymongo_import.fieldconfig import FieldConfigException, FieldConfig
+from pymongo_import.fieldconfig import FieldConfig
 from pymongo_import.file_writer import File_Writer
 from pymongo_import.logger import Logger
 from pymongo_import.command import Import_Command

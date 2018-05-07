@@ -6,13 +6,16 @@ class Converter(object):
 
     type_fields = [ "int", "float", "str", "datetime", "date", "timestamp"]
 
-    def __init__(self):
+    def __init__(self, log=None):
+
+        self._log = log
+
         self._converter = {
             "int"       : Converter.to_int,
             "float"     : Converter.to_float,
             "str"       : Converter.to_str,
-            "datetime"  : Converter.to_datetime,
-            "date"      : Converter.to_datetime,
+            "datetime"  : self.to_datetime,
+            "date"      : self.to_datetime,
             "timestamp" : Converter.to_timestamp
         }
 
@@ -33,8 +36,7 @@ class Converter(object):
     def to_str(v):
         return str(v)
 
-    @staticmethod
-    def to_datetime(v, format=None):
+    def to_datetime(self, v, format=None):
         if v == "NULL":
             return None
         elif format is None:
@@ -43,6 +45,9 @@ class Converter(object):
             try:
                 return datetime.datetime.strptime(v, format)
             except ValueError:
+                if self._log:
+                    self._log.warning( "Using the slower date parse: for value '%s' as format '%s' has failed",
+                                       v, format)
                 return date_parse(v)
 
     @staticmethod

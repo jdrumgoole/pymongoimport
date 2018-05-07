@@ -125,7 +125,8 @@ class Import_Command(Command):
 
         if self._log:
             self._log.info("using field file: '%s'", field_filename)
-        self._fieldConfig = FieldConfig(field_filename,
+        self._fieldConfig = FieldConfig(self._log,
+                                        field_filename,
                                         self._delimiter,
                                         self._hasheader,
                                         self._onerror)

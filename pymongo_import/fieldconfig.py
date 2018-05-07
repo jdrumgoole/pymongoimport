@@ -20,11 +20,6 @@ from collections import OrderedDict
 import re
 
 
-class FieldConfigException(Exception):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
 class FieldConfig(object):
     '''
       Each field is represented by a section in the config parser
@@ -42,11 +37,11 @@ class FieldConfig(object):
       
     '''
 
-    def __init__(self, cfgFilename, delimiter=",", hasheader=True, onerror="warn" ):
+    def __init__(self, log, cfgFilename, delimiter=",", hasheader=True, onerror="warn" ):
         '''
         Constructor
         '''
-        self._logger = logging.getLogger(Logger.LOGGER_NAME)
+        self._log = log
         self._idField = None  # section on which name == _id
         # self._tags = ["name", "type", "format"]
         # self._cfg = RawConfigParser()
@@ -60,7 +55,7 @@ class FieldConfig(object):
         self._onerror = onerror
         self._hasheader = hasheader
         self._config = None
-        self._converter = Converter()
+        self._converter = Converter(self._log)
         if cfgFilename:
             self._config = Config_File(cfgFilename)
 
@@ -193,16 +188,19 @@ class FieldConfig(object):
                 #print(dictEntry)
                 msg = msg + "\t\t\tline:{}:'{}'".format( self._record_count, self._delimiter.join( [ str(v) for v in dictEntry.values()]))
                 if self._onerror == "fail" :
-                    self._logger.error( msg)
+                    if self._log:
+                        self._log.error( msg)
                     raise ValueError(msg)
                 elif self._onerror == "warn":
-                    self._logger.warning(msg)
+                    if self._log:
+                        self._log.warning(msg)
                     continue
                 else:
                     continue
 
             if k.startswith("blank-") and self._onerror == "warn":  # ignore blank- columns
-                self._logger.info("Field %i is blank [blank-] : ignoring", fieldCount)
+                if self._log:
+                    self._log.info("Field %i is blank [blank-] : ignoring", fieldCount)
                 continue
 
             # try:
@@ -217,9 +215,10 @@ class FieldConfig(object):
             except ValueError:
 
                 if self._onerror == "fail":
-                    self._logger.error("Error at line %i at field '%s'", self._record_count, k)
-                    self._logger.error("type conversion error: Cannot convert '%s' to type %s", dictEntry[k],
-                                       type_field)
+                    if self._log:
+                        self._log.error("Error at line %i at field '%s'", self._record_count, k)
+                        self._log.error("type conversion error: Cannot convert '%s' to type %s", dictEntry[k],
+                                           type_field)
                     raise
                 elif self._onerror == "warn":
                     msg = "Parse failure at line {} at field '{}'".format( self._record_count, k )
@@ -237,9 +236,9 @@ class FieldConfig(object):
                 doc[k] = v
 
         #             except ValueError :
-        #                 self._logger.error( "Value error parsing field : [%s]" , k )
-        #                 self._logger.error( "read value is: '%s'", dictEntry[ k ] )
-        #                 self._logger.error( "line: %i, '%s'", self._record_count, dictEntry )
+        #                 self._log.error( "Value error parsing field : [%s]" , k )
+        #                 self._log.error( "read value is: '%s'", dictEntry[ k ] )
+        #                 self._log.error( "line: %i, '%s'", self._record_count, dictEntry )
         #                 #print( "ValueError parsing filed : %s with value : %s (type of field: $s) " % ( str(k), str(line[ k ]), str(fieldDict[ k]["type"])))
         #                 raise
 

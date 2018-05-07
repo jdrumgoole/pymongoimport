@@ -9,7 +9,7 @@ import datetime
 
 import pymongo
 
-from pymongo_import.fieldconfig import FieldConfig, FieldConfigException
+from pymongo_import.fieldconfig import FieldConfig
 from pymongo_import.logger import Logger
 from pymongo_import.file_writer import File_Writer
 from pymongo_import.filesplitter import File_Splitter, Line_Counter
@@ -31,14 +31,14 @@ class Test(unittest.TestCase):
         pass
 
     def test_FieldConfig(self):
-        fc = FieldConfig("data/test_fieldconfig.ff")
+        fc = FieldConfig(None, "data/test_fieldconfig.ff")
         cfg = fc.config()
         self.assertEqual(len(cfg.fields()), 4)
 
         self.assertEqual(cfg.fields()[0], "Test 1")
         self.assertEqual(cfg.fields()[3], "Test 4")
 
-        fc = FieldConfig("data/uk_property_prices.ff")
+        fc = FieldConfig(None, "data/uk_property_prices.ff")
         cfg = fc.config()
         self.assertEqual(len(cfg.fields()), 15)
 
@@ -48,14 +48,14 @@ class Test(unittest.TestCase):
 
     def test_delimiter_no_header(self):
         start_count = self._col.count()
-        fc = FieldConfig("data/10k.ff", delimiter='|', hasheader=False)
+        fc = FieldConfig(None, "data/10k.ff", delimiter='|', hasheader=False)
         bw = File_Writer(self._col, fc)
         bw.insert_file("data/10k.txt")
         self.assertEqual(self._col.count() - start_count, 10000)
 
     def test_delimiter_header(self):
         start_count = self._col.count()
-        fc = FieldConfig("data/AandE_Data_2011-04-10.ff", delimiter=',', hasheader=True)
+        fc = FieldConfig( None, "data/AandE_Data_2011-04-10.ff", delimiter=',', hasheader=True)
         bw = File_Writer(self._col, fc)
         bw.insert_file("data/AandE_Data_2011-04-10.csv")
         self.assertEqual(self._col.count() - start_count, 300)
@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
 
     def test_dict_reader(self):
         fc_filename = FieldConfig.generate_field_file("data/inventory.csv")
-        fc = FieldConfig(fc_filename)
+        fc = FieldConfig(None, fc_filename)
         cfg = fc.config()
         with open("data/inventory.csv", "r")  as f:
             if fc.hasheader():
@@ -94,7 +94,7 @@ class Test(unittest.TestCase):
                 for field in cfg.fields():
                     self.assertTrue(field in row)
 
-        fc = FieldConfig("data/uk_property_prices.ff")
+        fc = FieldConfig(None, "data/uk_property_prices.ff")
         cfg = fc.config()
         with open("data/uk_property_prices.csv", "r")  as f:
             if fc.hasheader():
@@ -110,7 +110,7 @@ class Test(unittest.TestCase):
 
         fc_filename = FieldConfig.generate_field_file("data/inventory.csv", ext="testff")
         self.assertTrue(os.path.isfile("data/inventory.testff"))
-        fc = FieldConfig(fc_filename, hasheader=True)
+        fc = FieldConfig(None, fc_filename, hasheader=True)
         config = fc.config()
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
@@ -135,7 +135,7 @@ class Test(unittest.TestCase):
                 self.assertTrue(doc)
 
     def test_date(self):
-        fc = FieldConfig("data/inventory_dates.ff", hasheader=True)
+        fc = FieldConfig(None, "data/inventory_dates.ff", hasheader=True)
         config = fc.config()
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
@@ -161,11 +161,11 @@ class Test(unittest.TestCase):
     def test_field_config_exception(self):
 
         # f.open( "duplicateID.ff" )
-        self.assertRaises(OSError, FieldConfig, "nosuchfile.ff")
+        self.assertRaises(OSError, FieldConfig, None, "nosuchfile.ff")
         # print( "fields: %s" % f.fields())
 
     def testFieldDict(self):
-        f = FieldConfig("data/testresults.ff", delimiter="|")
+        f = FieldConfig( None, "data/testresults.ff", delimiter="|")
         d = f.config().field_dict()
         self.assertTrue("TestID" in d )
         self.assertTrue("FirstUseDate" in d)
@@ -173,7 +173,7 @@ class Test(unittest.TestCase):
         self.assertTrue(d["TestID"]["type"] == "int")
 
     def test_duplicate_id(self):
-        self.assertRaises(ValueError, FieldConfig, "data/duplicate_id.ff")
+        self.assertRaises(ValueError, FieldConfig, None, "data/duplicate_id.ff")
 
 
 if __name__ == "__main__":
