@@ -13,7 +13,7 @@ from pymongo_import.fieldconfig import FieldConfig, FieldConfigException
 from pymongo_import.logger import Logger
 from pymongo_import.file_writer import File_Writer
 from pymongo_import.filesplitter import File_Splitter, Line_Counter
-
+from pymongo_import.type_converter import Converter
 
 class Test(unittest.TestCase):
 
@@ -111,7 +111,7 @@ class Test(unittest.TestCase):
         fc_filename = FieldConfig.generate_field_file("data/inventory.csv", ext="testff")
         self.assertTrue(os.path.isfile("data/inventory.testff"))
         fc = FieldConfig(fc_filename, hasheader=True)
-
+        config = fc.config()
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("data/inventory.csv")
@@ -120,37 +120,40 @@ class Test(unittest.TestCase):
 
         os.unlink("data/inventory.testff")
 
+        c = Converter()
         with open("data/inventory.csv", "r")  as f:
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader(f)
-            fields = fc.fields()
+            fields = config.fields()
             for row in reader:
                 # print( row )
                 for f in fields:
-                    row[f] = fc.type_convert(row[f], fc.typeData(f))  # remember we type convert fields
+                    row[f] = c.convert(config.type_value(f), row[f])  # remember we type convert fields
 
                 doc = self._col.find_one(row)
                 self.assertTrue(doc)
 
     def test_date(self):
         fc = FieldConfig("data/inventory_dates.ff", hasheader=True)
-
+        config = fc.config()
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("data/inventory.csv")
         line_count = Line_Counter("data/inventory.csv").count()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
+        c = Converter()
+
         with open("data/inventory.csv", "r")  as f:
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader(f)
-            fields = fc.fields()
+            fields = config.fields()
             for row in reader:
                 # print( row )
                 for f in fields:
-                    row[f] = fc.type_convert(row[f], fc.typeData(f))  # remember we type convert fields
+                    row[f] = c.convert(config.type_value(f), row[f])  # remember we type convert fields
 
                 doc = self._col.find_one(row)
                 self.assertTrue(doc)
@@ -158,7 +161,7 @@ class Test(unittest.TestCase):
     def test_field_config_exception(self):
 
         # f.open( "duplicateID.ff" )
-        self.assertRaises(FieldConfigException, FieldConfig, "nosuchfile.ff")
+        self.assertRaises(OSError, FieldConfig, "nosuchfile.ff")
         # print( "fields: %s" % f.fields())
 
     def testFieldDict(self):
@@ -170,7 +173,7 @@ class Test(unittest.TestCase):
         self.assertTrue(d["TestID"]["type"] == "int")
 
     def test_duplicate_id(self):
-        self.assertRaises(FieldConfigException, FieldConfig, "duplicate_id.ff")
+        self.assertRaises(ValueError, FieldConfig, "data/duplicate_id.ff")
 
 
 if __name__ == "__main__":

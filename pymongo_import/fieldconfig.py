@@ -60,7 +60,7 @@ class FieldConfig(object):
         self._onerror = onerror
         self._hasheader = hasheader
         self._config = None
-        self._converter = Converter
+        self._converter = Converter()
         if cfgFilename:
             self._config = Config_File(cfgFilename)
 
@@ -230,8 +230,9 @@ class FieldConfig(object):
                 else:
                     raise ValueError("Invalid value for onerror: %s" % self._onerror)
 
-            if self.hasNewName(k):
-                doc[self.nameData(k)] = v
+            if self._config.hasNewName(k):
+                assert( self._config.name_value(k) != None)
+                doc[self._config.name_value(k)] = v
             else:
                 doc[k] = v
 

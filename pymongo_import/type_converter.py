@@ -1,5 +1,6 @@
 import datetime
 from dateutil.parser import parse as date_parse
+import time
 
 class Converter(object):
 
@@ -39,7 +40,7 @@ class Converter(object):
         elif format is None:
             return date_parse(v) #much slower than strptime, avoid for large jobs
         else:
-            return datetime.strptime(v, format)
+            return datetime.datetime.strptime(v, format)
 
     @staticmethod
     def to_timestamp(v):

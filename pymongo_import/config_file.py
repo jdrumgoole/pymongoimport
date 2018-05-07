@@ -44,11 +44,12 @@ class Config_File(object):
                         if self._idField == None:
                             self._idField = s
                         else:
-                            raise ValueError(self.duplicateIDMsg(self._idField, s))
+                            raise ValueError("Duplicate _id field:{} and {}".format(self._idField, s))
 
                 fieldDict[s][o] = self._cfg.get(s, o)
 
             if not "name" in fieldDict[s]:
+                #assert( s != None)
                 fieldDict[s]["name"] = s
 
             if not "format" in fieldDict[s]: #Need to exist for date/datetime fields
@@ -78,5 +79,8 @@ class Config_File(object):
         #return self._cfg.get(fieldName, "format")
 
     def name_value(self, fieldName):
-        return self._fieldDict[fieldName]["format"]
+        return self._fieldDict[fieldName]["name"]
         #return self._cfg.get(fieldName, "name")
+
+    def __repr__(self):
+        return "filename:{}\ndict:\n{}\n".format( str( self._filename), str(self._fieldDict))
