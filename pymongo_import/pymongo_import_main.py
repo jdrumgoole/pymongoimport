@@ -217,7 +217,8 @@ def mongo_import_main(input_args=None):
         args.hasheader = True
         log.info("Forcing hasheader true for --genfieldfile")
         cmd = Generate_Fieldfile_Command(log, args.delimiter)
-        cmd.run(args.filenames)
+        for i in args.filenames:
+            cmd.run(i)
         sys.exit(0)
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false

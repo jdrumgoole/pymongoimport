@@ -1,5 +1,5 @@
 """
-1.7b1   : 07-May-2018 : Use strptime in preferennce to parse which gives a massive boost in performance.
+1.7b2   : 07-May-2018 : Use strptime in preferennce to parse which gives a massive boost in performance.
 1.7a2   : 06-May-2018 : Refactored commands into a command class. Removed the mapping for multiprocessing.
                         Changed the default forking model to "spawn" which dramatically improved performance.
 1.6a6   : 03-May-2018 : Bug fix
@@ -17,4 +17,4 @@
 Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 
 """
-__VERSION__="1.7b1"  # type: str
+__VERSION__="1.7b2"  # type: str

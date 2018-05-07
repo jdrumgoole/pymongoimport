@@ -1,43 +1,28 @@
-[TestID]
-type : int
-	
-[VehicleID]
-type : int
-
-[TestDate]
-type : date
-format : %Y-%m-%d
- 	
-[TestClassID]
-type : str
-
-[TestType]
-type : str
-
-[TestResult]
-type : str
-
-[TestMileage]
-type : int
-
-[Postcode] 
-type : str
-
-[Make]
-type : str
-
-[Model]
-type : str
-
-[Colour]
-type : str
-
-[FuelType] : 
-type: str
-	
-[CylinderCapacity] : 
-type: int
-	
-[FirstUseDate]
-type : date 
-format: %Y-%m-%d
+[17]
+type=int
+[28]
+type=int
+[2013-05-02]
+type=datetime
+[2]
+type=int
+[N]
+type=str
+[P]
+type=str
+[46414]
+type=int
+[BN]
+type=str
+[SUZUKI]
+type=str
+[UNCLASSIFIED]
+type=str
+[GREEN]
+type=str
+[P]
+type=str
+[398]
+type=int
+[1993-08-11]
+type=datetime
