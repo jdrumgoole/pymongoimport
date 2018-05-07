@@ -254,8 +254,6 @@ def mongo_import_main(input_args=None):
 
     if args.filenames:
 
-
-
         if args.audit:
             audit = Audit(client=client)
             batch_ID = audit.start_batch({"command": sys.argv})
@@ -266,7 +264,10 @@ def mongo_import_main(input_args=None):
         process= Sub_Process(log, audit, batch_ID, args)
 
         for i in args.filenames:
-            process.run(i)
+            if os.path.isfile(i):
+                process.run(i)
+            else:
+                log.warning( "No such file:'{}' ignoring".format(i))
 
         if args.audit:
             audit.end_batch(batch_ID)

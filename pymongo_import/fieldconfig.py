@@ -13,10 +13,12 @@ import textwrap
 from dateutil.parser import parse
 
 from pymongo_import.logger import Logger
-from enum import Enum
+from pymongo_import.config_file import Config_File
+from pymongo_import.type_converter import Converter
 
 from collections import OrderedDict
 import re
+
 
 class FieldConfigException(Exception):
     def __init__(self, *args, **kwargs):
@@ -46,10 +48,9 @@ class FieldConfig(object):
         '''
         self._logger = logging.getLogger(Logger.LOGGER_NAME)
         self._idField = None  # section on which name == _id
-        self._tags = ["name", "type", "format"]
-        self._cfg = RawConfigParser()
-        self._fieldDict = OrderedDict()
-        self._names = OrderedDict()
+        # self._tags = ["name", "type", "format"]
+        # self._cfg = RawConfigParser()
+        # self._fieldDict = OrderedDict()
         self._doc_template = OrderedDict()
         self._delimiter = delimiter
         self._record_count = 0
@@ -58,9 +59,13 @@ class FieldConfig(object):
         self._pid = os.getpid()
         self._onerror = onerror
         self._hasheader = hasheader
-
+        self._config = None
+        self._converter = Converter
         if cfgFilename:
-            self._fieldDict = self.read(cfgFilename)
+            self._config = Config_File(cfgFilename)
+
+    def config(self):
+        return self._config
 
     def hasheader(self):
         return self._hasheader
@@ -81,7 +86,7 @@ class FieldConfig(object):
         return self._doc_template
 
     def get_dict_reader(self, f):
-        return csv.DictReader(f, fieldnames=self.fields(), delimiter=self._delimiter)
+        return csv.DictReader(f, fieldnames=self._config.fields(), delimiter=self._delimiter)
 
     def duplicateIDMsg(self, firstSection, secondSection):
         msg = textwrap.dedent("""\
@@ -94,73 +99,6 @@ class FieldConfig(object):
     def delimiter(self):
         return self._delimiter
 
-    def read(self, filename):
-        '''
-        Read fieldfile values into a dictionary without type conversion
-        '''
-
-        fieldDict = OrderedDict()
-
-        result = self._cfg.read(filename)
-        if len(result) == 0:
-            raise FieldConfigException("Couldn't open '%s'" % filename)
-
-        self._fields = self._cfg.sections()
-
-        for s in self._fields:
-            # print( "section: '%s'" % s )
-            fieldDict[s] = {}
-            for o in self._cfg.options(s):
-                # print("option : '%s'" % o )
-                if not o in self._tags:
-                    raise FieldConfigException("No such field type: %s in section: %s" % (o, s))
-                if (o == "name"):
-                    if (self._cfg.get(s, o) == "_id"):
-                        if self._idField == None:
-                            self._idField = s
-                        else:
-                            raise FieldConfigException(self.duplicateIDMsg(self._idField, s))
-
-                fieldDict[s][o] = self._cfg.get(s, o)
-
-            if not "name" in fieldDict[s]:
-                fieldDict[s]["name"] = s
-
-        self._fieldDict = fieldDict
-        return fieldDict
-
-    def fieldDict(self):
-        if self._fieldDict is None:
-            raise ValueError("trying retrieve a fieldDict which has a 'None' value")
-        else:
-            return self._fieldDict
-
-    def fields(self):
-        return self._fields
-
-    def hasNewName(self, section):
-        return section != self._fieldDict[section]['name']
-
-    def names(self):
-        return self._names
-
-    def typeData(self, fieldName):
-        return self._cfg.get(fieldName, "type")
-
-    def formatData(self, fieldName):
-        return self._cfg.get(fieldName, "format")
-
-    def nameData(self, fieldName):
-        return self._cfg.get(fieldName, "name")
-
-    #     @staticmethod
-    #     def generateFieldFile( csvfile, delimiter=',' ):
-    #
-    #         with open( csvfile ) as inputfile :
-    #             header = inputfile.readline()
-    #
-    #         for field in header.split(  delimiter ):
-    #             print( field )
 
     @staticmethod
     def guess_type(s):
@@ -196,28 +134,6 @@ class FieldConfig(object):
 
     def doc_template(self):
         return self._doc_template
-
-    class Converter(object):
-
-        @staticmethod
-        def _ts( v ):
-            return datetime.datetime.fromtimestamp(int(v))
-
-        @staticmethod
-        def _int(v):
-            try:
-                # print( "converting : '%s' to int" % v )
-                v = int(v)
-            except ValueError:
-                v = float(v)
-
-            return v
-
-        def __init__(self):
-
-            self._converter = { "timestamp" : Converter._ts,
-                                "int" :  Converter._int }
-
 
 
     def type_convert(self, v, t):
@@ -260,11 +176,9 @@ class FieldConfig(object):
         if self._timestamp == "gen":
             doc['timestamp'] = datetime.utcnow()
 
-
-
         # print( "dictEntry: %s" % dictEntry )
         fieldCount = 0
-        for k in self.fields():
+        for k in self._config.fields():
             # print( "field: %s" % k )
             # print( "value: %s" % dictEntry[ k ])
             fieldCount = fieldCount + 1
@@ -293,8 +207,12 @@ class FieldConfig(object):
 
             # try:
             try:
-                type_field = self.typeData(k)
-                v = self.type_convert(dictEntry[k], type_field)
+                type_field = self._config.type_value(k)
+                if type_field in [ "date", "datetime"]:
+                    format = self._config.format_value(k)
+                    v = self._converter.convert_time(type_field, dictEntry[k], format)
+                else:
+                    v = self._converter.convert(type_field, dictEntry[k])
 
             except ValueError:
 
@@ -306,10 +224,6 @@ class FieldConfig(object):
                 elif self._onerror == "warn":
                     msg = "Parse failure at line {} at field '{}'".format( self._record_count, k )
                     msg = msg + " type conversion error: Cannot convert '{}' to type {} using string type instead".format(dictEntry[k], type_field)
-                    self._logger.warning(msg)
-                    # self._logger.warning("Parse failure at line %i at field '%s'", self._record_count, k)
-                    # self._logger.warning("type conversion error: Cannot convert '%s' to type %s", dictEntry[k], type_field)
-                    # self._logger.warning("Using string type instead")
                     v = str(dictEntry[k])
                 elif self._onerror == "ignore":
                     v = str(dictEntry[k])

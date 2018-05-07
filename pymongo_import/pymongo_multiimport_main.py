@@ -8,13 +8,14 @@ from multiprocessing import Pool, Process
 from collections import OrderedDict
 import time
 import pymongo
-import logging
+import os
 
 from pymongo_import.filesplitter import File_Splitter
 
 from pymongo_import.logger import Logger
 from pymongo_import.argparser import add_standard_args
 from pymongo_import.pymongo_import_main import Sub_Process
+from pymongo_import.audit import Audit
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
     '''
@@ -95,30 +96,27 @@ def multi_import(*argv):
         client.drop_database(args.database)
         child_args = strip_arg(child_args, args.drop)
 
+    if args.audit:
+        audit=Audit(client)
+        batch_ID=audit.start_batch({ "command": sys.argv })
+    else:
+        audit=None
+        batch_ID=None
 
     start = time.time()
 
     process_count = 0
     log.info( "Poolsize:{}".format(poolsize))
 
+    log.info("Fork using:'%s'", args.forkmethod)
     if args.forkmethod == "fork":
-        subprocess = Sub_Process(log=log, audit=None, batch_ID=None, args=args)
+        subprocess = Sub_Process(log=log, audit=audit, batch_ID=batch_ID, args=args)
     elif args.forkmethod == "spawn":
-        subprocess = Sub_Process(log=None, audit=None, batch_ID=None, args=args)
+        subprocess = Sub_Process(log=None, audit=audit, batch_ID=batch_ID, args=args)
     elif args.forkmethod == "forkserver":
-        subprocess = Sub_Process(log=None, audit=None, batch_ID=None, args=args)
+        subprocess = Sub_Process(log=None, audit=audit, batch_ID=batch_ID, args=args)
 
     subprocess.setup_log_handlers()
-
-    # with Pool(poolsize) as p :
-    #
-    #     for i in args.filenames:
-    #         print("Pool")
-    #         p.apply_async(func=subprocess.run, args=(i,), callback=success_callback,
-    #                       error_callback=fail_callback )
-    #
-    #     #results = [p.apply_async(subprocess.run, (i,)) for i in args.filenames]
-
 
     try:
 
@@ -128,15 +126,16 @@ def multi_import(*argv):
         #
         proc_list=[]
 
-
-        for arg_list in chunker( args.filenames, poolsize):
-
+        for arg_list in chunker( args.filenames, poolsize): #blocks of poolsize
             proc_list=[]
             for i in arg_list:
+                if os.path.isfile(i):
                     log.info("Processing:'%s'", i)
                     proc = Process(target=subprocess.run, args=(i,), name=i)
                     proc.start()
                     proc_list.append(proc)
+                else:
+                    log.warning("No such file:'{}' ignoring".format(i))
 
             for proc in proc_list:
                 proc.join()
@@ -152,32 +151,4 @@ def multi_import(*argv):
     log.info("Total elapsed time:%f" % (finish - start))
 
 if __name__ == '__main__':
-
     multi_import(sys.argv[1:])
-
-    # with Pool(poolsize) as p:
-    #     try:
-    #         log.info( "processing args:%s", args.filenames)
-
-            #for i in args.filenames:
-            #print( "processing: {}".format(i))
-            #p.map(subprocess.run, ['test_result_2016.txt.1', 'test_result_2016.txt.2', 'test_result_2016.txt.3', 'test_result_2016.txt.4', 'test_result_2016.txt.5'])
-            #p.map(print_name, list(args.filenames))
-                #subprocess.run(i)
-            # for filename in args.filenames:
-            #
-            #     process_count = process_count + 1
-            #     # need to turn args to Process into a tuple )
-            #     new_args = copy.deepcopy(child_args)
-            #     # new_args.extend( [ "--logname", filename[0], filename[0] ] )
-            #     new_args.append(filename)
-            #     log.info("Processing '%s'", filename)
-            #     log.info("args:%s", new_args)
-            #     process_pool.apply_async(func=shim, args=(new_args,))
-
-
-            #log.info("elapsed time for process %s : %f", i, children[i]["end"] - children[i]["start"])
-
-
-
-

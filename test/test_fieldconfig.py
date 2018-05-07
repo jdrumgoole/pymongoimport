@@ -32,19 +32,19 @@ class Test(unittest.TestCase):
 
     def test_FieldConfig(self):
         fc = FieldConfig("data/test_fieldconfig.ff")
+        cfg = fc.config()
+        self.assertEqual(len(cfg.fields()), 4)
 
-        self.assertEqual(len(fc.fields()), 4)
-
-        self.assertEqual(fc.fields()[0], "Test 1")
-        self.assertEqual(fc.fields()[3], "Test 4")
+        self.assertEqual(cfg.fields()[0], "Test 1")
+        self.assertEqual(cfg.fields()[3], "Test 4")
 
         fc = FieldConfig("data/uk_property_prices.ff")
+        cfg = fc.config()
+        self.assertEqual(len(cfg.fields()), 15)
 
-        self.assertEqual(len(fc.fields()), 15)
-
-        self.assertEqual(fc.fields()[0], "txn")
-        self.assertEqual(fc.fields()[2], "Date of Transfer")
-        self.assertEqual(fc.fields()[14], "PPD Category Type")
+        self.assertEqual(cfg.fields()[0], "txn")
+        self.assertEqual(cfg.fields()[2], "Date of Transfer")
+        self.assertEqual(cfg.fields()[14], "PPD Category Type")
 
     def test_delimiter_no_header(self):
         start_count = self._col.count()
@@ -85,21 +85,23 @@ class Test(unittest.TestCase):
     def test_dict_reader(self):
         fc_filename = FieldConfig.generate_field_file("data/inventory.csv")
         fc = FieldConfig(fc_filename)
+        cfg = fc.config()
         with open("data/inventory.csv", "r")  as f:
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader(f)
             for row in reader:
-                for field in fc.fields():
+                for field in cfg.fields():
                     self.assertTrue(field in row)
 
         fc = FieldConfig("data/uk_property_prices.ff")
+        cfg = fc.config()
         with open("data/uk_property_prices.csv", "r")  as f:
             if fc.hasheader():
                 _ = f.readline()
             reader = fc.get_dict_reader(f)
             for row in reader:
-                for field in fc.fields():
+                for field in cfg.fields():
                     self.assertTrue(field in row)
                     self.assertTrue(type(row["Price"]) == str)
                     self.assertTrue(type(row["Date of Transfer"]) == str)
@@ -161,7 +163,7 @@ class Test(unittest.TestCase):
 
     def testFieldDict(self):
         f = FieldConfig("data/testresults.ff", delimiter="|")
-        d = f.fieldDict()
+        d = f.config().field_dict()
         self.assertTrue("TestID" in d )
         self.assertTrue("FirstUseDate" in d)
         self.assertTrue("Colour" in d)

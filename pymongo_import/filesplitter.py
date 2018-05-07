@@ -188,7 +188,18 @@ class File_Splitter(object):
         return self._header_line
 
     def no_header_size(self):
-        return self._size - len(self._header_line)
+        if self._file_type == File_Type.DOS:
+            if self._header_line:
+                adjustment = self._line_count + len(self._header_line)
+            else:
+                adjustment = self._line_count + len(self._header_line) + 1
+        else:
+            if self._header_line:
+                adjustment = len(self._header_line)
+            else:
+                adjustment = 0
+
+        return self._size - adjustment
 
     def output_files(self):
         return list(self._files.keys())

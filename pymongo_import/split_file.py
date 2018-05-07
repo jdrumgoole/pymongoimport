@@ -110,11 +110,11 @@ using **--splitsize** chunks until it is consumed.
         size = os.path.getsize(i)
         total_size = total_size + size
         total_lines = total_lines + lines
-        print("{:4}. '{:20}'. Lines : {:5}, Size: {:7}".format(count, i, lines, size))
+        print("{:4}. '{:20}'. Lines : {:6}, Size: {:10}".format(count, i, lines, size))
 
         count = count + 1
     if len(files) > 1 :
-        print("{} {:15} {:14}".format( " " * (len(i) + 7), total_lines, total_size))
+        print("{} {:16} {:17}".format( " " * (len(i) + 7), total_lines, total_size))
 
     if files and (total_size != splitter.no_header_size()):
         raise ValueError("Filesize of original and pieces does not match: total_size: %i, no header split_size: %i" % (
