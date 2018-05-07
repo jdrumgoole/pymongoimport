@@ -40,7 +40,10 @@ class Converter(object):
         elif format is None:
             return date_parse(v) #much slower than strptime, avoid for large jobs
         else:
-            return datetime.datetime.strptime(v, format)
+            try:
+                return datetime.datetime.strptime(v, format)
+            except ValueError:
+                return date_parse(v)
 
     @staticmethod
     def to_timestamp(v):

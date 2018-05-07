@@ -38,6 +38,8 @@ class File_Writer(object):
 
         self._limit = limit
 
+    def get_field_config(self):
+        return self._fieldConfig
 
     def get_batch_size(self):
         return self._batch_size

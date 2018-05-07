@@ -80,7 +80,7 @@ class Generate_Fieldfile_Command(Command):
 
 class Import_Command(Command):
 
-    def __init__(self, log, collection, field_filename, delimiter, hasheader, onerror, limit, audit=None, id=None):
+    def __init__(self, log, collection, field_filename=None, delimiter=",", hasheader=True, onerror="warn", limit=0, audit=None, id=None):
 
         super().__init__( log, audit, id)
         self._collection = collection
@@ -91,6 +91,7 @@ class Import_Command(Command):
         self._onerror = onerror
         self._limit = limit
         self._total_written = 0
+        self._fieldConfig = None
 
         if self._log:
             self._log.info("Auditing output")
@@ -124,18 +125,22 @@ class Import_Command(Command):
 
         if self._log:
             self._log.info("using field file: '%s'", field_filename)
-        fieldConfig = FieldConfig(field_filename,
-                                  self._delimiter,
-                                  self._hasheader,
-                                  self._onerror)
+        self._fieldConfig = FieldConfig(field_filename,
+                                        self._delimiter,
+                                        self._hasheader,
+                                        self._onerror)
 
-        fw = File_Writer(self._collection, fieldConfig, self._limit, self._log)
-        self._total_written = self._total_written + fw.insert_file(arg)
+        self._fw = File_Writer(self._collection, self._fieldConfig, self._limit, self._log)
+        self._total_written = self._total_written + self._fw.insert_file(arg)
 
         return self._total_written
 
     def total_written(self):
         return self._total_written
+
+    def get_field_config(self):
+        return self._fieldConfig
+
 
     def post_execute(self, arg):
         super().post_execute(arg)
