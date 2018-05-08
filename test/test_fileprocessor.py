@@ -15,11 +15,12 @@ class Test(unittest.TestCase):
 
 
     def setUp(self):
-        self._client = pymongo.MongoClient( host="mongodb://localhost:27017/TEST_FP")
-        self._col = self._client[ "TEST_FP"]["TEST_FP"]
+        self._client = pymongo.MongoClient( host="mongodb://localhost:27017")
+        self._database = self._client[ "TEST_FP"]
+        self._col = self._database["test_fp"]
 
     def tearDown(self):
-        self._col.drop()
+        self._client.drop_database( self._database)
         pass
 
 
@@ -43,20 +44,24 @@ class Test(unittest.TestCase):
 
     def test_mot_data(self):
 
-        start_count = self._col.count()
-        fp=FileProcessor( self._col, '|' )
+
+        col = self._database[ "mot"]
+        start_count = col.count()
+        fp=FileProcessor( col, '|' )
         fp.processOneFile("data/10k.txt")
         lines = Line_Counter( "data/10k.txt").count()
-        self.assertEqual(lines, self._col.count() - start_count)
-        self.assertTrue( self._col.find_one({"TestID":114624}))
+        self.assertEqual(lines, col.count() - start_count)
+        self.assertTrue(col.find_one({"test_id":114624}))
 
     def test_A_and_E_data(self):
-        start_count = self._col.count()
-        fp = FileProcessor(self._col, ',', onerror="ignore")
+
+        col = self._database[ "AandE"]
+        start_count = col.count()
+        fp = FileProcessor( col, ',', onerror="ignore")
         fp.processOneFile(input_filename = "data/AandE_Data_2011-04-10.csv", hasheader=True )
         lines = Line_Counter( "data/AandE_Data_2011-04-10.csv").count()
-        self.assertEqual( lines, self._col.count() - start_count + 1)
-        self.assertTrue( self._col.find_one( { "Code" : "RA4"}) )
+        self.assertEqual( lines, col.count() - start_count + 1)
+        self.assertTrue(col.find_one( { "Code" : "RA4"}) )
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_fileprocessor']
