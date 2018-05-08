@@ -70,13 +70,13 @@ class Generate_Fieldfile_Command(Command):
 
     def execute(self, arg):
 
-        name = FieldConfig.generate_field_file(arg, self._delimiter)
-        self._fieldfile_names.append(name)
+        self._name = FieldConfig.generate_field_file(arg, self._delimiter)
+        self._fieldfile_names.append(self._name)
 
-        return name
+        return self._name
 
     def post_execute(self, arg):
-        self._log.info("Creating field filename:'%s'", arg)
+        self._log.info("Creating field filename '%s' from '%s'", self._name, arg)
 
 class Import_Command(Command):
 

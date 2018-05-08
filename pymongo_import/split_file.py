@@ -90,14 +90,14 @@ using **--splitsize** chunks until it is consumed.
         if args.autosplit:
             print("Autosplitting: '{}' into approximately {} parts".format(i, args.autosplit))
             for newfile in splitter.autosplit(args.autosplit):
-                cfg_filename = FieldConfig.generate_field_filename( newfile[0], ".ff")
-                shutil.copy( master_cfg_filename, cfg_filename)
+                # cfg_filename = FieldConfig.generate_field_filename( newfile[0], ".ff")
+                # shutil.copy( master_cfg_filename, cfg_filename)
                 files.append(newfile)
         else:
             print("Splitting '%s' using %i splitsize" % (args.filenames[0], args.splitsize))
             for newfile in splitter.split_file(args.splitsize):
-                cfg_filename = FieldConfig.generate_field_filename( newfile[0], ".ff")
-                shutil.copy( master_cfg_filename, cfg_filename)
+                # cfg_filename = FieldConfig.generate_field_filename( newfile[0], ".ff")
+                # shutil.copy( master_cfg_filename, cfg_filename)
                 files.append(newfile)
 
         # print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
