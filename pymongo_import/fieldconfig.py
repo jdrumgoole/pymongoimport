@@ -83,13 +83,13 @@ class FieldConfig(object):
     def get_dict_reader(self, f):
         return csv.DictReader(f, fieldnames=self._config.fields(), delimiter=self._delimiter)
 
-    def duplicateIDMsg(self, firstSection, secondSection):
-        msg = textwrap.dedent("""\
-        The type defintion '_id" occurs in more that one section (there can only be one
-        _id definition). The first section is [%s] and the second section is [%s]
-        """)
-
-        return msg % (firstSection, secondSection)
+    # def duplicateIDMsg(self, firstSection, secondSection):
+    #     msg = textwrap.dedent("""\
+    #     The type defintion '_id" occurs in more that one section (there can only be one
+    #     _id definition). The first section is [%s] and the second section is [%s]
+    #     """)
+    #
+    #     return msg % (firstSection, secondSection)
 
     def delimiter(self):
         return self._delimiter
@@ -131,34 +131,34 @@ class FieldConfig(object):
         return self._doc_template
 
 
-    def type_convert(self, v, t):
-        '''
-        Use type entry for the field in the fieldConfig file (.ff) to determine what type
-        conversion to use.
-        '''
-        v = v.strip()
-
-        if t == "timestamp":
-            v = datetime.datetime.fromtimestamp(int(v))
-        elif t == "int":  # Ints can be floats
-            try:
-                # print( "converting : '%s' to int" % v )
-                v = int(v)
-            except ValueError:
-                v = float(v)
-        elif t == "float":
-            v = float(v)
-        elif t == "str":
-            v = str(v)
-        elif t == "datetime" or t == "date":
-            if v == "NULL":
-                v = None
-            else:
-                v = parse(v)
-        else:
-            raise ValueError
-
-        return v
+    # def type_convert(self, v, t):
+    #     '''
+    #     Use type entry for the field in the fieldConfig file (.ff) to determine what type
+    #     conversion to use.
+    #     '''
+    #     v = v.strip()
+    #
+    #     if t == "timestamp":
+    #         v = datetime.datetime.fromtimestamp(int(v))
+    #     elif t == "int":  # Ints can be floats
+    #         try:
+    #             # print( "converting : '%s' to int" % v )
+    #             v = int(v)
+    #         except ValueError:
+    #             v = float(v)
+    #     elif t == "float":
+    #         v = float(v)
+    #     elif t == "str":
+    #         v = str(v)
+    #     elif t == "datetime" or t == "date":
+    #         if v == "NULL":
+    #             v = None
+    #         else:
+    #             v = parse(v)
+    #     else:
+    #         raise ValueError
+    #
+    #     return v
 
     def createDoc(self, doc, dictEntry):
 

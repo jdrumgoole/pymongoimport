@@ -2,8 +2,10 @@
 type=int
 [tpep_pickup_datetime]
 type=datetime
+format=%Y-%m-%d %H:%M:%S
 [tpep_dropoff_datetime]
 type=datetime
+format=%Y-%m-%d %H:%M:%S
 [passenger_count]
 type=int
 [trip_distance]

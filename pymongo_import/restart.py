@@ -6,9 +6,19 @@ Created on 30 Jul 2017
 from datetime import datetime
 import socket
 import sys
+from enum import Enum
+
+import pymongo
 
 from pymongo_import.canonical_path import Canonical_Path
 
+
+class Restart_State(Enum):
+
+    undefined  = 0
+    start      = 1
+    inprogress = 2
+    finish     = 3
 
 class Restarter(object):
     '''
@@ -65,22 +75,19 @@ class Restarter(object):
         return (id_str[0:8], id_str[8:14], id_str[14:18], id_str[18:24])
 
     def start(self):
-        self._audit.insert_one({"name": self._name(),
-                                "start": datetime.utcnow(),
-                                "last_doc_id": None,
-                                "count": 0,
+        self._audit.insert_one({"name"      : self._name(),
+                                "ts"        : datetime.utcnow(),
                                 "batch_size": self._batch_size,
-                                "command": self._cmd,
-                                "state": "inprogress"})
+                                "command"   : self._cmd,
+                                "state"     : Restart_State.start})
 
     def update(self, doc_id, count):
 
-        self._audit.find_one_and_update({"name": self._name(),
-                                         "state": "inprogress"},
-                                        {"$set": {"count": count,
-                                                  "end": datetime.utcnow(),
-                                                  "last_doc_id": doc_id,
-                                                  "state": "inprogress"}})
+        self._audit.insert_one({"name"   : self._name(),
+                                "count"  : count,
+                                "ts"     : datetime.utcnow(),
+                                "doc_id" : doc_id,
+                                "state"  : Restart_State.inprogress})
 
     def restart(self, collection):
         '''
@@ -89,16 +96,16 @@ class Restarter(object):
         Return the new doc count that we can skip too.
         '''
 
-        self._restartDoc = self._audit.find_one({"name": self._name(),
-                                                 "state": "inprogress"})
+        self._restartDoc = self._audit.find_one({"name" : self._name(),
+                                                 "state": Restart_State.inprogress})
 
         if self._restartDoc is None:  # skip nothing, nothing to restart
             return 0
 
         count = self._restartDoc["count"]
-        (_, machine, pid, _) = Restarter.split_ID(self._restartDoc["last_doc_id"])
+        (_, machine, pid, _) = Restarter.split_ID(self._restartDoc["doc_id"])
 
-        cursor = collection.find({"_id": {"$gt": self._restartDoc["last_doc_id"]}})
+        cursor = collection.find({"_id": {"$gt": self._restartDoc["doc_id"]}})
 
         for i in cursor:
             (_, i_machine, i_pid, _) = Restarter.split_ID(i["_id"])
@@ -115,11 +122,37 @@ class Restarter(object):
 
     def finish(self):
 
-        self._restartDoc = self._audit.find_one_and_update(
-            {"name": self._name(),
-             "state": "inprogress"},
-            {"$set": {"end": datetime.utcnow(),
-                      "state": "completed"}})
+        self._restartDoc = self._audit.insert_one({"name" : self._name(),
+                                                   "ts"   : datetime.utcnow(),
+                                                   "state": Restart_State.finish})
+
+
+    def _find_last(self, col, doc):
+
+        if "ts" in doc:
+            cursor = col.find( doc).sort( {"ts" :pymongo.DESCENDING}).limit(1)
+            for c in cursor:
+                return c
+            return None
+        else:
+            raise ValueError( "_find_last requires a timestamp field 'ts'")
+
+    def get_state(self, name):
+
+        doc = self._audit.find( { "name" : name,
+                                  "state" : Restart_State.finish}).sort( {"ts" :pymongo.DESCENDING}).limit(1)
+
+        if doc:
+            return Restart_State.finish
+
+        doc = self._audit.find_one( { "name" : name,
+                                      "state" : Restart_State.inprogress})
+
+        if doc:
+            return Restart_State.inprogress
+
+        doc = self._audit.find_one( { "name" : name,
+                                      "state" : Restart_State.start})
 
     def reset(self):
 
