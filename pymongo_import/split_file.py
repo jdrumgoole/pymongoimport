@@ -79,11 +79,11 @@ using **--splitsize** chunks until it is consumed.
         if not os.path.isfile( i ):
             print( "No such input file:'{}'".format(i))
             continue
-        master_cfg_filename = FieldConfig.generate_field_filename( i, ".ff")
-        if args.generatefieldfile:
-            field_file = FieldConfig.generate_field_file( i, delimiter=args.delimiter)
-        if not os.path.isfile( master_cfg_filename):
-            raise OSError( "Missing field config file '{}' for '{}'".format( master_cfg_filename, i))
+        # master_cfg_filename = FieldConfig.generate_field_filename( i, ".ff")
+        # if args.generatefieldfile:
+        #     field_file = FieldConfig.generate_field_file( i, delimiter=args.delimiter)
+        # if not os.path.isfile( master_cfg_filename):
+        #     raise OSError( "Missing field config file '{}' for '{}'".format( master_cfg_filename, i))
 
         splitter = File_Splitter(i, args.hasheader)
 
