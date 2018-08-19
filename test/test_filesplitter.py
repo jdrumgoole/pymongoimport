@@ -27,7 +27,7 @@ class Test(unittest.TestCase):
 
         for (part_name, line_count) in splitter.split_file(split_size):
             splitter_part = File_Splitter( part_name)
-            part_count = Line_Counter(part_name).count()
+            part_count = Line_Counter(part_name).line_count()
             self.assertEqual(part_count, line_count)
             part_total_count = part_total_count + part_count
             part_total_size = part_total_size + splitter_part.size()
@@ -36,12 +36,12 @@ class Test(unittest.TestCase):
         lc = Line_Counter(filename)
 
         if has_header:
-            self.assertEqual(part_total_count, lc.count() - 1)
+            self.assertEqual(part_total_count, lc.line_count() - 1)
         else:
-            self.assertEqual(part_total_count, lc.count())
+            self.assertEqual(part_total_count, lc.line_count())
 
         if dos_adjust:
-            self.assertEqual(part_total_size, splitter.size() - lc.count() - len( splitter.header_line()) +1)
+            self.assertEqual(part_total_size, splitter.size() - lc.line_count() - len( splitter.header_line()) +1)
         else:
             self.assertEqual(part_total_size, splitter.size() - len( splitter.header_line()))
 
@@ -57,11 +57,11 @@ class Test(unittest.TestCase):
         count = 0
         part_total_size = 0
         part_total_count = 0
-        total_line_count = Line_Counter(filename).count()
+        total_line_count = Line_Counter(filename).line_count()
         self.assertEqual( total_line_count, lines)
         for (part_name, line_count) in splitter.autosplit(split_count):
             splitter_part = File_Splitter(part_name)
-            part_count = Line_Counter( part_name).count()
+            part_count = Line_Counter( part_name).line_count()
             self.assertGreater(part_count, 0)
             self.assertEqual(part_count, line_count)
             part_total_count = part_total_count + part_count
@@ -74,13 +74,13 @@ class Test(unittest.TestCase):
         if has_header:
             self.assertEqual(part_total_count, lines - 1)
             if splitter.file_type() is File_Type.DOS:
-                self.assertEqual(part_total_size, splitter.size() - lc.count() - len( splitter.header_line()) +1)
+                self.assertEqual(part_total_size, splitter.size() - lc.line_count() - len( splitter.header_line()) +1)
             else:
                 self.assertEqual(part_total_size, splitter.size() - len( splitter.header_line()))
         else:
             self.assertEqual(part_total_count, lines)
             if splitter.file_type() is File_Type.DOS:
-                self.assertEqual(part_total_size, splitter.size() - lc.count())
+                self.assertEqual(part_total_size, splitter.size() - lc.line_count())
             else:
                 self.assertEqual(part_total_size, splitter.size())
 

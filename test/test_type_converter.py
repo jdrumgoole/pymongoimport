@@ -2,17 +2,18 @@ import unittest
 
 from pymongo_import.type_converter import Converter
 import datetime
+from datetime import timezone
 
 class Test(unittest.TestCase):
 
     def test_converter(self):
 
-        c =Converter()
+        c =Converter( utctime=True)
 
         self.assertEqual( 10, c.convert( "int", "10"))
         self.assertEqual( 10.0, c.convert( "int", "10.0"))
         self.assertEqual( 10.0, c.convert("float", "10.0"))
-        self.assertEqual( datetime.datetime(2018, 5, 7, 3, 1, 54),
+        self.assertEqual( datetime.datetime(2018, 5, 7, 2, 1, 54, tzinfo=timezone.utc),
                           c.convert("timestamp", "1525658514"))
 
         self.assertEqual( datetime.datetime(2018, 5, 25, 11, 30),

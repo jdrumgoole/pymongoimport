@@ -31,9 +31,12 @@ test_data:
 test_all: test_scripts
 	${BINDIR}/python setup.py test
 
+nose:
+	nosetests
 
 build:
 	${BINDIR}/python setup.py sdist
+
 clean:
 	rm -rf dist bdist sdist
 

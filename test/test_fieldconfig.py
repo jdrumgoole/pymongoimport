@@ -115,7 +115,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("data/inventory.csv")
-        line_count = Line_Counter("data/inventory.csv").count()
+        line_count = Line_Counter("data/inventory.csv").line_count()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
         os.unlink("data/inventory.testff")
@@ -140,7 +140,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count()
         writer = File_Writer(self._col, fc)
         writer.insert_file("data/inventory.csv")
-        line_count = Line_Counter("data/inventory.csv").count()
+        line_count = Line_Counter("data/inventory.csv").line_count()
         self.assertEqual(self._col.count() - start_count, line_count - 1)  # header must be subtracted
 
         c = Converter()

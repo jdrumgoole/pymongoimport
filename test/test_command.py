@@ -51,8 +51,8 @@ class Test(unittest.TestCase):
         collection = self._database[ "import_test"]
 
         start_size = collection.count()
-        size_10k = Line_Counter( "data/10k.txt").count()
-        size_120 = Line_Counter( "data/120lines.txt").count()
+        size_10k = Line_Counter( "data/10k.txt").line_count()
+        size_120 = Line_Counter( "data/120lines.txt").line_count()
         cmd = Import_Command(log=getLogger(__file__),
                              audit=self._audit,
                              id=id,

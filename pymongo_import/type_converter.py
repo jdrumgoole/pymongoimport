@@ -1,4 +1,5 @@
 import datetime
+from datetime import timezone
 from dateutil.parser import parse as date_parse
 import time
 
@@ -6,9 +7,10 @@ class Converter(object):
 
     type_fields = [ "int", "float", "str", "datetime", "date", "timestamp"]
 
-    def __init__(self, log=None):
+    def __init__(self, log=None, utctime=False):
 
         self._log = log
+        self._utctime = utctime
 
         self._converter = {
             "int"       : Converter.to_int,
@@ -18,6 +20,10 @@ class Converter(object):
             "date"      : self.to_datetime,
             "timestamp" : Converter.to_timestamp
         }
+
+        if self._utctime:
+            self._converter[ "timestamp"] = Converter.to_timestamp_utc
+
 
     @staticmethod
     def to_int(v):
@@ -53,6 +59,11 @@ class Converter(object):
     @staticmethod
     def to_timestamp(v):
         return datetime.datetime.fromtimestamp(int(v))
+
+    @staticmethod
+
+    def to_timestamp_utc(v):
+        return datetime.datetime.fromtimestamp(int(v), tz=timezone.utc)
 
     def convert_time(self, t, v, f=None):
         return self._converter[t](v, f)

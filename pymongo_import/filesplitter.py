@@ -63,11 +63,12 @@ class Line_Counter(object):
     def file_size(self):
         return self._file_size
 
-    def read_blocks(self, file):
+    @staticmethod
+    def read_blocks(file, blocksize=64*1024):
         while True:
             # disable universal newlines so that sizes are correct when
             # reading DOS and Linux files.
-            b = file.read(self._blocksize)
+            b = file.read(blocksize)
             if not b: break
             yield b
 
@@ -78,7 +79,7 @@ class Line_Counter(object):
         # disable universal newlines with "newline=''" so that sizes are correct when
         # reading DOS and Linux files.
         with open(filename, "r", encoding="utf-8", errors='ignore', newline='') as f:
-            for block in self.read_blocks(f):
+            for block in Line_Counter.read_blocks(f, self._blocksize):
                 self._line_count = self._line_count + block.count("\n")
                 self._file_size = self._file_size + len(block)
 
@@ -128,7 +129,9 @@ class File_Splitter(object):
         """
         self._input_filename = input_filename
         self._has_header = has_header
-        self._line_count, self._size = Line_Counter(self._input_filename).count()
+        lc = Line_Counter(self._input_filename)
+        self._line_count = lc.line_count()
+        self._size = lc.file_size()
         self._header_line = ""  # Not none so len does something sensible when has_header is false
         self._size = os.path.getsize(self._input_filename)
         if self._size > 0 and self._has_header :
@@ -208,7 +211,7 @@ class File_Splitter(object):
                 self._header_line=input.readline()
 
             with open(rhs, "w", encoding="utf-8", errors='ignore') as output:
-                for i in Line_Counter.blocks(input):
+                for i in Line_Counter.read_blocks(input):
                     total_lines = total_lines + i.count("\n")
                     output.write(i)
 
