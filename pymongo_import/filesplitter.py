@@ -27,6 +27,35 @@ from collections import OrderedDict
 from enum import Enum
 
 
+class Block_Reader(object):
+
+    def __init__(self, blocksize=None):
+
+        if blocksize :
+            self._blocksize = blocksize
+        else:
+            self._blocksize = 64 * 1024
+
+    def _read_blocks(self, file, blocksize=None):
+
+        if blocksize:
+            self._blocksize = blocksize
+
+        while True:
+            # disable universal newlines so that sizes are correct when
+            # reading DOS and Linux files.
+            b = file.read(self._blocksize)
+            if not b: break
+            yield b
+
+    def read_fd(self, fd):
+        for block in self._read_blocks(fd, self._blocksize):
+            yield block
+
+    def read_file(self, filename):
+        with open(filename, "r", encoding="utf-8", errors='ignore', newline='') as f:
+            yield self.read_fd(f)
+
 class File_Type(Enum):
     DOS = 1
     UNIX = 2
@@ -38,21 +67,20 @@ class Line_Counter(object):
     default (64k).
     """
 
-    def __init__(self, filename=None, blocksize=None):
+    def __init__(self, filename=None, blocksize=None, count_now=True):
 
         self._first_line = None
-        self._line_count = 0
+        self._line_count = None
         self._file_size = 0
         if blocksize :
             self._blocksize = blocksize
         else:
             self._blocksize = 64 * 1024
 
-        if filename:
-            self._filename = filename
+        self._filename = filename
+
+        if count_now and filename:
             self.count_now(self._filename)
-
-
 
     def line_count(self):
         return self._line_count
@@ -63,25 +91,18 @@ class Line_Counter(object):
     def file_size(self):
         return self._file_size
 
-    @staticmethod
-    def read_blocks(file, blocksize=64*1024):
-        while True:
-            # disable universal newlines so that sizes are correct when
-            # reading DOS and Linux files.
-            b = file.read(blocksize)
-            if not b: break
-            yield b
-
-
     def count_now(self, filename):
         self._file_size=0
+        self._line_count=0
         block = None
+        self._reader = Block_Reader(self._blocksize)
         # disable universal newlines with "newline=''" so that sizes are correct when
         # reading DOS and Linux files.
-        with open(filename, "r", encoding="utf-8", errors='ignore', newline='') as f:
-            for block in Line_Counter.read_blocks(f, self._blocksize):
-                self._line_count = self._line_count + block.count("\n")
-                self._file_size = self._file_size + len(block)
+        for i in self._reader.read_file(filename):
+            block=i
+            self._line_count = self._line_count + i.count("\n")
+            self._file_size = self._file_size + len(i)
+
 
         if block and block[-1:] != '\n' : #file doesn't end with a newline but its still a line
             self._line_count = self._line_count + 1
@@ -101,7 +122,7 @@ class Line_Counter(object):
         lineCount = 0
         if (skipCount > 0):
             # print( "Skipping")
-            dummy = f.readline()  # skicaount may be bigger than the number of lines i  the file
+            dummy = f.readline()  # skipCount may be bigger than the number of lines i  the file
             while dummy:
                 lineCount = lineCount + 1
                 if (lineCount == skipCount):
@@ -205,13 +226,14 @@ class File_Splitter(object):
 
         lhs = self._input_filename
 
+        lhs_reader = Block_Reader(lhs)
         total_lines = 0
         with open(lhs, "r", encoding="utf-8", errors='ignore') as input:
             if ignore_header:
                 self._header_line=input.readline()
 
             with open(rhs, "w", encoding="utf-8", errors='ignore') as output:
-                for i in Line_Counter.read_blocks(input):
+                for i in Block_Reader.read_blocks(input):
                     total_lines = total_lines + i.count("\n")
                     output.write(i)
 
@@ -228,20 +250,17 @@ class File_Splitter(object):
 
     def no_header_size(self):
         """
-
+        For DOS files the line endings have an extra character.
         :return:
         """
 
-        if self._file_type == File_Type.DOS:
-            if self._header_line:
-                adjustment = self._line_count + len(self._header_line)
-            else:
+        if self._has_header:
+            if self._file_type == File_Type.DOS:
                 adjustment = self._line_count + len(self._header_line) + 1
-        else:
-            if self._header_line:
-                adjustment = len(self._header_line)
             else:
-                adjustment = 0
+                adjustment = len(self._header_line)
+        else:
+            adjustment = 0
 
         return self._size - adjustment
 

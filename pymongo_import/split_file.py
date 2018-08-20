@@ -58,7 +58,7 @@ using **--splitsize** chunks until it is consumed.
     parser.add_argument("--autosplit", type=int,
                         help="split file based on loooking at the first ten lines and overall file size [default : %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
-                        help="Ignore header when calculating splits")
+                        help="Ignore header when calculating splits, don't include header in output")
     parser.add_argument('--usefieldfile', type=str,
                         help="Use this field file and copy to match split filenames")
     parser.add_argument('--generatefieldfile', default=False, action="store_true",
