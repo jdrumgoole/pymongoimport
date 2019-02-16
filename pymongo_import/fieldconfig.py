@@ -269,7 +269,7 @@ class FieldConfig(object):
         genfilename = FieldConfig.generate_field_filename(path, ext)
 
         with open(genfilename, "w") as genfile:
-            # print( "The field file will be '%s'" % genfilename )
+            print( "The field file will be '%s'" % genfilename )
             with open(path, "r") as inputfile:
                 header_line = inputfile.readline().rstrip().split(delimiter)  # strip newline
                 value_line = inputfile.readline().rstrip().split(delimiter)

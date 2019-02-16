@@ -29,32 +29,50 @@ from enum import Enum
 
 class Block_Reader(object):
 
-    def __init__(self, blocksize=None):
+    BLOCK_SIZE = 64 * 1024
+
+    def __init__(self, filename, blocksize=None):
+
+        self._filename = filename
 
         if blocksize :
             self._blocksize = blocksize
         else:
-            self._blocksize = 64 * 1024
+            self._blocksize = Block_Reader.BLOCK_SIZE
 
-    def _read_blocks(self, file, blocksize=None):
 
-        if blocksize:
-            self._blocksize = blocksize
+    def __enter__(self):
+        self._file = open(self.filename, "r", encoding="utf-8", errors='ignore', newline='')
+        return self._file
+
+    def __exit__(self, *args):
+        self._file.close()
+
+    @staticmethod
+    def read_blocks(file, blocksize=None):
+
+        if not blocksize:
+            blocksize = Block_Reader.BLOCK_SIZE
 
         while True:
             # disable universal newlines so that sizes are correct when
             # reading DOS and Linux files.
-            b = file.read(self._blocksize)
-            if not b: break
+            b = file.read(blocksize)
+            if not b:
+                break
             yield b
 
+    @staticmethod
+    def readline(file):
+        return file.readline()
+
     def read_fd(self, fd):
-        for block in self._read_blocks(fd, self._blocksize):
+        for block in self.read_blocks(fd, self._blocksize):
             yield block
 
     def read_file(self, filename):
         with open(filename, "r", encoding="utf-8", errors='ignore', newline='') as f:
-            yield self.read_fd(f)
+            yield from self.read_fd(f)
 
 class File_Type(Enum):
     DOS = 1
@@ -228,14 +246,14 @@ class File_Splitter(object):
 
         lhs_reader = Block_Reader(lhs)
         total_lines = 0
-        with open(lhs, "r", encoding="utf-8", errors='ignore') as input:
+        with open(lhs, "r", encoding="utf-8", errors='ignore') as input_file:
             if ignore_header:
-                self._header_line=input.readline()
+                self._header_line = Block_Reader.readline(input_file)
 
-            with open(rhs, "w", encoding="utf-8", errors='ignore') as output:
-                for i in Block_Reader.read_blocks(input):
+            with open(rhs, "w", encoding="utf-8", errors='ignore') as output_file:
+                for i in Block_Reader.read_blocks(input_file):
                     total_lines = total_lines + i.count("\n")
-                    output.write(i)
+                    output_file.write(i)
 
             if i and i[-1:] != '\n' : #file doesn't end with a newline but its still a line
                 total_lines = total_lines + 1
@@ -256,7 +274,7 @@ class File_Splitter(object):
 
         if self._has_header:
             if self._file_type == File_Type.DOS:
-                adjustment = self._line_count + len(self._header_line) + 1
+                adjustment = self._line_count + len(self._header_line)  # tryout
             else:
                 adjustment = len(self._header_line)
         else:

@@ -65,6 +65,8 @@ using **--splitsize** chunks until it is consumed.
                         help="Generate a fieldfile for each input file")
     parser.add_argument('--delimiter', default=",", help="Delimiter for fields[default : %(default)s] ")
     parser.add_argument("--splitsize", type=int, help="Split file into chunks of this size")
+    parser.add_argument('--verbose', default=False, action="store_true",
+                        help="Print out what is happening")
     parser.add_argument("filenames", nargs="*", help='list of files')
     args = parser.parse_args(*argv)
 
@@ -76,28 +78,21 @@ using **--splitsize** chunks until it is consumed.
 
     for i in args.filenames:
 
-        if not os.path.isfile( i ):
+        if not os.path.isfile(i):
             print( "No such input file:'{}'".format(i))
             continue
-        # master_cfg_filename = FieldConfig.generate_field_filename( i, ".ff")
-        # if args.generatefieldfile:
-        #     field_file = FieldConfig.generate_field_file( i, delimiter=args.delimiter)
-        # if not os.path.isfile( master_cfg_filename):
-        #     raise OSError( "Missing field config file '{}' for '{}'".format( master_cfg_filename, i))
 
         splitter = File_Splitter(i, args.hasheader)
 
         if args.autosplit:
-            print("Autosplitting: '{}' into approximately {} parts".format(i, args.autosplit))
+            if args.verbose:
+                print("Autosplitting: '{}' into approximately {} parts".format(i, args.autosplit))
             for newfile in splitter.autosplit(args.autosplit):
-                # cfg_filename = FieldConfig.generate_field_filename( newfile[0], ".ff")
-                # shutil.copy( master_cfg_filename, cfg_filename)
                 files.append(newfile)
         else:
-            print("Splitting '%s' using %i splitsize" % (args.filenames[0], args.splitsize))
+            if args.verbose:
+                print("Splitting '%s' using %i splitsize" % (args.filenames[0], args.splitsize))
             for newfile in splitter.split_file(args.splitsize):
-                # cfg_filename = FieldConfig.generate_field_filename( newfile[0], ".ff")
-                # shutil.copy( master_cfg_filename, cfg_filename)
                 files.append(newfile)
 
         # print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
@@ -110,11 +105,13 @@ using **--splitsize** chunks until it is consumed.
         size = os.path.getsize(i)
         total_size = total_size + size
         total_lines = total_lines + lines
-        print("{:4}. '{:20}'. Lines : {:6}, Size: {:10}".format(count, i, lines, size))
+        if args.verbose:
+            print("{:4}. '{:20}'. Lines : {:6}, Size: {:10}".format(count, i, lines, size))
 
         count = count + 1
     if len(files) > 1 :
-        print("{} {:16} {:17}".format( " " * (len(i) + 7), total_lines, total_size))
+        if args.verbose:
+            print("{} {:16} {:17}".format( " " * (len(i) + 7), total_lines, total_size))
 
     if files and (total_size != splitter.no_header_size()):
         raise ValueError("Filesize of original and pieces does not match: total_size: %i, no header split_size: %i" % (

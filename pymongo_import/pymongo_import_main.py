@@ -195,7 +195,7 @@ def mongo_import_main(input_args=None):
     # print( "Argv: %s" % argv )
     # print(argv)
 
-    if input_args :
+    if input_args:
         cmd = input_args
         args = parser.parse_args(cmd)
     else:
@@ -212,7 +212,7 @@ def mongo_import_main(input_args=None):
         Logger.add_stream_handler(args.logname)
 
     log.info("Started pymongo_import")
-
+    print(args.filenames)
     if args.genfieldfile:
         args.hasheader = True
         log.info("Forcing hasheader true for --genfieldfile")

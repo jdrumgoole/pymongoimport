@@ -53,7 +53,6 @@ by the parser.
         'Programming Language :: Python :: 3.6' ],
    
     install_requires = [  "pymongo",
-                          "mongodb_utils",
                           "nose",
                           "dnspython",
                           "dateutils"],

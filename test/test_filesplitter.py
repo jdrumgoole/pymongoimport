@@ -1,21 +1,33 @@
-'''
+"""
 Created on 13 Aug 2017
 
 @author: jdrumgoole
-'''
+"""
 import unittest
 import os
 
 from pymongo_import.filesplitter import Line_Counter,File_Splitter, File_Type
 
 
+path_dir = os.path.dirname(os.path.realpath(__file__))
+
+
+def f(path):
+    return os.path.join(path_dir, path)
+
 class Test(unittest.TestCase):
 
+    def setUp(self):
+        self._dir = os.path.dirname(os.path.realpath(__file__))
+
+    def f(self, path):
+        return os.path.join(self._dir, path)
+
     def test_count_lines(self):
-        self.assertEqual(3, File_Splitter("data/threelines.txt").line_count())
-        self.assertEqual(0, File_Splitter("data/emptyfile.txt").line_count())
-        self.assertEqual(4, File_Splitter("data/fourlines.txt").line_count())
-        self.assertEqual(5, File_Splitter("data/inventory.csv").line_count())
+        self.assertEqual(3, File_Splitter(f("data/threelines.txt")).line_count())
+        self.assertEqual(0, File_Splitter(f("data/emptyfile.txt")).line_count())
+        self.assertEqual(4, File_Splitter(f("data/fourlines.txt")).line_count())
+        self.assertEqual(5, File_Splitter(f("data/inventory.csv")).line_count())
 
     def _split_helper(self, filename, split_size, has_header=False, dos_adjust=False):
 
@@ -46,10 +58,9 @@ class Test(unittest.TestCase):
             self.assertEqual(part_total_size, splitter.size() - len( splitter.header_line()))
 
     def test_split_file(self):
-        self._split_helper("data/fourlines.txt", 3)
-        self._split_helper("data/AandE_Data_2011-04-10.csv", 47, has_header=True, dos_adjust=True)
-        self._split_helper("data/10k.txt", 2300, has_header=False)
-
+        self._split_helper(f("data/fourlines.txt"), 3)
+        self._split_helper(f("data/AandE_Data_2011-04-10.csv"), 47, has_header=True, dos_adjust=True)
+        self._split_helper(f("data/10k.txt"), 2300, has_header=False)
 
     def _auto_split_helper(self, filename, lines, split_count, has_header=False, dos_adjust=False):
 
@@ -84,13 +95,10 @@ class Test(unittest.TestCase):
             else:
                 self.assertEqual(part_total_size, splitter.size())
 
-
-
-
     def test_copy_file(self):
-        splitter = File_Splitter("data/AandE_Data_2011-04-10.csv", has_header=True)
-        self.assertEqual( splitter.file_type(), File_Type.DOS )
-        (_, total_lines)=splitter.copy_file("data/AandE_Data_2011-04-10.csv" + ".1", ignore_header=True)
+        splitter = File_Splitter(f("data/AandE_Data_2011-04-10.csv"), has_header=True)
+        self.assertEqual(splitter.file_type(), File_Type.DOS )
+        (_, total_lines)=splitter.copy_file(f("data/AandE_Data_2011-04-10.csv") + ".1", ignore_header=True)
 
         #
         # we subtract 1 char for each line to account for dos \r\n.
@@ -98,24 +106,23 @@ class Test(unittest.TestCase):
         # because we have already subtracted all the lines in the original including the header line
         # (which has a \r\n) we add one back to account for this extra char.
         #
-        self.assertEqual(os.path.getsize("data/AandE_Data_2011-04-10.csv.1"), splitter.size() - splitter.line_count() - len( splitter.header_line()) +1)
+        self.assertEqual(os.path.getsize(f("data/AandE_Data_2011-04-10.csv.1")), splitter.size() - splitter.line_count() - len( splitter.header_line()) +1)
 
     def test_autosplit_file(self):
-        self.assertEqual( File_Splitter("data/AandE_Data_2011-04-10.csv").file_type(), File_Type.DOS)
-        self._auto_split_helper("data/fourlines.txt", 4, 2, has_header=False)
-        self._auto_split_helper("data/ninelines.txt", 9, 3, has_header=True)
-        self._auto_split_helper("data/inventory.csv", 5, 2, has_header=True)
-        self._auto_split_helper("data/AandE_Data_2011-04-10.csv", 301, 3, has_header=True, dos_adjust=True)
-        self._auto_split_helper("data/AandE_Data_2011-04-10.csv", 301, 2, has_header=True, dos_adjust=True)
-        self._auto_split_helper("data/AandE_Data_2011-04-10.csv", 301, 1, has_header=True, dos_adjust=True)
-        self._auto_split_helper("data/AandE_Data_2011-04-10.csv", 301, 0, has_header=True, dos_adjust=True)
-        self._auto_split_helper("data/10k.txt", 10000, 5, has_header=True)
-        self._auto_split_helper("data/yellow_tripdata_2015-01-06-1999.csv", 1999, 4, has_header=False)
+        self.assertEqual( File_Splitter(f("data/AandE_Data_2011-04-10.csv")).file_type(), File_Type.DOS)
+        self._auto_split_helper(f("data/fourlines.txt"), 4, 2, has_header=False)
+        self._auto_split_helper(f("data/ninelines.txt"), 9, 3, has_header=True)
+        self._auto_split_helper(f("data/inventory.csv"), 5, 2, has_header=True)
+        self._auto_split_helper(f("data/AandE_Data_2011-04-10.csv"), 301, 3, has_header=True, dos_adjust=True)
+        self._auto_split_helper(f("data/AandE_Data_2011-04-10.csv"), 301, 2, has_header=True, dos_adjust=True)
+        self._auto_split_helper(f("data/AandE_Data_2011-04-10.csv"), 301, 1, has_header=True, dos_adjust=True)
+        self._auto_split_helper(f("data/AandE_Data_2011-04-10.csv"), 301, 0, has_header=True, dos_adjust=True)
+        self._auto_split_helper(f("data/10k.txt"), 10000, 5, has_header=True)
+        self._auto_split_helper(f("data/yellow_tripdata_2015-01-06-1999.csv"), 1999, 4, has_header=False)
 
     def test_get_average_line_size(self):
-        self.assertEqual(10, File_Splitter( "data/tenlines.txt").get_average_line_size())
+        self.assertEqual(10, File_Splitter(f("data/tenlines.txt")).get_average_line_size())
 
 
 if __name__ == "__main__":
-    # import sys;sys.argv = ['', 'Test.test_autosplit']
     unittest.main()

@@ -50,7 +50,7 @@ class Test(unittest.TestCase):
         id = self._audit.start_batch( { "test" : "test_batch"})
         collection = self._database[ "import_test"]
 
-        start_size = collection.count()
+        start_size = collection.count_documents({})
         size_10k = Line_Counter( "data/10k.txt").line_count()
         size_120 = Line_Counter( "data/120lines.txt").line_count()
         cmd = Import_Command(log=getLogger(__file__),
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
                              limit=0)
 
         cmd.run( "data/10k.txt", "data/120lines.txt")
-        new_size = collection.count()
+        new_size = collection.count_documents({})
         self.assertEqual( size_10k + size_120, new_size - start_size )
 
         self._audit.end_batch(id)

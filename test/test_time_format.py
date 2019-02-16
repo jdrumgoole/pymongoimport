@@ -2,6 +2,8 @@ from pymongo_import.command import Import_Command
 import pymongo
 from csv import DictReader
 import unittest
+import os
+
 
 class Test(unittest.TestCase):
 
@@ -9,6 +11,7 @@ class Test(unittest.TestCase):
         self._client = pymongo.MongoClient()
         self._db = self._client["TEST_FORMAT"]
         self._collection = self._db[ "format"]
+        self._dir = os.path.dirname(os.path.realpath(__file__))
 
     def tearDown(self):
         pass #self._client.drop_database(self._db)
@@ -17,7 +20,7 @@ class Test(unittest.TestCase):
 
         #MOT delimiter=|
         cmd = Import_Command(log=None,collection=self._collection, delimiter="|")
-        cmd.run( "data/mot_time_format_test.txt")
+        cmd.run(os.path.join( self._dir, "data", "mot_time_format_test.txt"))
 
         fc = cmd.get_field_config()
         format = fc.config().format_value( "test_date" )
@@ -25,7 +28,7 @@ class Test(unittest.TestCase):
         self.assertTrue(fc)
 
         data={}
-        with open( "data/mot_time_format_test.txt") as csvfile:
+        with open(os.path.join( self._dir, "data", "mot_time_format_test.txt")) as csvfile:
             reader = DictReader( csvfile, fieldnames=fc.config().fields())
             count = 0
             for i in reader:
@@ -39,10 +42,10 @@ class Test(unittest.TestCase):
         for i in fc.config().fields() :
             projection[i] = 1
 
-        print(projection)
-        first_rec = self._collection.find_one( { "locator.n" : 1 }, projection)
+        #print(projection)
+        first_rec = self._collection.find_one({"locator.n": 1}, projection)
 
-        print( first_rec)
+        #print( first_rec)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.test_autosplit']
