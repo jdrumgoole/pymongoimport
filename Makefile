@@ -25,13 +25,13 @@ test_scripts:
 	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_import_main.py --delimiter '|' data/10k.txt > /dev/null 2>&1)
 	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_multiimport_main.py -h > /dev/null 2>&1)
 	(export PYTHONPATH=`pwd` && python pymongo_import/pwc.py -h > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongo_import/split_file.py -h > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && python pymongo_import/splitfile.py -h > /dev/null 2>&1)
 
 test_data:
-	(export PYTHONPATH=`pwd` && python pymongo_import/split_file.py --hasheader --autosplit 4 data/yellow_tripdata_2015-01-06-200k.csv > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && python pymongo_import/splitfile.py --hasheader --autosplit 4 data/yellow_tripdata_2015-01-06-200k.csv > /dev/null 2>&1)
 	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_multiimport_main.py --poolsize 2 yellow_tripdata_2015-01-06-200k.csv.[12] > /dev/null 2>&1)
 	(rm yellow_tripdata_2015-01-06-200k.csv.*)
-	(export PYTHONPATH=`pwd` && python pymongo_import/split_file.py --autosplit 4 data/100k.txt > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && python pymongo_import/splitfile.py --autosplit 4 data/100k.txt > /dev/null 2>&1)
 	(export PYTHONPATH=`pwd` && python pymongo_import/pymongo_multiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null 2>&1)
 	(rm 100k.txt.* > /dev/null 2>&1)
 

@@ -11,7 +11,7 @@ import pymongo
 from pymongo_import.fieldconfig import FieldConfig
 from pymongo_import.logger import Logger
 from pymongo_import.file_writer import File_Writer
-from pymongo_import.filesplitter import Line_Counter
+from pymongo_import.filesplitter import LineCounter
 from pymongo_import.type_converter import Converter
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count_documents({})
         writer = File_Writer(self._col, fc)
         writer.insert_file(f("data/inventory.csv"))
-        line_count = Line_Counter(f("data/inventory.csv")).line_count()
+        line_count = LineCounter(f("data/inventory.csv")).line_count()
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         os.unlink(f("data/inventory.testff"))
@@ -145,7 +145,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count_documents({})
         writer = File_Writer(self._col, fc)
         writer.insert_file(f("data/inventory.csv"))
-        line_count = Line_Counter(f("data/inventory.csv")).line_count()
+        line_count = LineCounter(f("data/inventory.csv")).line_count()
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         c = Converter()

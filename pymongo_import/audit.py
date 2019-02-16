@@ -45,9 +45,9 @@ class Audit(object):
         if database:
             self._database = database
         elif client:
-            self._database =client[ "AUDIT"]
+            self._database = client["AUDIT"]
         else:
-            raise ValueError( "Neither database nor client defined")
+            raise ValueError("Neither database nor client defined")
 
         self._auditCollection = self._database[collection]
         self._open_batch_count = 0
@@ -65,7 +65,7 @@ class Audit(object):
                 continue
             yield i['batchID']
 
-    def start_batch(self, doc ):
+    def start_batch(self, doc):
         '''
         The hack at the start is just a way to handle the old an new way of counting batches
         once all the audit collections are past 100 we can remove this code.
@@ -77,43 +77,41 @@ class Audit(object):
                                                                 upsert=True,
                                                                 return_document=pymongo.ReturnDocument.AFTER)
 
-        assert(updated_doc)
+        assert (updated_doc)
         #         if doc[ "currentID"] < 100 :
         #             raise ValueError( "BatchIDs must be greated than 100: (current value: %i" % doc[ "currentID"])
         self._open_batch_count = self._open_batch_count + 1
-        self._auditCollection.insert_one({"batchID"  : updated_doc["currentID"],
-                                          "username" : getpass.getuser(),
-                                          "start"    : datetime.utcnow(),
-                                          "host"     : socket.getfqdn(),
-                                          "pid"      : os.getpid(),
-                                          "info"     : doc})
+        self._auditCollection.insert_one({"batchID": updated_doc["currentID"],
+                                          "username": getpass.getuser(),
+                                          "start": datetime.utcnow(),
+                                          "host": socket.getfqdn(),
+                                          "pid": os.getpid(),
+                                          "info": doc})
 
         return updated_doc["currentID"]
 
     def add_batch_info(self, batchID, field_name, doc):
-
         self._auditCollection.insert_one({"batchID": batchID,
-                                          "timestamp"  : datetime.utcnow(),
-                                          field_name   : doc })
-
+                                          "timestamp": datetime.utcnow(),
+                                          field_name: doc})
 
     def add_command(self, batchID, cmd_name, args):
 
-        self.add_batch_info( batchID, "command", { "name" : cmd_name,
-                                                   "args" : args })
+        self.add_batch_info(batchID, "command", {"name": cmd_name,
+                                                 "args": args})
 
     def end_batch(self, batchID):
 
         if not self.is_batch(batchID):
             raise ValueError("BatchID does not exist: %s" % batchID)
 
-        start = self._auditCollection.find_one({"batchID"  : batchID,
-                                                "start"    : {"$type": 9}}) #is a timestamp
+        start = self._auditCollection.find_one({"batchID": batchID,
+                                                "start": {"$type": 9}})  # is a timestamp
 
-        assert(start)
+        assert (start)
         self._auditCollection.insert_one({"batchID": batchID,
-                                          "start"  : start["start"],
-                                          "end"    : datetime.utcnow()})
+                                          "start": start["start"],
+                                          "end": datetime.utcnow()})
 
         self._open_batch_count = self._open_batch_count - 1
         return batchID
@@ -205,4 +203,3 @@ class Audit(object):
         ids = self.get_valid_batch_ids()
         for i in ids:
             return i
-

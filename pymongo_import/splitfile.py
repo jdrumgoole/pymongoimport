@@ -1,6 +1,6 @@
 '''
 ==================================================
-split_file : Split a file into seperate pieces
+splitfile : Split a file into seperate pieces
 ==================================================
 Files can be split on
 preset line boundaries using **--splitsize** or split automatically
@@ -40,7 +40,7 @@ from pymongo_import.filesplitter import File_Splitter
 from pymongo_import.fieldconfig import FieldConfig
 
 
-def split_file(*argv):
+def split_file_main(*argv):
     usage_message = '''
     
 Split a text file into seperate pieces. if you specify 
@@ -92,7 +92,7 @@ using **--splitsize** chunks until it is consumed.
         else:
             if args.verbose:
                 print("Splitting '%s' using %i splitsize" % (args.filenames[0], args.splitsize))
-            for newfile in splitter.split_file(args.splitsize):
+            for newfile in splitter.splitfile(args.splitsize):
                 files.append(newfile)
 
         # print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
@@ -121,4 +121,4 @@ using **--splitsize** chunks until it is consumed.
 
 
 if __name__ == '__main__':
-    split_file(sys.argv[1:])
+    split_file_main(sys.argv[1:])

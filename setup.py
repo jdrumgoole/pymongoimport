@@ -67,7 +67,7 @@ by the parser.
     entry_points={
         'console_scripts': [
             'pymongo_import=pymongo_import.pymongo_import_main:mongo_import_main',
-            'splitfile=pymongo_import.split_file:split_file',
+            'splitfile=pymongo_import.splitfile:splitfile',
             'pymongo_multiimport=pymongo_import.pymongo_multiimport_main:multi_import',
             'pwc=pymongo_import.pwc:pwc',
         ]

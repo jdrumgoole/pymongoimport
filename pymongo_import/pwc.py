@@ -17,7 +17,7 @@ import sys
 import argparse
 import os
 
-from pymongo_import.filesplitter import Line_Counter
+from pymongo_import.filesplitter import LineCounter
 
 
 def pwc( *argv ):
@@ -32,7 +32,7 @@ def pwc( *argv ):
     if args.filenames:
         print( "lines\tbytes\tfilename")
     for filename in args.filenames:
-        counter = Line_Counter(filename)
+        counter = LineCounter(filename)
         total_count = total_count + counter.line_count()
         total_size  = total_size  + counter.file_size()
 
@@ -44,4 +44,3 @@ if __name__ == "__main__" :
     pwc( sys.argv[1:])
     
 
-    
