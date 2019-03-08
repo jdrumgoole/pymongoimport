@@ -11,11 +11,14 @@ ROOT=${HOME}/GIT/pymongo_import
 root:
 	@echo "The project ROOT is '${ROOT}'"
 
-pip:clean test build
-	sh prod-twine.sh
+bump_tag:
+	semvermgr --bump tag_version setup.py
+
+prod_build:clean test build
+	twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u jdrumgoole
 
 test_build:
-	sh test-twine.sh
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u jdrumgoole
 
 #
 # Just test that these scripts run
@@ -47,9 +50,10 @@ build:
 clean:
 	rm -rf dist bdist sdist
 
-init:
-	pip3 install twine pymongo
-	pip3 install --upgrade pip
-	pip3 install keyring
+pkgs:
+	pipenv install pymongo keyring twine nose semvermanager
+
+init: pkgs
 	keyring set https://test.pypi.org/legacy/ ${USERNAME}
 	keyring set https://upload.pypi.org/legacy/ ${USERNAME}
+
