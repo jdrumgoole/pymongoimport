@@ -19,7 +19,7 @@ Created on 25 Jul 2017
 1.4.8a8 : 19-Apr-2017 : Added --info argument to allow insertion of a string during auditing.
 Version 1.4.7 : 8-Apr-2018 : Now only supports python 3.6.
 Version 1.5.0 : 8-Mar-2019 : Fixed tests. New package for upload.
-
+Version 1.5.1 : 8-Arp-2019 : Added --delimiter tab arg to allow tsv files with tab delimiters
 @author: jdrumgoole
 """
 
@@ -31,7 +31,7 @@ pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongo_import",
-    version="1.5.0",
+    version="1.5.1",
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",

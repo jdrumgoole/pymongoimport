@@ -68,7 +68,18 @@ class Test(unittest.TestCase):
         fp.processOneFile(input_filename = f("data/AandE_Data_2011-04-10.csv"), hasheader=True )
         lines = LineCounter(f("data/AandE_Data_2011-04-10.csv")).line_count()
         self.assertEqual( lines, col.count_documents({}) - start_count + 1)
-        self.assertTrue(col.find_one( { "Code" : "RA4"}) )
+        self.assertTrue(col.find_one( { "Code" : "RA4"}))
+
+    def test_gdelt_data(self):
+        col = self._database["GDELT"]
+        start_count = col.count_documents({})
+        fp = FileProcessor(col, onerror="ignore", delimiter="tab")
+        fp.processOneFile(input_filename = f("data/gdelt.tsv"),
+                          hasheader=False,
+                          field_filename=f("data/GDELT_columns.ff"))
+        lines = LineCounter(f("data/gdelt.tsv")).line_count()
+        self.assertEqual( lines, col.count_documents({}) - start_count)
+        self.assertTrue(col.find_one({"SOURCEURL": "https://www.standardspeaker.com/news/dream-factory-director-retiring-1.2467094"}))
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_fileprocessor']

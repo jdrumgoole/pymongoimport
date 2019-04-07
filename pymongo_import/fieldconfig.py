@@ -81,6 +81,8 @@ class FieldConfig(object):
         return self._doc_template
 
     def get_dict_reader(self, f):
+        if self._delimiter == "tab":
+            self._delimiter = "\t"
         return csv.DictReader(f, fieldnames=self._config.fields(), delimiter=self._delimiter)
 
     # def duplicateIDMsg(self, firstSection, secondSection):
