@@ -12,11 +12,12 @@ from configparser import RawConfigParser
 from yaml import load
 
 
-def dict_to_fields(d, f):
+def dict_to_fields(d):
 
+    f = []
     for k,v in d.items():
         if type(v) == dict:
-            f.extend(dict_to_fields(v, f))
+            f.extend(dict_to_fields(v))
         else:
             f.append(k)
 

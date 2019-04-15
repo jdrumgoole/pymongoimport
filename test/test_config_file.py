@@ -28,15 +28,21 @@ class Test(unittest.TestCase):
 
     def test_dict_to_fields(self):
 
-        a={ "a" : 1, "b" : 2, "c" : 3}
-        b={ "w" : 5, "z" : a}
+        a={ "a": 1, "b": 2, "c": 3}
+        b={ "w": 5, "z": a}
+        c={ "m": a, "n": b }
 
-        fields = dict_to_fields(a, [])
+        fields = dict_to_fields(a)
         self.assertEqual(len(fields), 3)
+        self.assertEqual([ "a", "b", "c"], fields)
 
-        fields = dict_to_fields(b, [])
-        self.assertEqual(len(fields), 5)
+        fields = dict_to_fields(b)
+        self.assertEqual(len(fields), 4)
+        self.assertEqual([ "w", "a", "b", "c"], fields)
 
+        fields = dict_to_fields(c)
+        self.assertEqual(len(fields), 7)
+        self.assertEqual(["a", "b", "c", "w", "a", "b", "c"], fields)
 
 if __name__ == "__main__":
     unittest.main()
