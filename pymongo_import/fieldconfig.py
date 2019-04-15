@@ -52,7 +52,11 @@ class FieldConfig(object):
       
     '''
 
-    def __init__(self, log, cfgFilename, delimiter=",", hasheader=True, onerror="warn"):
+    def __init__(self, log, cfgFilename,
+                 delimiter=",",
+                 hasheader=True,
+                 onerror="warn",
+                 input_type="CSV"):
         '''
         Constructor
         '''
@@ -288,11 +292,15 @@ class FieldConfig(object):
         return newpath
 
     @staticmethod
-    def generate_field_file(path, delimiter=",", ext=".ff"):
-        '''
-        Take a file name and create a field file name and the corresponding field file data 
-        from that file by reading the headers and 'sniffing' the first line of data.
-        '''
+    def generate_field_file(path, delimiter=",", ext=".ff", output_type="CSV"):
+        """
+        Create a default filed file using the data from the file.
+        :param path: CSV file to use for input
+        :param delimiter: delimiter character used to seperate fields in CSV file
+        :param ext: File extension for field file.
+        :param output_type: Type of file to generate default is CSV, other option is YAML
+        :return: The name of the generated file
+        """
 
         genfilename = FieldConfig.generate_field_filename(path, ext)
 
@@ -319,7 +327,11 @@ class FieldConfig(object):
                 line = line.replace('$', '_')  # not valid keys for mongodb
                 line = line.replace('.', '_')  # not valid keys for mongodb
                 (_, t) = FieldConfig.guess_type(value_line[i])
-                genfile.write(f"[{line}]\n")
-                genfile.write(f"type={t}\n")
+                if output_type=="CSV":
+                    genfile.write(f"[{line}]\n")
+                    genfile.write(f"type={t}\n")
+                elif output_type=="YAML":
+                    genfile.write(f"{line}:\n")
+                    genfile.write(f"  type={t}\n")
 
         return genfilename
