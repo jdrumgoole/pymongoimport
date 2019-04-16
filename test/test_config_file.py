@@ -1,7 +1,7 @@
 import unittest
 import os
 
-from pymongo_import.config_file import Config_File, dict_to_fields
+from pymongo_import.config_file import Config_File, dict_to_fields, dict_walker
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -43,6 +43,20 @@ class Test(unittest.TestCase):
         fields = dict_to_fields(c)
         self.assertEqual(len(fields), 7)
         self.assertEqual(["a", "b", "c", "w", "a", "b", "c"], fields)
+
+    def test_dict_walker(self):
+
+        d1 = {"a":1 }
+        paths = dict_walker(d1)
+        self.assertEqual(paths, ["a"])
+
+        d2 = {"a": 1, "b":2}
+        paths = dict_walker(d2)
+        self.assertEqual(paths, ["a", "b"])
+
+        d3 = {"a": 1, "b":2, "c": { "d" : 3, "e" : 4 }}
+        paths = dict_walker(d3)
+        self.assertEqual(paths, ["a", "b", "c.d", "c.e"], paths)
 
 if __name__ == "__main__":
     unittest.main()

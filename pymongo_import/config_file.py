@@ -20,9 +20,18 @@ def dict_to_fields(d):
             f.extend(dict_to_fields(v))
         else:
             f.append(k)
-
     return f
 
+def dict_walker(d):
+
+    paths = []
+    for k,v in d.items():
+        if type(v) == dict:
+            paths.extend(f"{k}.{dict_walker(v)}")
+        else:
+            paths.append(k)
+
+    return paths
 
 
 class YAMLFile:
@@ -34,6 +43,10 @@ class YAMLFile:
     def read(self, filename):
 
         fieldDict = load(filename)
+
+        fields = dict_to_fields(fieldDict)
+
+        #for k,v in fieldDict.items():
 
         for s in self._fields:
             # print( "section: '%s'" % s )
