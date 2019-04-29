@@ -9,7 +9,7 @@ Valid subfields are:
 from collections import OrderedDict
 
 from configparser import RawConfigParser
-from yaml import load
+import yaml
 
 
 def dict_to_fields(d):
@@ -21,6 +21,7 @@ def dict_to_fields(d):
         else:
             f.append(k)
     return f
+
 
 def dict_walker(d):
 
@@ -35,6 +36,9 @@ def dict_walker(d):
 
 
 class YAMLFile:
+    """
+    Read a YAML file and return a dict representing the hierarchy
+    """
 
     def __init__(self, filename):
         self._filename = filename
@@ -42,7 +46,7 @@ class YAMLFile:
 
     def read(self, filename):
 
-        fieldDict = load(filename)
+        fieldDict = yaml.load(filename)
 
         fields = dict_to_fields(fieldDict)
 
