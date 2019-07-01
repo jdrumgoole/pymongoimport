@@ -2,10 +2,10 @@ import unittest
 import os
 
 import pymongo
-from pymongo_import.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
-from pymongo_import.audit import Audit
+from pymongoimport.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
+from pymongoimport.audit import Audit
 from logging import getLogger
-from pymongo_import.filesplitter import LineCounter
+from pymongoimport.filesplitter import LineCounter
 import shutil
 
 path_dir = os.path.dirname(os.path.realpath(__file__))

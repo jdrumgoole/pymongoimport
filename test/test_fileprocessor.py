@@ -10,9 +10,9 @@ import os
 import pymongo
 import pymongo.errors
 
-from pymongo_import.filesplitter import LineCounter
+from pymongoimport.filesplitter import LineCounter
 
-from pymongo_import.fileprocessor import FileProcessor
+from pymongoimport.fileprocessor import FileProcessor
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

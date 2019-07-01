@@ -1,4 +1,4 @@
-from pymongo_import.command import Import_Command
+from pymongoimport.command import Import_Command
 import pymongo
 from csv import DictReader
 import unittest

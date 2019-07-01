@@ -7,10 +7,10 @@ import unittest
 import os
 
 import pymongo
-from pymongo_import.restart import Restarter
-from pymongo_import.file_writer import File_Writer
-from pymongo_import.fieldconfig import FieldConfig
-from pymongo_import.root import Root
+from pymongoimport.restart import Restarter
+from pymongoimport.file_writer import File_Writer
+from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.root import Root
 
 class Test(unittest.TestCase):
     pass

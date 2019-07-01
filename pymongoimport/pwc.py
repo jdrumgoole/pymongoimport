@@ -17,7 +17,7 @@ import sys
 import argparse
 import os
 
-from pymongo_import.filesplitter import LineCounter
+from pymongoimport.filesplitter import LineCounter
 
 
 def pwc( *argv ):

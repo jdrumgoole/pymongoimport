@@ -8,11 +8,11 @@ import os
 
 import pymongo
 
-from pymongo_import.fieldconfig import FieldConfig
-from pymongo_import.logger import Logger
-from pymongo_import.file_writer import File_Writer
-from pymongo_import.filesplitter import LineCounter
-from pymongo_import.type_converter import Converter
+from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.logger import Logger
+from pymongoimport.file_writer import File_Writer
+from pymongoimport.filesplitter import LineCounter
+from pymongoimport.type_converter import Converter
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

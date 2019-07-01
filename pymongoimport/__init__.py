@@ -1,12 +1,12 @@
 '''
 ===============================
-pymongo_import
+pymongoimport
 ===============================
 
-pymongo_import is a python program that will import data into a MongoDB
+pymongoimport is a python program that will import data into a MongoDB
 database (default 'test' ) and a MongoDB collection (default 'test' ).
  
-Why do we have pymongo_import?
+Why do we have pymongoimport?
 
 MongoDB already has a perfectly good (and much faster)
 `mongoimport <https://docs.mongodb.com/manual/reference/program/mongoimport/>`_ program 
@@ -14,18 +14,18 @@ that is available for free in the standard MongoDB `community download <https://
 
 Well pymonogodbimport does a few things that mongoimport doesn't do (yet). For people
 with new CSV files there is the ``--genfieldfile`` option which will automatically
-generate a typed field file for the specified input file. Even with a field file pymongo_import
+generate a typed field file for the specified input file. Even with a field file pymongoimport
 will fall back to the string type if type conversion fails on any
 input column.
 
-pymongo_import also has the ability to restart  an upload from the
+pymongoimport also has the ability to restart  an upload from the
 point where is finished. This restart capability is recorded in an
 ``audit`` collection in the current database. And audit record is
 stored for each upload in progress and each completed upload. Thus the
 audit collection gives you a record of all uploads by filename and
 date time.
 
-Finally pymongo_import is more forgiving of *dirty* data. So if your
+Finally pymongoimport is more forgiving of *dirty* data. So if your
 actual data doesn't match your field type definitions then the type
 converter will fall back to using a string type.
 

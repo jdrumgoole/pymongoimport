@@ -10,7 +10,7 @@ from enum import Enum
 
 import pymongo
 
-from pymongo_import.canonical_path import Canonical_Path
+from pymongoimport.canonical_path import Canonical_Path
 
 
 class Restart_State(Enum):

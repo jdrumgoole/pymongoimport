@@ -7,8 +7,8 @@ Author: joe@joedrumgoole.com
 """
 import os
 
-from pymongo_import.fieldconfig import FieldConfig
-from pymongo_import.file_writer import File_Writer
+from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.file_writer import File_Writer
 
 
 class Command(object):

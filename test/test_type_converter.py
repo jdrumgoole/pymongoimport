@@ -1,6 +1,6 @@
 import unittest
 
-from pymongo_import.type_converter import Converter
+from pymongoimport.type_converter import Converter
 import datetime
 from datetime import timezone
 

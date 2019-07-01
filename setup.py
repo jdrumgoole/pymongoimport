@@ -30,12 +30,12 @@ import glob
 pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
-    name="pymongo_import",
-    version="1.5.1",
+    name="pymongoimport",
+    version="1.5.2",
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",
-    description="pymongo_import - a program for reading CSV files into mongodb",
+    description="pymongoimport - a program for reading CSV files into mongodb",
     long_description=
     '''
 Pymongo_import is a program that can parse a csv file from its header and first line to
@@ -81,10 +81,10 @@ by the parser.
     scripts=[],
     entry_points={
         'console_scripts': [
-            'pymongo_import=pymongo_import.pymongo_import_main:mongo_import_main',
-            'splitfile=pymongo_import.splitfile:splitfile',
-            'pymongo_multiimport=pymongo_import.pymongo_multiimport_main:multi_import',
-            'pwc=pymongo_import.pwc:pwc',
+            'pymongoimport=pymongoimport.pymongoimport_main:mongoimport_main',
+            'splitfile=pymongoimport.splitfile:splitfile',
+            'pymongomultiimport=pymongoimport.pymongomultiimport_main:multi_import',
+            'pwc=pymongoimport.pwc:pwc',
         ]
     },
 

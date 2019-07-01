@@ -23,16 +23,16 @@ def dict_to_fields(d):
     return f
 
 
-def dict_walker(d):
-
-    paths = []
-    for k,v in d.items():
-        if type(v) == dict:
-            paths.extend(f"{k}.{dict_walker(v)}")
-        else:
-            paths.append(k)
-
-    return paths
+# def dict_walker(d):
+#
+#     paths = []
+#     for k,v in d.items():
+#         if type(v) == dict:
+#             paths.extend(f"{k}.{dict_walker(v)}")
+#         else:
+#             paths.append(k)
+#
+#     return paths
 
 
 class YAMLFile:

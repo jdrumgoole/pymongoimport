@@ -9,8 +9,8 @@ from contextlib import contextmanager
 from io import StringIO
 import sys
 
-from pymongo_import.splitfile import split_file_main
-from pymongo_import.filesplitter import File_Splitter
+from pymongoimport.splitfile import split_file_main
+from pymongoimport.filesplitter import File_Splitter
 
 import os
 

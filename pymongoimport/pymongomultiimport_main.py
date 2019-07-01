@@ -10,12 +10,12 @@ import time
 import pymongo
 import os
 
-from pymongo_import.filesplitter import File_Splitter
+from pymongoimport.filesplitter import File_Splitter
 
-from pymongo_import.logger import Logger
-from pymongo_import.argparser import add_standard_args
-from pymongo_import.pymongo_import_main import Sub_Process
-from pymongo_import.audit import Audit
+from pymongoimport.logger import Logger
+from pymongoimport.argparser import add_standard_args
+from pymongoimport.pymongoimport_main import Sub_Process
+from pymongoimport.audit import Audit
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
     '''

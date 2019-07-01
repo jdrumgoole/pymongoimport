@@ -12,9 +12,9 @@ import logging
 import textwrap
 from dateutil.parser import parse
 
-from pymongo_import.logger import Logger
-from pymongo_import.config_file import Config_File
-from pymongo_import.type_converter import Converter
+from pymongoimport.logger import Logger
+from pymongoimport.config_file import Config_File
+from pymongoimport.type_converter import Converter
 
 from collections import OrderedDict
 import re

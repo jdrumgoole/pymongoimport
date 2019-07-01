@@ -18,12 +18,12 @@ import os
 from multiprocessing import Process
 
 import pymongo
-from pymongo_import.fileprocessor import FileProcessor
-from pymongo_import.fieldconfig import FieldConfig
-from pymongo_import.argparser import add_standard_args
-from pymongo_import.logger import Logger
-from pymongo_import.audit import Audit
-from pymongo_import.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
+from pymongoimport.fileprocessor import FileProcessor
+from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.argparser import add_standard_args
+from pymongoimport.logger import Logger
+from pymongoimport.audit import Audit
+from pymongoimport.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
 #from monglog import MongoHandler
 
 # def mongo_import_one( log, client, args, filename):
@@ -100,7 +100,7 @@ class Sub_Process(object):
 
     def run(self, filename):
         if self._log:
-            self._log.info("Started pymongo_import")
+            self._log.info("Started pymongoimport")
         else:
             self._log = Logger(self._args.logname, self._args.loglevel).log()
 
@@ -175,7 +175,7 @@ def mongo_import_main(input_args=None):
 
     usage_message = '''
     
-    pymongo_import is a python program that will import data into a mongodb
+    pymongoimport is a python program that will import data into a mongodb
     database (default 'test' ) and a mongodb collection (default 'test' ).
     
     Each file in the input list must correspond to a fieldfile format that is
@@ -184,7 +184,7 @@ def mongo_import_main(input_args=None):
     
     An example run:
     
-    python pymongo_import.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
+    python pymongoimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
     '''
 
     # if input_args:
@@ -211,7 +211,7 @@ def mongo_import_main(input_args=None):
     if not args.silent:
         Logger.add_stream_handler(args.logname)
 
-    log.info("Started pymongo_import")
+    log.info("Started pymongoimport")
     print(args.filenames)
     if args.genfieldfile:
         args.hasheader = True

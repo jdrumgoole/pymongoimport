@@ -1,8 +1,8 @@
 import unittest
-from pymongo_import.liner import make_line_file
+from pymongoimport.liner import make_line_file
 import os
 
-from pymongo_import.filesplitter import LineCounter
+from pymongoimport.filesplitter import LineCounter
 
 
 

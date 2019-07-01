@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# pymongo_import documentation build configuration file, created by
+# pymongoimport documentation build configuration file, created by
 # sphinx-quickstart on Sun Aug 20 15:41:21 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -51,7 +51,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pymongo_import'
+project = u'pymongoimport'
 copyright = u'2017, Joe Drumgoole'
 author = u'Joe Drumgoole'
 
@@ -147,7 +147,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'pymongo_import.tex', u'pymongo_import Documentation',
+    (master_doc, 'pymongoimport.tex', u'pymongoimport Documentation',
      u'Joe Drumgoole', 'manual'),
 ]
 
@@ -157,7 +157,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pymongo_import', u'pymongo_import Documentation',
+    (master_doc, 'pymongoimport', u'pymongoimport Documentation',
      [author], 1)
 ]
 
@@ -168,8 +168,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'pymongo_import', u'pymongo_import Documentation',
-     author, 'pymongo_import', 'One line description of project.',
+    (master_doc, 'pymongoimport', u'pymongoimport Documentation',
+     author, 'pymongoimport', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -180,4 +180,4 @@ texinfo_documents = [
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 import sys
-sys.path.insert( 0, "/Users/jdrumgoole/GIT/pymongo_import" )
+sys.path.insert( 0, "/Users/jdrumgoole/GIT/pymongoimport" )

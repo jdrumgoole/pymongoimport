@@ -7,10 +7,10 @@ Created on 24 Jul 2017
 import os
 import logging
 
-from pymongo_import.fieldconfig import FieldConfig
-from pymongo_import.file_writer import File_Writer
-from pymongo_import.logger import Logger
-from pymongo_import.command import Import_Command
+from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.file_writer import File_Writer
+from pymongoimport.logger import Logger
+from pymongoimport.command import Import_Command
 
 from datetime import datetime
 

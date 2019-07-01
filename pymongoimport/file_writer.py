@@ -11,8 +11,8 @@ import time
 import logging
 from pymongo import errors
 
-from pymongo_import.restart import Restarter
-from pymongo_import.logger import Logger
+from pymongoimport.restart import Restarter
+from pymongoimport.logger import Logger
 from datetime import datetime, timedelta
 
 from collections import OrderedDict

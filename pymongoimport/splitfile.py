@@ -34,10 +34,10 @@ import argparse
 import sys
 import os
 import shutil
-from pymongo_import.version import __VERSION__
+from pymongoimport.version import __VERSION__
 
-from pymongo_import.filesplitter import File_Splitter
-from pymongo_import.fieldconfig import FieldConfig
+from pymongoimport.filesplitter import File_Splitter
+from pymongoimport.fieldconfig import FieldConfig
 
 
 def split_file_main(*argv):
