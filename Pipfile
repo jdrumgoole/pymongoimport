@@ -14,6 +14,7 @@ twine = "*"
 keyring = "*"
 semvermanager = "*"
 pyyaml = "*"
+sphinx = "*"
 
 [requires]
 python_version = "3.6"

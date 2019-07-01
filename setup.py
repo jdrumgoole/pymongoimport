@@ -83,7 +83,7 @@ by the parser.
         'console_scripts': [
             'pymongoimport=pymongoimport.pymongoimport_main:mongoimport_main',
             'splitfile=pymongoimport.splitfile:splitfile',
-            'pymongomultiimport=pymongoimport.pymongomultiimport_main:multi_import',
+            'pymultiimport=pymongoimport.pymongomultiimport_main:multi_import',
             'pwc=pymongoimport.pwc:pwc',
         ]
     },

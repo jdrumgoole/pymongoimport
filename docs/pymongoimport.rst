@@ -159,7 +159,9 @@ The default is `mongodb://localhost:27017/test`
     use record count insert to restart at last write also enable restart logfile [default: False]
 
     Restarts will happen from the last record that was written. You
-    must specify restart when 
+    must specify restart when restarting an upload or when you wish to use
+    the restart option.
+
 **--drop**                
     drop collection before loading [default: False]
 
