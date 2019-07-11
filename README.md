@@ -1,4 +1,4 @@
-# pymongo_import
+# pymongoimport
 
 (Warning - This documentation is incomplete, give it time :-))
 
