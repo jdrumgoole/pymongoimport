@@ -15,6 +15,7 @@ keyring = "*"
 semvermanager = "*"
 pyyaml = "*"
 sphinx = "*"
+setup-py = "*"
 
 [requires]
 python_version = "3.6"
