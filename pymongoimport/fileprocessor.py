@@ -1,18 +1,16 @@
-'''
+"""
 Created on 24 Jul 2017
 
 @author: jdrumgoole
-'''
+"""
 
-import os
 import logging
-
-from pymongoimport.fieldconfig import FieldConfig
-from pymongoimport.file_writer import File_Writer
-from pymongoimport.logger import Logger
-from pymongoimport.command import Import_Command
-
+import os
 from datetime import datetime
+
+from pymongoimport.command import Import_Command
+from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.logger import Logger
 
 
 class InputFileException(Exception):
