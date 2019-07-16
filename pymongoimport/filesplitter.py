@@ -1,4 +1,4 @@
-'''
+"""
 Created on 13 Aug 2017
 
 @author: jdrumgoole
@@ -10,7 +10,7 @@ File_Splitter
 File Splitter is a class that takes a file and splits it into separate pieces. Its purpose built for
 use with pymongoimport and is expected to be used to split CSV files (which may or may not have
 a header, hence the **hasheader** argument). When splitting a file the output files are produced without
-a header file. 
+a header file.
 
 The file can be split by number of lines using the **splitfile** function. Alternatively
 the file may be split automatically into a number of pieces specified by as a parameter to
@@ -21,9 +21,8 @@ The output files have the same name as the input file with a number appended ( .
 
 There is also a **count_lines** function to count the lines in a file.
 
-'''
+"""
 import os
-from collections import OrderedDict
 from enum import Enum
 
 
@@ -130,11 +129,11 @@ class LineCounter(object):
 
     @staticmethod
     def skipLines(f, skipCount):
-        '''
+        """
         >>> f = open( "test_set_small.txt", "r" )
         >>> skipLines( f , 20 )
         20
-        '''
+        """
 
         lineCount = 0
         if (skipCount > 0):
@@ -314,7 +313,7 @@ class File_Splitter(object):
                     self._header_line = input_file.readline()
 
                 for line in input_file:
-                # print( "Line type:%s" % repr(input_file.newlines))
+                    # print( "Line type:%s" % repr(input_file.newlines))
                     if current_split_size < split_size:
                         if current_split_size == 0:
                             file_count = file_count + 1

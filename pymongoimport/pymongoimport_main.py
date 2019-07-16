@@ -10,21 +10,20 @@ Created on 19 Feb 2016
 @author: jdrumgoole
 """
 
-
 import argparse
-import sys
-import socket
 import os
+import sys
 from multiprocessing import Process
 
 import pymongo
-from pymongoimport.fileprocessor import FileProcessor
-from pymongoimport.fieldconfig import FieldConfig
+
 from pymongoimport.argparser import add_standard_args
-from pymongoimport.logger import Logger
 from pymongoimport.audit import Audit
 from pymongoimport.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
-#from monglog import MongoHandler
+from pymongoimport.logger import Logger
+
+
+# from monglog import MongoHandler
 
 # def mongo_import_one( log, client, args, filename):
 #
@@ -73,27 +72,27 @@ class Sub_Process(object):
 
         self._audit = audit
         self._batch_ID = batch_ID
-        self._log                = log
-        self._host               = args.host
-        self._write_concern      = args.writeconcern
-        self._fsync              = args.fsync
-        self._journal            = args.journal
-        self._audit              = args.audit
-        self._database_name      = args.database
-        self._collection_name    = args.collection
-        self._fieldfile          = args.fieldfile
-        self._hasheader          = args.hasheader
-        self._delimiter          = args.delimiter
-        self._onerror            = args.onerror
-        self._limit              = args.limit
-        self._limit              = args.limit
-        self._args               = args
+        self._log = log
+        self._host = args.host
+        self._write_concern = args.writeconcern
+        self._fsync = args.fsync
+        self._journal = args.journal
+        self._audit = args.audit
+        self._database_name = args.database
+        self._collection_name = args.collection
+        self._fieldfile = args.fieldfile
+        self._hasheader = args.hasheader
+        self._delimiter = args.delimiter
+        self._onerror = args.onerror
+        self._limit = args.limit
+        self._limit = args.limit
+        self._args = args
 
     def setup_log_handlers(self):
         if self._log:
             self._log = Logger(self._args.logname, self._args.loglevel).log()
 
-        # Logger.add_file_handler(args.logname)
+            # Logger.add_file_handler(args.logname)
 
             if not self._args.silent:
                 Logger.add_stream_handler(self._args.logname)
@@ -113,7 +112,6 @@ class Sub_Process(object):
             client = pymongo.MongoClient(self._host, w=self._write_concern)
         else:
             client = pymongo.MongoClient(self._host, w=self._write_concern, fsync=self._fsync, j=self._journal)
-
 
         if not self._database_name:
             self._database_name = "PYIM"
@@ -146,7 +144,7 @@ class Sub_Process(object):
 
     def process_batch(self, pool_size, files):
 
-        procs=[]
+        procs = []
         for f in files[:pool_size]:
             self._log.info("Processing:'%s'", f)
             proc = Process(target=self.run, args=(f,), name=f)
@@ -157,6 +155,7 @@ class Sub_Process(object):
             p.join()
 
         return files[pool_size:]
+
 
 def mongo_import_main(input_args=None):
     """
@@ -173,7 +172,7 @@ def mongo_import_main(input_args=None):
     Processed test_set_small.txt
     """
 
-    usage_message = '''
+    usage_message = """
     
     pymongoimport is a python program that will import data into a mongodb
     database (default 'test' ) and a mongodb collection (default 'test' ).
@@ -185,7 +184,7 @@ def mongo_import_main(input_args=None):
     An example run:
     
     python pymongoimport.py --database demo --collection demo --fieldfile test_set_small.ff test_set_small.txt
-    '''
+    """
 
     # if input_args:
     #     print("args: {}".format( " ".join(input_args)))
@@ -206,7 +205,7 @@ def mongo_import_main(input_args=None):
 
     log = Logger(args.logname, args.loglevel).log()
 
-    #Logger.add_file_handler(args.logname)
+    # Logger.add_file_handler(args.logname)
 
     if not args.silent:
         Logger.add_stream_handler(args.logname)
@@ -228,13 +227,13 @@ def mongo_import_main(input_args=None):
 
     if args.audit:
         audit = Audit(client=client)
-        batch_ID = audit.start_batch({ "command": input_args })
+        batch_ID = audit.start_batch({"command": input_args})
     else:
-        audit=None
-        batch_ID=None
+        audit = None
+        batch_ID = None
 
     if args.database:
-        database_name= args.database
+        database_name = args.database
     else:
         database_name = "PYIM"
 
@@ -262,13 +261,13 @@ def mongo_import_main(input_args=None):
             audit = None
             batch_ID = None
 
-        process= Sub_Process(log, audit, batch_ID, args)
+        process = Sub_Process(log, audit, batch_ID, args)
 
         for i in args.filenames:
             if os.path.isfile(i):
                 process.run(i)
             else:
-                log.warning( "No such file:'{}' ignoring".format(i))
+                log.warning("No such file:'{}' ignoring".format(i))
 
         if args.audit:
             audit.end_batch(batch_ID)
@@ -277,6 +276,7 @@ def mongo_import_main(input_args=None):
         log.info("No input files: Nothing to do")
 
     return 1
+
 
 if __name__ == '__main__':
     mongo_import_main()

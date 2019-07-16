@@ -4,13 +4,7 @@ Created on 31 Jul 2017
 @author: jdrumgoole
 '''
 import unittest
-import os
 
-import pymongo
-from pymongoimport.restart import Restarter
-from pymongoimport.file_writer import File_Writer
-from pymongoimport.fieldconfig import FieldConfig
-from pymongoimport.root import Root
 
 class Test(unittest.TestCase):
     pass
@@ -58,7 +52,8 @@ class Test(unittest.TestCase):
     #
     #     self.assertEqual( last_audit_doc[ "last_doc_id"], last_doc[ "_id"])
     #     self.assertEqual( last_audit_doc[ "count"], 10000 )
-        
+
+
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.test_Restart']
+    # import sys;sys.argv = ['', 'Test.test_Restart']
     unittest.main()

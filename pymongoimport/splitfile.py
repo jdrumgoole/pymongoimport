@@ -1,4 +1,4 @@
-'''
+"""
 ==================================================
 splitfile : Split a file into seperate pieces
 ==================================================
@@ -29,15 +29,13 @@ Created on 11 Aug 2017
 
 @author: jdrumgoole
 
-'''
+"""
 import argparse
-import sys
 import os
-import shutil
-from pymongoimport.version import __VERSION__
+import sys
 
 from pymongoimport.filesplitter import File_Splitter
-from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.version import __VERSION__
 
 
 def split_file_main(*argv):
@@ -79,7 +77,7 @@ using **--splitsize** chunks until it is consumed.
     for i in args.filenames:
 
         if not os.path.isfile(i):
-            print( "No such input file:'{}'".format(i))
+            print("No such input file:'{}'".format(i))
             continue
 
         splitter = File_Splitter(i, args.hasheader)
@@ -109,13 +107,13 @@ using **--splitsize** chunks until it is consumed.
             print("{:4}. '{:20}'. Lines : {:6}, Size: {:10}".format(count, i, lines, size))
 
         count = count + 1
-    if len(files) > 1 :
+    if len(files) > 1:
         if args.verbose:
-            print("{} {:16} {:17}".format( " " * (len(i) + 7), total_lines, total_size))
+            print("{} {:16} {:17}".format(" " * (len(i) + 7), total_lines, total_size))
 
     if files and (total_size != splitter.no_header_size()):
         raise ValueError("Filesize of original and pieces does not match: total_size: %i, no header split_size: %i" % (
-        total_size, splitter.no_header_size()))
+            total_size, splitter.no_header_size()))
 
     return results
 

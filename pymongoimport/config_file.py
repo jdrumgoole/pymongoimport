@@ -7,15 +7,14 @@ Valid subfields are:
 """
 
 from collections import OrderedDict
-
 from configparser import RawConfigParser
+
 import yaml
 
 
 def dict_to_fields(d):
-
     f = []
-    for k,v in d.items():
+    for k, v in d.items():
         if type(v) == dict:
             f.extend(dict_to_fields(v))
         else:
@@ -50,7 +49,7 @@ class YAMLFile:
 
         fields = dict_to_fields(fieldDict)
 
-        #for k,v in fieldDict.items():
+        # for k,v in fieldDict.items():
 
         for s in self._fields:
             # print( "section: '%s'" % s )
@@ -69,7 +68,7 @@ class YAMLFile:
                 fieldDict[s][o] = self._cfg.get(s, o)
 
             if not "name" in fieldDict[s]:
-                #assert( s != None)
+                # assert( s != None)
                 fieldDict[s]["name"] = s
             #
             # format is optional for datetime input fields. It is used if present.
@@ -91,7 +90,6 @@ class Config_File(object):
         self._idField = None
         if self._filename:
             self._fieldDict = self.read(self._filename)
-
 
     def field_dict(self):
         return self._fieldDict
@@ -123,7 +121,7 @@ class Config_File(object):
                 fieldDict[s][o] = self._cfg.get(s, o)
 
             if not "name" in fieldDict[s]:
-                #assert( s != None)
+                # assert( s != None)
                 fieldDict[s]["name"] = s
             #
             # format is optional for datetime input fields. It is used if present.
@@ -145,18 +143,17 @@ class Config_File(object):
     def hasNewName(self, section):
         return section != self._fieldDict[section]['name']
 
-
     def type_value(self, fieldName):
         return self._fieldDict[fieldName]["type"]
-        #return self._cfg.get(fieldName, "type")
+        # return self._cfg.get(fieldName, "type")
 
     def format_value(self, fieldName):
         return self._fieldDict[fieldName]["format"]
-        #return self._cfg.get(fieldName, "format")
+        # return self._cfg.get(fieldName, "format")
 
     def name_value(self, fieldName):
         return self._fieldDict[fieldName]["name"]
-        #return self._cfg.get(fieldName, "name")
+        # return self._cfg.get(fieldName, "name")
 
     def __repr__(self):
-        return "filename:{}\ndict:\n{}\n".format( str( self._filename), str(self._fieldDict))
+        return "filename:{}\ndict:\n{}\n".format(str(self._filename), str(self._fieldDict))

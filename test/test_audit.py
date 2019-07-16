@@ -1,12 +1,14 @@
-'''
+"""
 Created on 13-Apr-2018
 
 @author: jdrumgoole
-'''
-import pymongo
-from pymongoimport.audit import Audit
+"""
 import unittest
+
+import pymongo
 from dateutil.parser import parse
+
+from pymongoimport.audit import Audit
 
 
 class Test_Audit(unittest.TestCase):
