@@ -5,16 +5,18 @@
 #
 
 
-USERNAME=${USER}
+PYPIUSERNAME="jdrumgoole"
 ROOT=${HOME}/GIT/pymongoimport
 
 root:
 	@echo "The project ROOT is '${ROOT}'"
 
-bump_tag:
-	semvermgr --bump tag_version setup.py
 
-prod_build:clean test build
+python_bin:
+	python -c "import os;print(os.environ.get('USERNAME'))"
+	which python
+
+prod_build:clean build test
 	twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u jdrumgoole
 
 test_build:
@@ -42,9 +44,10 @@ test_all: test_scripts
 	python setup.py test
 
 nose:
+	which python
 	nosetests
 
-build:
+dist:
 	python setup.py sdist
 
 clean:
