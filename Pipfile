@@ -15,7 +15,7 @@ keyring = "*"
 semvermanager = "*"
 pyyaml = "*"
 sphinx = "*"
-setup-py = "*"
+toml = "*"
 
 [requires]
 python_version = "3.7"

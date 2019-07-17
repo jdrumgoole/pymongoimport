@@ -157,14 +157,14 @@ class Sub_Process(object):
         return files[pool_size:]
 
 
-def mongo_import_main(input_args=None):
+def pymongoimport_main(input_args=None):
     """
     Expect to recieve an array of args
     
     1.3 : Added lots of support for the NHS Public Data sets project. --addfilename and --addtimestamp.
     Also we now fail back to string when type conversions fail.
     
-    >>> mongo_import( [ 'test_set_small.txt' ] )
+    >>> pymongoimport_main( [ 'test_set_small.txt' ] )
     database: test, collection: test
     files ['test_set_small.txt']
     Processing : test_set_small.txt
@@ -279,4 +279,4 @@ def mongo_import_main(input_args=None):
 
 
 if __name__ == '__main__':
-    mongo_import_main()
+    pymongoimport_main()
