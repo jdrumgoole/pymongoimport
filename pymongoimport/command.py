@@ -103,7 +103,7 @@ class Import_Command(Command):
             self._log.info("Using collection:'{}'".format(self._collection.full_name))
 
         if not self._field_filename:
-            #print( "arg:'{}".format(arg))
+            # print( "arg:'{}".format(arg))
             self._field_filename = FieldConfig.generate_field_filename(arg)
 
         if self._log:

@@ -1,5 +1,5 @@
-import unittest
 import os
+import unittest
 
 from pymongoimport.config_file import Config_File, dict_to_fields
 
@@ -13,13 +13,12 @@ def f(path):
 class Test(unittest.TestCase):
 
     def test_Config_File(self):
-
         cfg = Config_File(f("data/10k.ff"))
-        self.assertTrue( "test_id" in cfg.fields())
-        self.assertTrue( "cylinder_capacity" in cfg.fields())
+        self.assertTrue("test_id" in cfg.fields())
+        self.assertTrue("cylinder_capacity" in cfg.fields())
 
-        self.assertEqual( cfg.type_value( "test_id"), "int")
-        self.assertEqual( cfg.type_value( "test_date"), "datetime")
+        self.assertEqual(cfg.type_value("test_id"), "int")
+        self.assertEqual(cfg.type_value("test_date"), "datetime")
 
     def test_property_prices(self):
         cfg = Config_File(f("data/uk_property_prices.ff"))
@@ -27,18 +26,17 @@ class Test(unittest.TestCase):
         self.assertFalse(cfg.name_value("txn") is None)
 
     def test_dict_to_fields(self):
-
-        a={ "a": 1, "b": 2, "c": 3}
-        b={ "w": 5, "z": a}
-        c={ "m": a, "n": b }
+        a = {"a": 1, "b": 2, "c": 3}
+        b = {"w": 5, "z": a}
+        c = {"m": a, "n": b}
 
         fields = dict_to_fields(a)
         self.assertEqual(len(fields), 3)
-        self.assertEqual([ "a", "b", "c"], fields)
+        self.assertEqual(["a", "b", "c"], fields)
 
         fields = dict_to_fields(b)
         self.assertEqual(len(fields), 4)
-        self.assertEqual([ "w", "a", "b", "c"], fields)
+        self.assertEqual(["w", "a", "b", "c"], fields)
 
         fields = dict_to_fields(c)
         self.assertEqual(len(fields), 7)
@@ -57,6 +55,7 @@ class Test(unittest.TestCase):
     #     d3 = {"a": 1, "b":2, "c": { "d" : 3, "e" : 4 }}
     #     paths = dict_walker(d3)
     #     self.assertEqual(paths, ["a", "b", "c.d", "c.e"], paths)
+
 
 if __name__ == "__main__":
     unittest.main()

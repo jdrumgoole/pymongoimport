@@ -1,9 +1,8 @@
-import unittest
-from pymongoimport.liner import make_line_file
 import os
+import unittest
 
 from pymongoimport.filesplitter import LineCounter
-
+from pymongoimport.liner import make_line_file
 
 
 class MyTestCase(unittest.TestCase):
@@ -14,7 +13,6 @@ class MyTestCase(unittest.TestCase):
         os.unlink(f)
 
     def test_Line_Counter(self):
-
         LineCounter()
         self._test_file(1)
         self._test_file(2)
@@ -22,7 +20,8 @@ class MyTestCase(unittest.TestCase):
         self._test_file(65000)
         self._test_file(1, doseol=True)
         self._test_file(10, doseol=True)
-        self._test_file(65000,doseol=True)
+        self._test_file(65000, doseol=True)
+
 
 if __name__ == '__main__':
     unittest.main()

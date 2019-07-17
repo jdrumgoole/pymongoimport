@@ -27,12 +27,13 @@ There is an index on batchID.
 
 """
 
-import pymongo
+import getpass
+import os
+import socket
 from datetime import datetime
 from threading import Lock
-import getpass
-import socket
-import os
+
+import pymongo
 
 
 class Audit(object):
@@ -184,7 +185,7 @@ class Audit(object):
             batch_date = i['end']
             # print( batch_date )
             if start and end:
-                if batch_date >= start and batch_date <= end:
+                if start <= batch_date <= end:
                     yield i
             elif start:
                 if batch_date >= start:

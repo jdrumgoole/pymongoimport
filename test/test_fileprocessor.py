@@ -4,15 +4,14 @@ Created on 7 Aug 2017
 @author: jdrumgoole
 """
 
-import unittest
 import os
+import unittest
 
 import pymongo
 import pymongo.errors
 
-from pymongoimport.filesplitter import LineCounter
-
 from pymongoimport.fileprocessor import FileProcessor
+from pymongoimport.filesplitter import LineCounter
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 

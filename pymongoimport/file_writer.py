@@ -1,21 +1,15 @@
-'''
+"""
 Created on 23 Jul 2017
 
 @author: jdrumgoole
 
 
-'''
-# import os
+"""
 import time
-# import pprint
-import logging
-from pymongo import errors
-
-from pymongoimport.restart import Restarter
-from pymongoimport.logger import Logger
 from datetime import datetime, timedelta
 
-from collections import OrderedDict
+# import pprint
+from pymongo import errors
 
 
 def seconds_to_duration(seconds):
@@ -54,11 +48,11 @@ class File_Writer(object):
 
     @staticmethod
     def skipLines(f, skipCount:int):
-        '''
+        """
         >>> f = open( "test_set_small.txt", "r" )
         >>> skipLines( f , 20 )
         20
-        '''
+        """
 
         lineCount = 0
         if (skipCount > 0):
@@ -118,7 +112,7 @@ class File_Writer(object):
                                                  "input line. Do you have the "
                                                  "right delimiter set ? "
                                                  "( current delimiter is : '%s')",
-                                self._fieldConfig.delimiter())
+                                                 self._fieldConfig.delimiter())
                             self._logger.warning("input line : '%s'", "".join(dictEntry.values()))
 
                     d = self._fieldConfig.createDoc(dictEntry)
@@ -147,7 +141,7 @@ class File_Writer(object):
                 raise;
 
             if len(insert_list) > 0:
-                #print(insert_list)
+                # print(insert_list)
                 try:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)
@@ -156,7 +150,6 @@ class File_Writer(object):
                         self._logger.info("Input: '%s' : Inserted %i records", filename, total_written)
                 except errors.BulkWriteError as e:
                     self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
-
 
         finish = time.time()
         if self._logger:
