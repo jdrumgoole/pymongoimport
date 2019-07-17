@@ -46,14 +46,14 @@ class File_Writer(object):
     def get_batch_size(self):
         return self._batch_size
 
-    def set_batch_size(self, size):
+    def set_batch_size(self, size:int):
         if size < 1:
             raise ValueError("Invalid batchsize: {}".format(size))
 
         self._batch_size = size
 
     @staticmethod
-    def skipLines(f, skipCount):
+    def skipLines(f, skipCount:int):
         '''
         >>> f = open( "test_set_small.txt", "r" )
         >>> skipLines( f , 20 )
