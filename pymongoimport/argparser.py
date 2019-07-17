@@ -19,7 +19,7 @@ def add_standard_args(parser):
     parser.add_argument('--host', default="mongodb://localhost:27017/test",
                         help='mongodb URI. [default: %(default)s]')
     parser.add_argument('--batchsize', type=int, default=500,
-                        help='set batch size for bulk inserts [default: %(default)s]')
+                        help='set batch os_size for bulk inserts [default: %(default)s]')
     parser.add_argument('--restart', default=False, action="store_true",
                         help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument('--drop', default=False, action="store_true",

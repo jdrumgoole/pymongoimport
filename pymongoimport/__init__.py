@@ -162,7 +162,7 @@ The default is *mongodb://localhost:27017/test*
 
 **--batchsize** *batchsize*
 
-    set batch size for bulk inserts. This is the amount of docs the client
+    set batch os_size for bulk inserts. This is the amount of docs the client
     will add to a batch before trying to upload the whole chunk to the
     server (reduces server round trips). The default *batchsize* is 500.
 

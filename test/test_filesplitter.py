@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
             part_count = LineCounter(part_name).line_count()
             self.assertEqual(part_count, line_count)
             part_total_count = part_total_count + part_count
-            part_total_size = part_total_size + splitter_part.size()
+            part_total_size = part_total_size + splitter_part.os_size()
             os.unlink(part_name)
 
         lc = LineCounter(filename)
@@ -53,9 +53,9 @@ class Test(unittest.TestCase):
             self.assertEqual(part_total_count, lc.line_count())
 
         if dos_adjust:
-            self.assertEqual(part_total_size, splitter.size() - lc.line_count() - len(splitter.header_line()) + 1)
+            self.assertEqual(part_total_size, splitter.os_size() - lc.line_count() - len(splitter.header_line()) + 1)
         else:
-            self.assertEqual(part_total_size, splitter.size() - len(splitter.header_line()))
+            self.assertEqual(part_total_size, splitter.os_size() - len(splitter.header_line()))
 
     def test_split_file(self):
         self._split_helper(f("data/fourlines.txt"), 3)
@@ -76,7 +76,7 @@ class Test(unittest.TestCase):
             self.assertGreater(part_count, 0)
             self.assertEqual(part_count, line_count)
             part_total_count = part_total_count + part_count
-            part_total_size = part_total_size + splitter_part.size()
+            part_total_size = part_total_size + splitter_part.os_size()
             os.unlink(part_name)
 
         lc = LineCounter(filename)
@@ -84,15 +84,15 @@ class Test(unittest.TestCase):
         if has_header:
             self.assertEqual(part_total_count, lines - 1)
             if splitter.file_type() is FileType.DOS:
-                self.assertEqual(part_total_size, splitter.size() - lc.line_count() - len(splitter.header_line()) + 1)
+                self.assertEqual(part_total_size, splitter.os_size() - lc.line_count() - len(splitter.header_line()) + 1)
             else:
-                self.assertEqual(part_total_size, splitter.size() - len(splitter.header_line()))
+                self.assertEqual(part_total_size, splitter.os_size() - len(splitter.header_line()))
         else:
             self.assertEqual(part_total_count, lines)
             if splitter.file_type() is FileType.DOS:
-                self.assertEqual(part_total_size, splitter.size() - lc.line_count())
+                self.assertEqual(part_total_size, splitter.os_size() - lc.line_count())
             else:
-                self.assertEqual(part_total_size, splitter.size())
+                self.assertEqual(part_total_size, splitter.os_size())
 
     def test_copy_file(self):
         splitter = File_Splitter(f("data/AandE_Data_2011-04-10.csv"), has_header=True)
@@ -106,7 +106,7 @@ class Test(unittest.TestCase):
         # (which has a \r\n) we add one back to account for this extra char.
         #
         self.assertEqual(os.path.getsize(f("data/AandE_Data_2011-04-10.csv.1")),
-                         splitter.size() - splitter.line_count() - len(splitter.header_line()) + 1)
+                         splitter.os_size() - splitter.line_count() - len(splitter.header_line()) + 1)
 
     def test_autosplit_file(self):
         self.assertEqual(File_Splitter(f("data/AandE_Data_2011-04-10.csv")).file_type(), FileType.DOS)

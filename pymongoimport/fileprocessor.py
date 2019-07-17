@@ -69,7 +69,7 @@ class FileProcessor(object):
                 size = os.path.getsize(i)
                 path = os.path.abspath(i)
                 if audit and batchID:
-                    audit.add_batch_info(batchID, "file_data", {"size": size,
+                    audit.add_batch_info(batchID, "file_data", {"os_size": size,
                                                                 "collection": self._collection.full_name,
                                                                 "path": path,
                                                                 "records": lineCount,

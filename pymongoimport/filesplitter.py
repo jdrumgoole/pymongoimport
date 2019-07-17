@@ -14,7 +14,7 @@ a header file.
 
 The file can be split by number of lines using the **splitfile** function. Alternatively
 the file may be split automatically into a number of pieces specified by as a parameter to
-**autosplit**. Autosplitting is achieved by by guessing the average line size by looking at
+**autosplit**. Autosplitting is achieved by by guessing the average line os_size by looking at
 the first ten lines and taking an average of those lines.
 
 The output files have the same name as the input file with a number appended ( .1, .2, .3 etc.).
@@ -39,7 +39,7 @@ class Block_Reader(object):
             self._blocksize = Block_Reader.BLOCK_SIZE
 
     def __enter__(self):
-        self._file = open(self.filename, "r", encoding="utf-8", errors='ignore', newline='')
+        self._file = open(self.filename, "rb")
         return self._file
 
     def __exit__(self, *args):
@@ -68,7 +68,7 @@ class Block_Reader(object):
             yield block
 
     def read_file(self, filename):
-        with open(filename, "r", encoding="utf-8", errors='ignore', newline='') as f:
+        with open(filename, "rb") as f:
             yield from self.read_fd(f)
 
 
@@ -117,7 +117,7 @@ class LineCounter(object):
         # reading DOS and Linux files.
         for i in self._reader.read_file(filename):
             block = i
-            self._line_count = self._line_count + i.count("\n")
+            self._line_count = self._line_count + str(block).count("\n")
             self._file_size = self._file_size + len(i)
 
         if block and block[-1:] != '\n':  # file doesn't end with a newline but its still a line
@@ -151,7 +151,7 @@ class LineCounter(object):
 class File_Splitter(object):
     """
     Split a file into a number of segments. You can autosplit a file into a specific
-    number of pieces (autosplit) or divide in segments of a specific size (splitfile)
+    number of pieces (autosplit) or divide in segments of a specific os_size (splitfile)
     """
 
     def __init__(self, input_filename, has_header=False):
@@ -185,7 +185,8 @@ class File_Splitter(object):
 
     def get_header(self, filename):
         with open(filename, "r") as f:
-            return f.readline()
+            header = f.readline()
+        return header #.rstrip()
 
     def _check_file_type(self):
         line = ""
@@ -204,18 +205,18 @@ class File_Splitter(object):
         newfile = open(filename, "w")
         return (newfile, filename)
 
-    def size(self):
+    def os_size(self):
         return self._size
 
     def line_count(self):
         return self._line_count
 
-    # def size(self, include_header=True, dos_adjust=False):
+    # def os_size(self, include_header=True, dos_adjust=False):
     #     """
     #
-    #     :param include_header: Include header size in size otherwise subtract
-    #     :param dos_adjust: For DOS files deduct size increment due to extra LF characters
-    #     :return: file size
+    #     :param include_header: Include header os_size in os_size otherwise subtract
+    #     :param dos_adjust: For DOS files deduct os_size increment due to extra LF characters
+    #     :return: file os_size
     #     """
     #
     #     file_size = None
@@ -266,20 +267,20 @@ class File_Splitter(object):
         return self._header_line
 
     def no_header_size(self):
-        """
-        For DOS files the line endings have an extra character.
-        :return:
-        """
+        # """
+        # For DOS files the line endings have an extra character.
+        # :return:
+        # """
+        #
+        # if self._has_header:
+        #     if self._file_type == FileType.DOS:
+        #         adjustment = self._line_count + len(self._header_line)  # tryout
+        #     else:
+        #         adjustment = len(self._header_line)
+        # else:
+        #     adjustment = 0
 
-        if self._has_header:
-            if self._file_type == FileType.DOS:
-                adjustment = self._line_count + len(self._header_line)  # tryout
-            else:
-                adjustment = len(self._header_line)
-        else:
-            adjustment = 0
-
-        return self._size - adjustment
+        return self._size - len(self._header_line)
 
     def output_files(self):
         return list(self._files.keys())
@@ -287,16 +288,16 @@ class File_Splitter(object):
     # def data_lines_count(self):
     #     return self._data_lines_count
 
-    def splitfile(self, split_size=0):
+    def splitfile(self, split_size:int =0)-> (str, int) :
         """
-        Split file in a number of discrete parts of size split_size
-        The last split may be less than split_size in size.
+        Split file in a number of discrete parts of os_size split_size
+        The last split may be less than split_size in os_size.
         This is a generator function that yields each split as it is
         created.
 
         :param split_size:
         :return: a generator of tuples (filename, split_size)
-        Where split_size is the size of the split in bytes.
+        Where split_size is the os_size of the split in bytes.
         """
 
         if split_size < 1:
@@ -344,7 +345,7 @@ class File_Splitter(object):
     def get_average_line_size(self, sample_size=10):
         """
         Read the first sample_size lines of a file (ignoring the header). Use these lines to estimate the
-        average line size.
+        average line os_size.
         :return: average_line_size
         """
 
@@ -391,7 +392,6 @@ class File_Splitter(object):
             else:
                 self._split_size = 0
 
-            # print("Splitting '%s' into at least %i pieces of size %i" % (
+            # print("Splitting '%s' into at least %i pieces of os_size %i" % (
             # self._input_filename, split_count + 1, self._split_size))
-            for i in self.splitfile(self._split_size):
-                yield i
+            yield from self.splitfile(self._split_size)
