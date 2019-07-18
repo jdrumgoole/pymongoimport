@@ -8,7 +8,7 @@ pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongoimport",
-    version="1.5.4",
+    version="1.5.6",
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",
@@ -42,7 +42,7 @@ by the parser.
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 3.6'],
+        'Programming Language :: Python :: 3.7'],
 
     install_requires=["pymongo",
                       "nose",
