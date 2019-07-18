@@ -1,14 +1,18 @@
 import argparse
 
 
-def make_line_file(count=1, doseol=False, filename="liner.txt"):
-    with open(filename, "w") as file:
-        for i in range(count):
-            if doseol:
-                file.write("{}\r\n".format(i + 1))
-            else:
-                file.write("{}\n".format(i + 1))
+def write_file(file, count):
+    for i in range(count):
+        file.write(f"{i + 1}\n")
 
+
+def make_line_file(count=1, doseol=False, filename="liner.txt"):
+    if doseol:
+        with open(filename, "w", newline="\r\n") as file:
+            write_file(file,count)
+    else:
+        with open(filename, "w", newline="\n") as file:
+            write_file(file,count)
     return filename
 
 

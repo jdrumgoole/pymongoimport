@@ -76,6 +76,8 @@ class FileType(Enum):
     DOS = 1
     UNIX = 2
 
+class CounterException(Exception):
+    pass
 
 class LineCounter(object):
     """
@@ -84,23 +86,22 @@ class LineCounter(object):
     default (64k).
     """
 
-    def __init__(self, filename=None, blocksize=None, count_now=True):
+    def __init__(self, filename=None, count_now=True):
 
         self._first_line = None
         self._line_count = None
         self._file_size = 0
-        if blocksize:
-            self._blocksize = blocksize
-        else:
-            self._blocksize = 64 * 1024
-
         self._filename = filename
 
         if count_now and filename:
             self.count_now(self._filename)
 
+    @property
     def line_count(self):
-        return self._line_count
+        if self._line_count is None:
+            raise CounterException
+        else:
+            return self._line_count
 
     def first_line(self):
         return self._first_line
@@ -109,23 +110,34 @@ class LineCounter(object):
         return self._file_size
 
     def count_now(self, filename):
-        self._file_size = 0
-        self._line_count = 0
-        block = None
-        self._reader = Block_Reader(self._blocksize)
-        # disable universal newlines with "newline=''" so that sizes are correct when
-        # reading DOS and Linux files.
-        for i in self._reader.read_file(filename):
-            block = i
-            self._line_count = self._line_count + str(block).count("\n")
-            self._file_size = self._file_size + len(i)
 
-        if block and block[-1:] != '\n':  # file doesn't end with a newline but its still a line
-            self._line_count = self._line_count + 1
+        count = 0
+        with open(filename, "r") as input_file:
+            for count,line in enumerate(input_file, 1):
+                #print(f"{filename}:{line}:{self._line_count}")
+                pass
 
-        # print( "getsize({}}, self._file_size: {}".format( os.path.getsize(filename), self._file_size))
-        assert (os.path.getsize(filename) == self._file_size)
-        return (self._file_size, self._line_count)
+        self._line_count = count
+        return os.path.getsize(filename), self._line_count
+
+    # def count_now(self, filename):
+    #     self._file_size = 0
+    #     self._line_count = 0
+    #     block = None
+    #     self._reader = Block_Reader(self._blocksize)
+    #     # disable universal newlines with "newline=''" so that sizes are correct when
+    #     # reading DOS and Linux files.
+    #     for i in self._reader.read_file(filename):
+    #         block = i
+    #         self._line_count = self._line_count + str(block).count("\n")
+    #         self._file_size = self._file_size + len(i)
+    #
+    #     if block and block[-1:] != '\n':  # file doesn't end with a newline but its still a line
+    #         self._line_count = self._line_count + 1
+    #
+    #     # print( "getsize({}}, self._file_size: {}".format( os.path.getsize(filename), self._file_size))
+    #     assert (os.path.getsize(filename) == self._file_size)
+    #     return (self._file_size, self._line_count)
 
     @staticmethod
     def skipLines(f, skipCount):
@@ -167,12 +179,9 @@ class File_Splitter(object):
         """
         self._input_filename = input_filename
         self._has_header = has_header
-        lc = LineCounter(self._input_filename)
-        self._line_count = lc.line_count()
-        self._size = lc.file_size()
+        self._line_count = None
         self._header_line = ""  # Not none so len does something sensible when has_header is false
-        self._size = os.path.getsize(self._input_filename)
-        if self._size > 0 and self._has_header:
+        if self._has_header:
             self._header_line = self.get_header(self._input_filename)
         # self._data_lines_count = 0
         self._size_threshold = 1024 * 10
@@ -182,6 +191,18 @@ class File_Splitter(object):
         self._splits = None
 
         self._check_file_type()
+
+    @property
+    def line_count(self):
+        if self._line_count is None:
+            self._line_count = LineCounter(self._input_filename).line_count
+            return self._line_count
+        else:
+            return self._line_count
+
+    def count_now(self):
+        self._line_count = LineCounter(self._input_filename).line_count
+        return self._line_count
 
     def get_header(self, filename):
         with open(filename, "r") as f:
@@ -200,35 +221,10 @@ class File_Splitter(object):
 
     def new_file(self, filename, ext):
         basename = os.path.basename(filename)
-        filename = "{}.{}".format(basename, ext)
+        filename = f"{basename}.{ext}"
         # self._files[filename] = 0
         newfile = open(filename, "w")
         return (newfile, filename)
-
-    def os_size(self):
-        return self._size
-
-    def line_count(self):
-        return self._line_count
-
-    # def os_size(self, include_header=True, dos_adjust=False):
-    #     """
-    #
-    #     :param include_header: Include header os_size in os_size otherwise subtract
-    #     :param dos_adjust: For DOS files deduct os_size increment due to extra LF characters
-    #     :return: file os_size
-    #     """
-    #
-    #     file_size = None
-    #     if include_header:
-    #         file_size = self._size
-    #     else:
-    #         file_size = self._size - len( self._header_line)
-    #
-    #     if dos_adjust:
-    #         file_size = file_size - self._line_count
-    #
-    #     return file_size
 
     def wc(self):
         return self._line_count, os.path.getsize(self._input_filename)
@@ -244,24 +240,22 @@ class File_Splitter(object):
 
         lhs = self._input_filename
 
-        lhs_reader = Block_Reader(lhs)
-        total_lines = 0
-        with open(lhs, "r", encoding="utf-8", errors='ignore') as input_file:
-            if ignore_header:
-                self._header_line = Block_Reader.readline(input_file)
+        self._line_count = 0
+        with open(lhs, "r" ) as input_file:
 
-            with open(rhs, "w", encoding="utf-8", errors='ignore') as output_file:
-                for i in Block_Reader.read_blocks(input_file):
-                    total_lines = total_lines + i.count("\n")
+            if ignore_header:
+                self._header_line = input_file.readline()
+
+            with open(rhs, "w") as output_file:
+                for i in input_file:
+                    self._line_count = self._line_count + 1
                     output_file.write(i)
 
-            if i and i[-1:] != '\n':  # file doesn't end with a newline but its still a line
-                total_lines = total_lines + 1
+        return rhs, self._line_count
 
-        return (rhs, total_lines)
-
+    @property
     def has_header(self):
-        return self._header_line != ""
+        return self._has_header
 
     def header_line(self):
         return self._header_line
@@ -290,7 +284,7 @@ class File_Splitter(object):
 
     def splitfile(self, split_size:int =0)-> (str, int) :
         """
-        Split file in a number of discrete parts of os_size split_size
+        Split file in a number of discrete parts size split_size
         The last split may be less than split_size in os_size.
         This is a generator function that yields each split as it is
         created.
@@ -300,11 +294,11 @@ class File_Splitter(object):
         Where split_size is the os_size of the split in bytes.
         """
 
+        self._line_count = 0
         if split_size < 1:
             yield self.copy_file(self._input_filename + ".1")
         else:
             with open(self._input_filename, "r") as input_file:
-
                 current_split_size = 0
                 file_count = 0
                 filename = None
@@ -312,8 +306,10 @@ class File_Splitter(object):
 
                 if self._has_header:  # we strip the header from output files
                     self._header_line = input_file.readline()
+                    self._line_count = self._line_count+ 1
 
                 for line in input_file:
+                    self._line_count = self._line_count + 1
                     # print( "Line type:%s" % repr(input_file.newlines))
                     if current_split_size < split_size:
                         if current_split_size == 0:
@@ -383,7 +379,7 @@ class File_Splitter(object):
 
         if average_line_size > 0:
             if split_count > 0:
-                file_size = self._size
+                file_size = os.path.getsize(self._input_filename)
 
                 total_lines = int(round(file_size / average_line_size))
                 # print( "total lines : %i"  % total_lines )

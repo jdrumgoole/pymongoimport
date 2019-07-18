@@ -60,8 +60,8 @@ class Test(unittest.TestCase):
         collection = self._database["import_test"]
 
         start_size = collection.count_documents({})
-        size_10k = LineCounter(f("data/10k.txt")).line_count()
-        size_120 = LineCounter(f("data/120lines.txt")).line_count()
+        size_10k = LineCounter(f("data/10k.txt")).line_count
+        size_120 = LineCounter(f("data/120lines.txt")).line_count
         cmd = Import_Command(log=getLogger(__file__),
                              audit=self._audit,
                              id=batch_id,

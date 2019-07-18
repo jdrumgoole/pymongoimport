@@ -57,10 +57,6 @@ using **--splitsize** chunks until it is consumed.
                         help="split file based on loooking at the first ten lines and overall file os_size [default : %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
                         help="Ignore header when calculating splits, don't include header in output")
-    parser.add_argument('--usefieldfile', type=str,
-                        help="Use this field file and copy to match split filenames")
-    parser.add_argument('--generatefieldfile', default=False, action="store_true",
-                        help="Generate a fieldfile for each input file")
     parser.add_argument('--delimiter', default=",", help="Delimiter for fields[default : %(default)s] ")
     parser.add_argument("--splitsize", type=int, help="Split file into chunks of this os_size")
     parser.add_argument('--verbose', default=False, action="store_true",
@@ -81,6 +77,8 @@ using **--splitsize** chunks until it is consumed.
             continue
 
         splitter = File_Splitter(source, args.hasheader)
+        # if splitter.has_header:
+        #     print(f"{source} has a header line")
 
         if args.autosplit:
             if args.verbose:
@@ -95,30 +93,36 @@ using **--splitsize** chunks until it is consumed.
 
         # print( "Split '%s' into %i parts"  % ( args.filenames[ 0 ], len( files )))
 
+        #print(f"{source} has {splitter.line_count}")
         count = 1
         total_size = 0
-        total_lines = 0
+        original_lines = splitter.line_count
+        total_new_lines = 0
+
         results = list(files)
         for name, lines in results:
-            size = os.path.getsize(name)
-            total_size = total_size + size
-            total_lines = total_lines + lines
+            total_new_lines = total_new_lines + lines
             if args.verbose:
-                print(f"{count:4}. '{name:20}'. Lines : {lines:6}, Size: {size:10}")
+                print(f"{count:4}. '{name:20}'. Lines : {lines:6}")
 
             count = count + 1
         if len(files) > 1:
             if args.verbose:
-                print(f"{source} {total_lines:16} {total_size:17}")
+                print(f"{source} {original_lines:16}")
 
         # if len(files) > 1:
         #     if args.verbose:
         #         print("{} {:16} {:17}".format(" " * (len(i) + 7), total_lines, total_size))
 
-        if files and (total_size != splitter.no_header_size()):
-            raise ValueError(f"Filesize of '{source}' and total size of pieces {files} #"
-                             f"do not match: total_size: {total_size}, #"
-                             f"no header split_size: {splitter.no_header_size()}")
+        if splitter.has_header:
+            print("Has_header")
+            original_lines = original_lines - 1
+        if files and (total_new_lines != original_lines):
+            raise ValueError(f"Lines of '{source}' and total lines of pieces"\
+                             f"{files}"
+                             f"\ndo not match:"
+                             f"\noriginal_lines : {original_lines}"
+                             f"\npieces lines   : {total_new_lines}")
 
 
 

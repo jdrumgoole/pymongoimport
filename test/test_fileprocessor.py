@@ -43,7 +43,7 @@ class Test(unittest.TestCase):
         except pymongo.errors.BulkWriteError as e:
             print(e)
             raise;
-        lines = LineCounter(f("data/uk_property_prices.csv")).line_count()
+        lines = LineCounter(f("data/uk_property_prices.csv")).line_count
         self.assertEqual(lines, self._col.count_documents({}) - start_count)
 
         self.assertTrue(self._col.find_one({"Postcode": "NG10 5NN"}))
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
         start_count = col.count_documents({})
         fp = FileProcessor(col, '|')
         fp.processOneFile(f("data/10k.txt"))
-        lines = LineCounter(f("data/10k.txt")).line_count()
+        lines = LineCounter(f("data/10k.txt")).line_count
         self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one({"test_id": 114624}))
 
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
         start_count = col.count_documents({})
         fp = FileProcessor(col, delimiter='|')
         fp.processOneFile(f("data/mot_time_format_test.txt"))
-        lines = LineCounter(f("data/mot_time_format_test.txt")).line_count()
+        lines = LineCounter(f("data/mot_time_format_test.txt")).line_count
         self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one({"test_id": 1077}))
 
@@ -74,7 +74,7 @@ class Test(unittest.TestCase):
         start_count = col.count_documents({})
         fp = FileProcessor(col, ',', onerror="ignore")
         fp.processOneFile(input_filename=f("data/AandE_Data_2011-04-10.csv"), hasheader=True)
-        lines = LineCounter(f("data/AandE_Data_2011-04-10.csv")).line_count()
+        lines = LineCounter(f("data/AandE_Data_2011-04-10.csv")).line_count
         self.assertEqual(lines, col.count_documents({}) - start_count + 1)
         self.assertTrue(col.find_one({"Code": "RA4"}))
 
@@ -85,7 +85,7 @@ class Test(unittest.TestCase):
         fp.processOneFile(input_filename=f("data/gdelt.tsv"),
                           hasheader=False,
                           field_filename=f("data/GDELT_columns.ff"))
-        lines = LineCounter(f("data/gdelt.tsv")).line_count()
+        lines = LineCounter(f("data/gdelt.tsv")).line_count
         self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one(
             {"SOURCEURL": "https://www.standardspeaker.com/news/dream-factory-director-retiring-1.2467094"}))

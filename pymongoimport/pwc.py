@@ -30,10 +30,10 @@ def pwc(*argv):
         print("lines\tbytes\tfilename")
     for filename in args.filenames:
         counter = LineCounter(filename)
-        total_count = total_count + counter.line_count()
+        total_count = total_count + counter.line_count
         total_size = total_size + counter.file_size()
 
-        print("%i\t%i\t%s" % (counter.line_count(), counter.file_size(), filename))
+        print("%i\t%i\t%s" % (counter.line_count, counter.file_size(), filename))
     if len(args.filenames) > 1:
         print("%i\t%i\ttotal" % (total_count, total_size))
 

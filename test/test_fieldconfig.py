@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count_documents({})
         writer = File_Writer(self._col, fc)
         writer.insert_file(f("data/inventory.csv"))
-        line_count = LineCounter(f("data/inventory.csv")).line_count()
+        line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         os.unlink(f("data/inventory.testff"))
@@ -145,7 +145,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count_documents({})
         writer = File_Writer(self._col, fc)
         writer.insert_file(f("data/inventory.csv"))
-        line_count = LineCounter(f("data/inventory.csv")).line_count()
+        line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         c = Converter()
