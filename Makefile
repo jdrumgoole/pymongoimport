@@ -16,7 +16,7 @@ python_bin:
 	python -c "import os;print(os.environ.get('USERNAME'))"
 	which python
 
-prod_build:clean build test
+prod_build:clean dist test
 	twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u jdrumgoole
 
 test_build:
