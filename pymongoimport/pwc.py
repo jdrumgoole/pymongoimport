@@ -1,4 +1,4 @@
-'''
+"""
 =======================================
 pwc - python word count
 =======================================
@@ -11,36 +11,32 @@ This uses the Python readline() function to count lines correctly and opens file
 in universal mode.
 
 @author: jdrumgoole
-'''
+"""
 
-import sys
 import argparse
-import os
+import sys
 
 from pymongoimport.filesplitter import LineCounter
 
 
-def pwc( *argv ):
+def pwc(*argv):
     parser = argparse.ArgumentParser()
-    parser.add_argument( "filenames", nargs="*", help='list of files')
-    args= parser.parse_args( *argv )
-    
-    line_count = 0
+    parser.add_argument("filenames", nargs="*", help='list of files')
+    args = parser.parse_args(*argv)
+
     total_count = 0
     total_size = 0
-    size = 0
     if args.filenames:
-        print( "lines\tbytes\tfilename")
+        print("lines\tbytes\tfilename")
     for filename in args.filenames:
         counter = LineCounter(filename)
-        total_count = total_count + counter.line_count()
-        total_size  = total_size  + counter.file_size()
+        total_count = total_count + counter.line_count
+        total_size = total_size + counter.file_size()
 
-        print( "%i\t%i\t%s" % ( counter.line_count(), counter.file_size(), filename ))
-    if len( args.filenames ) > 1 :
-        print( "%i\t%i\ttotal" % (total_count, total_size ))
-            
-if __name__ == "__main__" :
-    pwc( sys.argv[1:])
-    
+        print("%i\t%i\t%s" % (counter.line_count, counter.file_size(), filename))
+    if len(args.filenames) > 1:
+        print("%i\t%i\ttotal" % (total_count, total_size))
 
+
+if __name__ == "__main__":
+    pwc(sys.argv[1:])

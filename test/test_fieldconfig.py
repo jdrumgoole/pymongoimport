@@ -1,17 +1,17 @@
-'''
+"""
 Created on 8 Aug 2017
 
 @author: jdrumgoole
-'''
-import unittest
+"""
 import os
+import unittest
 
 import pymongo
 
 from pymongoimport.fieldconfig import FieldConfig
-from pymongoimport.logger import Logger
 from pymongoimport.file_writer import File_Writer
 from pymongoimport.filesplitter import LineCounter
+from pymongoimport.logger import Logger
 from pymongoimport.type_converter import Converter
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
@@ -61,7 +61,7 @@ class Test(unittest.TestCase):
 
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
-        fc = FieldConfig( None, f("data/AandE_Data_2011-04-10.ff"), delimiter=',', hasheader=True)
+        fc = FieldConfig(None, f("data/AandE_Data_2011-04-10.ff"), delimiter=',', hasheader=True)
         bw = File_Writer(self._col, fc)
         bw.insert_file(f("data/AandE_Data_2011-04-10.csv"))
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
@@ -120,7 +120,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count_documents({})
         writer = File_Writer(self._col, fc)
         writer.insert_file(f("data/inventory.csv"))
-        line_count = LineCounter(f("data/inventory.csv")).line_count()
+        line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         os.unlink(f("data/inventory.testff"))
@@ -145,7 +145,7 @@ class Test(unittest.TestCase):
         start_count = self._col.count_documents({})
         writer = File_Writer(self._col, fc)
         writer.insert_file(f("data/inventory.csv"))
-        line_count = LineCounter(f("data/inventory.csv")).line_count()
+        line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         c = Converter()
@@ -170,15 +170,16 @@ class Test(unittest.TestCase):
         # print( "fields: %s" % f.fields())
 
     def testFieldDict(self):
-        fc = FieldConfig( None, f("data/testresults.ff"), delimiter="|")
+        fc = FieldConfig(None, f("data/testresults.ff"), delimiter="|")
         d = fc.config().field_dict()
-        self.assertTrue("TestID" in d )
+        self.assertTrue("TestID" in d)
         self.assertTrue("FirstUseDate" in d)
         self.assertTrue("Colour" in d)
         self.assertTrue(d["TestID"]["type"] == "int")
 
     def test_duplicate_id(self):
         self.assertRaises(ValueError, FieldConfig, None, f("data/duplicate_id.ff"))
+
 
 if __name__ == "__main__":
     unittest.main()

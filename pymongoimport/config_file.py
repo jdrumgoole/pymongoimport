@@ -7,15 +7,14 @@ Valid subfields are:
 """
 
 from collections import OrderedDict
-
 from configparser import RawConfigParser
-import yaml
+
+import toml
 
 
 def dict_to_fields(d):
-
     f = []
-    for k,v in d.items():
+    for k, v in d.items():
         if type(v) == dict:
             f.extend(dict_to_fields(v))
         else:
@@ -35,49 +34,18 @@ def dict_to_fields(d):
 #     return paths
 
 
-class YAMLFile:
+class TOMLFile:
     """
     Read a YAML file and return a dict representing the hierarchy
     """
 
     def __init__(self, filename):
         self._filename = filename
-        self._fieldDict = self.read(filename)
+        s: str = self.read(filename)
+        self._toml = toml.loads(s)
 
-    def read(self, filename):
-
-        fieldDict = yaml.load(filename)
-
-        fields = dict_to_fields(fieldDict)
-
-        #for k,v in fieldDict.items():
-
-        for s in self._fields:
-            # print( "section: '%s'" % s )
-            fieldDict[s] = {}
-            for o in self._cfg.options(s):
-                # print("option : '%s'" % o )
-                if not o in self._tags:
-                    raise ValueError("No such field type: %s in section: %s" % (o, s))
-                if (o == "name"):
-                    if (self._cfg.get(s, o) == "_id"):
-                        if self._idField == None:
-                            self._idField = s
-                        else:
-                            raise ValueError("Duplicate _id field:{} and {}".format(self._idField, s))
-
-                fieldDict[s][o] = self._cfg.get(s, o)
-
-            if not "name" in fieldDict[s]:
-                #assert( s != None)
-                fieldDict[s]["name"] = s
-            #
-            # format is optional for datetime input fields. It is used if present.
-            #
-            if not "format" in fieldDict[s]:
-                fieldDict[s]["format"] = None
-
-        return fieldDict
+    def toml(self):
+        return self._toml
 
 
 class Config_File(object):
@@ -91,7 +59,6 @@ class Config_File(object):
         self._idField = None
         if self._filename:
             self._fieldDict = self.read(self._filename)
-
 
     def field_dict(self):
         return self._fieldDict
@@ -123,7 +90,7 @@ class Config_File(object):
                 fieldDict[s][o] = self._cfg.get(s, o)
 
             if not "name" in fieldDict[s]:
-                #assert( s != None)
+                # assert( s != None)
                 fieldDict[s]["name"] = s
             #
             # format is optional for datetime input fields. It is used if present.
@@ -145,18 +112,17 @@ class Config_File(object):
     def hasNewName(self, section):
         return section != self._fieldDict[section]['name']
 
-
     def type_value(self, fieldName):
         return self._fieldDict[fieldName]["type"]
-        #return self._cfg.get(fieldName, "type")
+        # return self._cfg.get(fieldName, "type")
 
     def format_value(self, fieldName):
         return self._fieldDict[fieldName]["format"]
-        #return self._cfg.get(fieldName, "format")
+        # return self._cfg.get(fieldName, "format")
 
     def name_value(self, fieldName):
         return self._fieldDict[fieldName]["name"]
-        #return self._cfg.get(fieldName, "name")
+        # return self._cfg.get(fieldName, "name")
 
     def __repr__(self):
-        return "filename:{}\ndict:\n{}\n".format( str( self._filename), str(self._fieldDict))
+        return "filename:{}\ndict:\n{}\n".format(str(self._filename), str(self._fieldDict))

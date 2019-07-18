@@ -3,8 +3,8 @@ Created on 12 Aug 2017
 
 @author: jdrumgoole
 """
-from pymongoimport.version import __VERSION__
 from pymongoimport.logger import Logger
+from pymongoimport.version import __VERSION__
 
 
 def add_standard_args(parser):
@@ -19,7 +19,7 @@ def add_standard_args(parser):
     parser.add_argument('--host', default="mongodb://localhost:27017/test",
                         help='mongodb URI. [default: %(default)s]')
     parser.add_argument('--batchsize', type=int, default=500,
-                        help='set batch size for bulk inserts [default: %(default)s]')
+                        help='set batch os_size for bulk inserts [default: %(default)s]')
     parser.add_argument('--restart', default=False, action="store_true",
                         help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument('--drop', default=False, action="store_true",
@@ -54,11 +54,11 @@ def add_standard_args(parser):
                         help="Sync all nodes to disk [default: %(default)s]")
     parser.add_argument('--audit', action="store_true", default=False, help="Capture audit records for an upload")
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
-    #parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
+    # parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
 
-    parser.add_argument( "--limit", default=0, type=int, help="Limit the number of records we read in")
+    parser.add_argument("--limit", default=0, type=int, help="Limit the number of records we read in")
     #
     # Also try ISO-8859-1
     #
-    #parser.add_argument( '--encoding', default="utf-8", help="Unicode encoding for input file [default: %(default)s]")
+    # parser.add_argument( '--encoding', default="utf-8", help="Unicode encoding for input file [default: %(default)s]")
     return parser

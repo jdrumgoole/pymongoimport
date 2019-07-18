@@ -4,15 +4,14 @@ Created on 27 Aug 2017
 @author: jdrumgoole
 """
 
+import os
+import sys
 import unittest
 from contextlib import contextmanager
 from io import StringIO
-import sys
 
-from pymongoimport.splitfile import split_file_main
 from pymongoimport.filesplitter import File_Splitter
-
-import os
+from pymongoimport.splitfile import split_file_main
 
 
 @contextmanager
@@ -44,25 +43,25 @@ class TestSplitFile(unittest.TestCase):
                 with open(filename, "r") as file_piece:
                     for line in file_piece:
                         left = original_file.readline()
-                        original_count = original_count + 1 
+                        original_count = original_count + 1
                         right = line
-                        file_piece_count = file_piece_count + 1 
+                        file_piece_count = file_piece_count + 1
                         self.assertEqual(left, right)
                 os.unlink(filename)
-                
+
     def test_auto_split(self):
-        input_filename = os.path.join( self._dir, "data", "mot_test_set_small.csv")
-        filenames = split_file_main( [ "--autosplit", "2", input_filename ])
-        self._compare_input_output(input_filename,  filenames)
-        
+        input_filename = os.path.join(self._dir, "data", "mot_test_set_small.csv")
+        filenames = split_file_main(["--autosplit", "2", input_filename])
+        self._compare_input_output(input_filename, filenames)
+
     def test_split_size(self):
-        input_filename = os.path.join( self._dir, "data", "mot_test_set_small.csv")
-        filenames = split_file_main( [ "--splitsize", "50", input_filename ])
-        self._compare_input_output(input_filename,  filenames )
-        filenames = split_file_main( [ "--splitsize", "1", input_filename ])
-        self._compare_input_output(input_filename,  filenames )
-        filenames = split_file_main( [ "--splitsize", "23", input_filename ])
-        self._compare_input_output(input_filename,  filenames )
+        input_filename = os.path.join(self._dir, "data", "mot_test_set_small.csv")
+        filenames = split_file_main(["--splitsize", "50", input_filename])
+        self._compare_input_output(input_filename, filenames)
+        filenames = split_file_main(["--splitsize", "1", input_filename])
+        self._compare_input_output(input_filename, filenames)
+        filenames = split_file_main(["--splitsize", "23", input_filename])
+        self._compare_input_output(input_filename, filenames)
 
     def test_split_dos_file(self):
         input_filename = os.path.join(self._dir, "data", "yellow_tripdata_2015-01-06-200k.csv")

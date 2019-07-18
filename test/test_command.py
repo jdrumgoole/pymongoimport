@@ -1,12 +1,13 @@
-import unittest
 import os
+import shutil
+import unittest
+from logging import getLogger
 
 import pymongo
-from pymongoimport.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
+
 from pymongoimport.audit import Audit
-from logging import getLogger
+from pymongoimport.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
 from pymongoimport.filesplitter import LineCounter
-import shutil
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -59,8 +60,8 @@ class Test(unittest.TestCase):
         collection = self._database["import_test"]
 
         start_size = collection.count_documents({})
-        size_10k = LineCounter(f("data/10k.txt")).line_count()
-        size_120 = LineCounter(f("data/120lines.txt")).line_count()
+        size_10k = LineCounter(f("data/10k.txt")).line_count
+        size_120 = LineCounter(f("data/120lines.txt")).line_count
         cmd = Import_Command(log=getLogger(__file__),
                              audit=self._audit,
                              id=batch_id,
