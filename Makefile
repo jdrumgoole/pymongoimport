@@ -57,3 +57,6 @@ init: pkgs
 	keyring set https://test.pypi.org/legacy/ ${USERNAME}
 	keyring set https://upload.pypi.org/legacy/ ${USERNAME}
 
+collect:
+	python pymongoimport
+
