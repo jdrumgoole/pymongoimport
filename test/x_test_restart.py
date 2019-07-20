@@ -28,7 +28,7 @@ class Test(unittest.TestCase):
     #
     # def test_Restart(self):
     #     fc = FieldFile( self._root.root_path( "data", "10k.ff"), hasheader=False, delimiter="|")
-    #     bw = File_Writer( self._collection, fc)
+    #     bw = FileWriter( self._collection, fc)
     #     bw.insert_file( self._root.root_path( "data", "10k.txt"), restart=True )
     #     audit = self._db[ "audit"]
     #     self.assertEqual( audit.count(), 1 )

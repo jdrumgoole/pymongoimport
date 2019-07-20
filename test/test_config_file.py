@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pymongoimport.config_file import Config_File, dict_to_fields
+from pymongoimport.configfile import ConfigFile, dict_to_fields
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -13,7 +13,7 @@ def f(path):
 class Test(unittest.TestCase):
 
     def test_Config_File(self):
-        cfg = Config_File(f("data/10k.ff"))
+        cfg = ConfigFile(f("data/10k.ff"))
         self.assertTrue("test_id" in cfg.fields())
         self.assertTrue("cylinder_capacity" in cfg.fields())
 
@@ -21,7 +21,7 @@ class Test(unittest.TestCase):
         self.assertEqual(cfg.type_value("test_date"), "datetime")
 
     def test_property_prices(self):
-        cfg = Config_File(f("data/uk_property_prices.ff"))
+        cfg = ConfigFile(f("data/uk_property_prices.ff"))
         self.assertTrue(cfg.hasNewName("txn"))
         self.assertFalse(cfg.name_value("txn") is None)
 

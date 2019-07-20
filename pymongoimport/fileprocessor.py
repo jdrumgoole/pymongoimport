@@ -8,7 +8,7 @@ import logging
 import os
 from datetime import datetime
 
-from pymongoimport.command import Import_Command
+from pymongoimport.command import ImportCommand
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.logger import Logger
 
@@ -33,14 +33,13 @@ class FileProcessor(object):
     def processOneFile(self, input_filename, field_filename=None, hasheader=False, restart=False, batchID=None):
 
         if not field_filename:
-            field_filename = FieldFile.generate_field_filename(input_filename)
-        cmd = Import_Command(log=self._logger,
-                             collection=self._collection,
-                             field_filename=field_filename,
-                             delimiter=self._delimiter,
-                             hasheader=hasheader,
-                             onerror=self._onerror,
-                             limit=self._limit)
+            field_filename = FieldFile(input_filename).field_filename
+        cmd = ImportCommand(collection=self._collection,
+                            field_filename=field_filename,
+                            delimiter=self._delimiter,
+                            hasheader=hasheader,
+                            onerror=self._onerror,
+                            limit=self._limit)
 
         cmd.run(input_filename)
         return cmd.total_written()

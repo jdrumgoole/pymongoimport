@@ -16,6 +16,8 @@ semvermanager = "*"
 pyyaml = "*"
 sphinx = "*"
 toml = "*"
+requests = "*"
+ipython = "*"
 
 [requires]
 python_version = "3.7"

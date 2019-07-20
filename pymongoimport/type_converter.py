@@ -77,3 +77,39 @@ class Converter(object):
             v = str(v)
 
         return v
+
+    @staticmethod
+    def guess_type(s:str)->str:
+        """
+        Try and convert a string s to an object. Start with float, then try int
+        and if that doesn't work return the string.
+
+        Returns a tuple:
+           The value itself
+           The type of the value as a string
+        """
+
+        if type(s) != str:
+            raise ValueError(f"guess_type expects a string parameter value: type({s}) is '{type(s)}'")
+
+        v = None
+        try:
+            v = int(s)
+            return "int"
+        except ValueError:
+            pass
+
+        try:
+            v = float(s)
+            return "float"
+        except ValueError:
+            pass
+
+        try:
+            v = date_parse(s)  # dateutil.parse.parser
+            return "datetime"
+        except ValueError:
+            pass
+
+        v = str(s)
+        return "str"

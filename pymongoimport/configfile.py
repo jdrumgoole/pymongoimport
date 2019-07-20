@@ -48,7 +48,7 @@ class TOMLFile:
         return self._toml
 
 
-class Config_File(object):
+class ConfigFile(object):
 
     def __init__(self, filename=None):
 

@@ -14,7 +14,7 @@ import pymongo
 from pymongoimport.argparser import add_standard_args
 from pymongoimport.audit import Audit
 from pymongoimport.logger import Logger
-from pymongoimport.pymongoimport_main import Sub_Process
+from pymongoimport.pymongoimport_main import SubProcess
 
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
@@ -113,11 +113,11 @@ def multi_import(*argv):
 
     log.info("Fork using:'%s'", args.forkmethod)
     if args.forkmethod == "fork":
-        subprocess = Sub_Process(log=log, audit=audit, batch_ID=batch_ID, args=args)
+        subprocess = SubProcess(log=log, audit=audit, batch_ID=batch_ID, args=args)
     elif args.forkmethod == "spawn":
-        subprocess = Sub_Process(log=None, audit=audit, batch_ID=batch_ID, args=args)
+        subprocess = SubProcess(log=None, audit=audit, batch_ID=batch_ID, args=args)
     elif args.forkmethod == "forkserver":
-        subprocess = Sub_Process(log=None, audit=audit, batch_ID=batch_ID, args=args)
+        subprocess = SubProcess(log=None, audit=audit, batch_ID=batch_ID, args=args)
 
     subprocess.setup_log_handlers()
 

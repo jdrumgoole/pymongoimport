@@ -6,16 +6,19 @@ Author: joe@joedrumgoole.com
 
 """
 import os
+import logging
 
 from pymongoimport.fieldfile import FieldFile
-from pymongoimport.file_writer import File_Writer
+from pymongoimport.filewriter import FileWriter
+from pymongoimport.configfile import ConfigFile
+from pymongoimport.csvparser import CSVParser
 
 
 class Command(object):
 
-    def __init__(self, log, audit=None, id=None):
+    def __init__(self, audit=None, id=None):
         self._name = None
-        self._log = log
+        self._log = logging.getLogger(__name__)
         self._audit = audit
         self._id = id
 
@@ -40,9 +43,10 @@ class Command(object):
 
 class Drop_Command(Command):
 
-    def __init__(self, log, database, audit=None, id=None):
-        super().__init__(log, audit, id)
+    def __init__(self, database, audit=None, id=None):
+        super().__init__(audit, id)
         self._name = "drop"
+        self._log = logging.getLogger(__name__)
         self._database = database
 
     def post_execute(self, arg):
@@ -56,33 +60,36 @@ class Drop_Command(Command):
         self._database.drop_collection(arg)
 
 
-class Generate_Fieldfile_Command(Command):
+class GenerateFieldfileCommand(Command):
 
-    def __init__(self, log, delimiter, audit=None, id=None):
-        super().__init__(log, audit, id)
-        self._delimiter = delimiter
+    def __init__(self, audit=None, id=None):
+        super().__init__(audit, id)
         self._name = "generate"
-        self._fieldfile_names = []
+        self._log = logging.getLogger(__name__)
+        self._field_filename = None
 
-    def names(self):
-        return self._field_file_names
+    def field_filename(self):
+        return self._field_filename
 
     def execute(self, arg):
-        self._name = FieldFile.generate_field_file(arg, self._delimiter)
-        self._fieldfile_names.append(self._name)
+        ff= FieldFile(arg)
+        ff.generate_field_file()
+        self._field_filename = ff.field_filename
 
-        return self._name
+        return self._field_filename
 
     def post_execute(self, arg):
         self._log.info("Creating field filename '%s' from '%s'", self._name, arg)
 
 
-class Import_Command(Command):
+class ImportCommand(Command):
 
-    def __init__(self, log, collection, field_filename=None, delimiter=",", hasheader=True, onerror="warn", limit=0,
+    def __init__(self, collection, field_filename=None, delimiter=",", hasheader=True, onerror="warn", limit=0,
                  audit=None, id=None):
 
-        super().__init__(log, audit, id)
+        super().__init__(audit, id)
+
+        self._log = logging.getLogger(__name__)
         self._collection = collection
         self._name = "import"
         self._field_filename = field_filename
@@ -91,7 +98,7 @@ class Import_Command(Command):
         self._onerror = onerror
         self._limit = limit
         self._total_written = 0
-        self._fieldConfig = None
+        self._config = None
 
         if self._log:
             self._log.info("Auditing output")
@@ -104,7 +111,7 @@ class Import_Command(Command):
 
         if not self._field_filename:
             # print( "arg:'{}".format(arg))
-            self._field_filename = FieldFile.generate_field_filename(arg)
+            self._field_filename = FieldFile(arg).field_filename
 
         if self._log:
             self._log.info("Using field file:'{}'".format(self._field_filename))
@@ -117,7 +124,7 @@ class Import_Command(Command):
         if self._field_filename:
             field_filename = self._field_filename
         else:
-            field_filename = FieldFile.generate_field_filename(arg)
+            field_filename = FieldFile(arg).field_filename
 
         if not os.path.isfile(field_filename):
             error_msg = "The fieldfile '{}' does not exit".format(field_filename)
@@ -126,13 +133,9 @@ class Import_Command(Command):
 
         if self._log:
             self._log.info("using field file: '%s'", field_filename)
-        self._fieldConfig = FieldFile(self._log,
-                                      field_filename,
-                                      self._delimiter,
-                                      self._hasheader,
-                                      self._onerror)
-
-        self._fw = File_Writer(self._collection, self._fieldConfig, self._limit, self._log)
+        self._config = ConfigFile(field_filename)
+        csv_parser = CSVParser(self._config, self._hasheader, self._delimiter, self._onerror)
+        self._fw = FileWriter(self._collection, csv_parser, self._limit)
         self._total_written = self._total_written + self._fw.insert_file(arg)
 
         return self._total_written
@@ -140,8 +143,8 @@ class Import_Command(Command):
     def total_written(self):
         return self._total_written
 
-    def get_field_config(self):
-        return self._fieldConfig
+    def get_config(self):
+        return self._config
 
     def post_execute(self, arg):
         super().post_execute(arg)

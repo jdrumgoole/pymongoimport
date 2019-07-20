@@ -19,7 +19,7 @@ import pymongo
 
 from pymongoimport.argparser import add_standard_args
 from pymongoimport.audit import Audit
-from pymongoimport.command import Drop_Command, Generate_Fieldfile_Command, Import_Command
+from pymongoimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
 from pymongoimport.logger import Logger
 
 
@@ -66,7 +66,7 @@ from pymongoimport.logger import Logger
 #     except KeyboardInterrupt:
 #         log.warn("exiting due to keyboard interrupt...")
 
-class Sub_Process(object):
+class SubProcess(object):
 
     def __init__(self, log, audit, batch_ID, args):
 
@@ -128,15 +128,15 @@ class Sub_Process(object):
             self._log.info("fsync         : %i", self._fsync)
             self._log.info("hasheader     : %s", self._hasheader)
 
-        cmd = Import_Command(log=self._log,
-                             collection=self._collection,
-                             field_filename=self._fieldfile,
-                             delimiter=self._delimiter,
-                             hasheader=self._hasheader,
-                             onerror=self._onerror,
-                             limit=self._limit,
-                             audit=self._audit,
-                             id=self._batch_ID)
+        cmd = ImportCommand(log=self._log,
+                            collection=self._collection,
+                            field_filename=self._fieldfile,
+                            delimiter=self._delimiter,
+                            hasheader=self._hasheader,
+                            onerror=self._onerror,
+                            limit=self._limit,
+                            audit=self._audit,
+                            id=self._batch_ID)
 
         cmd.run(filename)
 
@@ -214,10 +214,9 @@ def pymongoimport_main(input_args=None):
     print(args.filenames)
     if args.genfieldfile:
         args.hasheader = True
-        log.info("Forcing hasheader true for --genfieldfile")
-        cmd = Generate_Fieldfile_Command(log, args.delimiter)
-        for i in args.filenames:
-            cmd.run(i)
+        log.info('Forcing hasheader true for --genfieldfile')
+        cmd = GenerateFieldfileCommand(log)
+        cmd.run(args.filenames[0])
         sys.exit(0)
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
@@ -261,7 +260,7 @@ def pymongoimport_main(input_args=None):
             audit = None
             batch_ID = None
 
-        process = Sub_Process(log, audit, batch_ID, args)
+        process = SubProcess(log, audit, batch_ID, args)
 
         for i in args.filenames:
             if os.path.isfile(i):

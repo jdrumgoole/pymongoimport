@@ -8,9 +8,11 @@ Created on 23 Jul 2017
 import time
 from datetime import datetime, timedelta
 import requests
-
-# import pprint
+import logging
+import pymongo
 from pymongo import errors
+
+from pymongoimport.csvparser import CSVParser
 
 
 def seconds_to_duration(seconds):
@@ -19,24 +21,26 @@ def seconds_to_duration(seconds):
     return "%02d:%02d:%02d:%02d" % (d.day - 1, d.hour, d.minute, d.second)
 
 
-class File_Writer(object):
+class FileWriter(object):
 
-    def __init__(self, collection, fieldConfig, limit=0, log=None):
+    def __init__(self, collection : pymongo.collection,
+                 parser: CSVParser,
+                 limit : int = 0):
 
-        self._logger = log
+        self._logger = logging.getLogger(__name__)
         self._collection = collection
-        self._fieldConfig = None
         self._batch_size = 500
         self._totalWritten = 0
         self._currentLine = 0
-        self._fieldConfig = fieldConfig
-        if fieldConfig.hasheader():
+        self._parser = parser
+
+        if self._parser.hasheader():
             self._currentLine = self._currentLine + 1
 
         self._limit = limit
 
-    def get_field_config(self):
-        return self._fieldConfig
+    def get_config(self):
+        return self._config
 
     def get_batch_size(self):
         return self._batch_size
@@ -48,24 +52,23 @@ class File_Writer(object):
         self._batch_size = size
 
     @staticmethod
-    def skipLines(f, skipCount:int):
+    def skipLines(f, skip_count:int):
         """
         >>> f = open( "test_set_small.txt", "r" )
         >>> skipLines( f , 20 )
         20
         """
 
-        lineCount = 0
-        if (skipCount > 0):
+        line_count = 0
+        if skip_count > 0:
             # print( "Skipping")
             dummy = f.readline()  # skicaount may be bigger than the number of lines i  the file
             while dummy:
-                lineCount = lineCount + 1
-                if (lineCount == skipCount):
+                line_count = line_count + 1
+                if line_count == skip_count:
                     break
                 dummy = f.readline()
-
-        return lineCount
+        return line_count
 
     def has_locator(self, collection, filename):
 
@@ -115,7 +118,7 @@ class File_Writer(object):
 
             self.skipLines(f, self._currentLine)  # skips header if present
 
-            reader = self._fieldConfig.get_dict_reader(f)
+            reader = self._parser.get_dict_reader(f)
 
             try:
                 for dictEntry in reader:
@@ -129,10 +132,10 @@ class File_Writer(object):
                                                  "input line. Do you have the "
                                                  "right delimiter set ? "
                                                  "( current delimiter is : '%s')",
-                                                 self._fieldConfig.delimiter())
+                                                 self._config.delimiter())
                             self._logger.warning("input line : '%s'", "".join(dictEntry.values()))
 
-                    d = self._fieldConfig.createDoc(dictEntry)
+                    d = self._parser.createDoc(dictEntry)
 
                     d = self.add_locator(self._collection, d, filename, total_read)
 
