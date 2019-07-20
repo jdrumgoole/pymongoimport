@@ -12,7 +12,7 @@ from pymongoimport.fieldfile import FieldFile
 from pymongoimport.filewriter import FileWriter
 from pymongoimport.configfile import ConfigFile
 from pymongoimport.csvparser import CSVParser
-
+from pymongoimport.csvparser import ErrorResponse
 
 class Command(object):
 
@@ -84,7 +84,7 @@ class GenerateFieldfileCommand(Command):
 
 class ImportCommand(Command):
 
-    def __init__(self, collection, field_filename=None, delimiter=",", hasheader=True, onerror="warn", limit=0,
+    def __init__(self, collection, field_filename=None, delimiter=",", hasheader=True, onerror=ErrorResponse.Warn, limit=0,
                  audit=None, id=None):
 
         super().__init__(audit, id)

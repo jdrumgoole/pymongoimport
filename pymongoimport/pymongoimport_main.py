@@ -14,6 +14,7 @@ import argparse
 import os
 import sys
 from multiprocessing import Process
+import logging
 
 import pymongo
 
@@ -68,11 +69,11 @@ from pymongoimport.logger import Logger
 
 class SubProcess(object):
 
-    def __init__(self, log, audit, batch_ID, args):
+    def __init__(self, audit, batch_ID, args):
 
         self._audit = audit
         self._batch_ID = batch_ID
-        self._log = log
+        self._log = logging.getLogger(__name__)
         self._host = args.host
         self._write_concern = args.writeconcern
         self._fsync = args.fsync
@@ -128,8 +129,7 @@ class SubProcess(object):
             self._log.info("fsync         : %i", self._fsync)
             self._log.info("hasheader     : %s", self._hasheader)
 
-        cmd = ImportCommand(log=self._log,
-                            collection=self._collection,
+        cmd = ImportCommand(collection=self._collection,
                             field_filename=self._fieldfile,
                             delimiter=self._delimiter,
                             hasheader=self._hasheader,
@@ -211,7 +211,7 @@ def pymongoimport_main(input_args=None):
         Logger.add_stream_handler(args.logname)
 
     log.info("Started pymongoimport")
-    print(args.filenames)
+    #print(args.filenames)
     if args.genfieldfile:
         args.hasheader = True
         log.info('Forcing hasheader true for --genfieldfile')
@@ -248,7 +248,7 @@ def pymongoimport_main(input_args=None):
         if args.restart:
             log.info("Warning --restart overrides --drop ignoring drop commmand")
         else:
-            cmd = Drop_Command(log=log, audit=audit, id=batch_ID, database=database)
+            cmd = Drop_Command(audit=audit, id=batch_ID, database=database)
             cmd.run(collection_name)
 
     if args.filenames:
@@ -260,7 +260,7 @@ def pymongoimport_main(input_args=None):
             audit = None
             batch_ID = None
 
-        process = SubProcess(log, audit, batch_ID, args)
+        process = SubProcess(audit, batch_ID, args)
 
         for i in args.filenames:
             if os.path.isfile(i):

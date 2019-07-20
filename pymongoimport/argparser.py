@@ -5,7 +5,7 @@ Created on 12 Aug 2017
 """
 from pymongoimport.logger import Logger
 from pymongoimport.version import __VERSION__
-
+from pymongoimport.csvparser import ErrorResponse
 
 def add_standard_args(parser):
     """
@@ -38,7 +38,7 @@ def add_standard_args(parser):
                         help="Generate a fieldfile from the data file, we set hasheader to true [default: %(default)s]")
     parser.add_argument('--id', default="mongodb", choices=["mongodb", "gen"],
                         help="Autogenerate ID default [ %(default)s ]")
-    parser.add_argument('--onerror', default="warn", choices=['fail', "warn", "ignore"],
+    parser.add_argument('--onerror', type=ErrorResponse,  default=ErrorResponse.Warn, choices=list(ErrorResponse),
                         help="What to do when we hit an error parsing a csv file [default: %(default)s]")
     parser.add_argument('--logname', default=Logger.LOGGER_NAME,
                         help="Logfile to write output to [default: %(default)s]")

@@ -10,9 +10,12 @@ from pymongoimport.type_converter import Converter
 
 
 class ErrorResponse(Enum):
-    Ignore = 0
-    Warn   = 1
-    Fail   = 2
+    Ignore = "ignore"
+    Warn   = "warn"
+    Fail   = "fail"
+
+    def __str__(self):
+        return self.value
 
 
 class CSVParser:
