@@ -7,6 +7,7 @@ Created on 23 Jul 2017
 """
 import time
 from datetime import datetime, timedelta
+import requests
 
 # import pprint
 from pymongo import errors
@@ -81,6 +82,22 @@ class File_Writer(object):
             doc['locator'] = {"n": record_number}
 
         return doc
+
+    def download_file(url):
+        """
+
+        :return:
+        """
+        local_filename = url.split('/')[-1]
+        # NOTE the stream=True parameter below
+        with requests.get(url, stream=True) as r:
+            r.raise_for_status()
+            with open(local_filename, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:  # filter out keep-alive new chunks
+                        f.write(chunk)
+                        # f.flush()
+        return local_filename
 
     def insert_file(self, filename, restart=False):
 

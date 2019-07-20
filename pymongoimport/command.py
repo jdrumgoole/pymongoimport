@@ -7,7 +7,7 @@ Author: joe@joedrumgoole.com
 """
 import os
 
-from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.fieldfile import FieldFile
 from pymongoimport.file_writer import File_Writer
 
 
@@ -68,7 +68,7 @@ class Generate_Fieldfile_Command(Command):
         return self._field_file_names
 
     def execute(self, arg):
-        self._name = FieldConfig.generate_field_file(arg, self._delimiter)
+        self._name = FieldFile.generate_field_file(arg, self._delimiter)
         self._fieldfile_names.append(self._name)
 
         return self._name
@@ -104,7 +104,7 @@ class Import_Command(Command):
 
         if not self._field_filename:
             # print( "arg:'{}".format(arg))
-            self._field_filename = FieldConfig.generate_field_filename(arg)
+            self._field_filename = FieldFile.generate_field_filename(arg)
 
         if self._log:
             self._log.info("Using field file:'{}'".format(self._field_filename))
@@ -117,7 +117,7 @@ class Import_Command(Command):
         if self._field_filename:
             field_filename = self._field_filename
         else:
-            field_filename = FieldConfig.generate_field_filename(arg)
+            field_filename = FieldFile.generate_field_filename(arg)
 
         if not os.path.isfile(field_filename):
             error_msg = "The fieldfile '{}' does not exit".format(field_filename)
@@ -126,11 +126,11 @@ class Import_Command(Command):
 
         if self._log:
             self._log.info("using field file: '%s'", field_filename)
-        self._fieldConfig = FieldConfig(self._log,
-                                        field_filename,
-                                        self._delimiter,
-                                        self._hasheader,
-                                        self._onerror)
+        self._fieldConfig = FieldFile(self._log,
+                                      field_filename,
+                                      self._delimiter,
+                                      self._hasheader,
+                                      self._onerror)
 
         self._fw = File_Writer(self._collection, self._fieldConfig, self._limit, self._log)
         self._total_written = self._total_written + self._fw.insert_file(arg)

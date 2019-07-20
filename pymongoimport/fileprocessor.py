@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 from pymongoimport.command import Import_Command
-from pymongoimport.fieldconfig import FieldConfig
+from pymongoimport.fieldfile import FieldFile
 from pymongoimport.logger import Logger
 
 
@@ -33,7 +33,7 @@ class FileProcessor(object):
     def processOneFile(self, input_filename, field_filename=None, hasheader=False, restart=False, batchID=None):
 
         if not field_filename:
-            field_filename = FieldConfig.generate_field_filename(input_filename)
+            field_filename = FieldFile.generate_field_filename(input_filename)
         cmd = Import_Command(log=self._logger,
                              collection=self._collection,
                              field_filename=field_filename,
@@ -77,7 +77,7 @@ class FileProcessor(object):
 
                 totalCount = lineCount + totalCount
             except FieldConfigException as e:
-                self._logger.info("FieldConfig error for %s : %s", i, e)
+                self._logger.info("FieldFile error for %s : %s", i, e)
                 failures.append(i)
                 if self._onerror == "fail":
                     raise

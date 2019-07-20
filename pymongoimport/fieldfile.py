@@ -16,7 +16,7 @@ from pymongoimport.config_file import Config_File
 from pymongoimport.type_converter import Converter
 
 
-class FieldConfig(object):
+class FieldFile(object):
     """
       Each field is represented by a section in the config parser
       For each field there are a set of configurations:
@@ -298,7 +298,7 @@ class FieldConfig(object):
         :return: The name of the generated file
         """
 
-        genfilename = FieldConfig.generate_field_filename(path, ext)
+        genfilename = FieldFile.generate_field_filename(path, ext)
 
         with open(genfilename, "w") as genfile:
             # print( "The field file will be '%s'" % genfilename)
@@ -322,7 +322,7 @@ class FieldConfig(object):
                     line = line.strip("'")
                 line = line.replace('$', '_')  # not valid keys for mongodb
                 line = line.replace('.', '_')  # not valid keys for mongodb
-                (_, t) = FieldConfig.guess_type(value_line[i])
+                (_, t) = FieldFile.guess_type(value_line[i])
                 if output_type == "CSV":
                     genfile.write(f"[{line}]\n")
                     genfile.write(f"type={t}\n")
