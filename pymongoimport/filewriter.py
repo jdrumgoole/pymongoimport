@@ -31,11 +31,8 @@ class FileWriter(object):
         self._collection = collection
         self._batch_size = 500
         self._totalWritten = 0
-        self._currentLine = 0
-        self._parser = parser
 
-        if self._parser.hasheader():
-            self._currentLine = self._currentLine + 1
+        self._parser = parser
 
         self._limit = limit
 
@@ -110,66 +107,71 @@ class FileWriter(object):
 
         # with open( filename, "r", encoding = "ISO-8859-1") as f :
 
-        with open(filename, "r") as f:
-            timeStart = time.time()
-            insertedThisQuantum = 0
-            total_read = 0
-            insert_list = []
+        # with open(filename, newline="") as f:
 
-            self.skipLines(f, self._currentLine)  # skips header if present
+            # if self._parser.hasheader():
+            #     self.skipLines(f, 1)  # skips header if present
 
-            reader = self._parser.get_dict_reader(f)
+            # reader = self._parser.get_dict_reader(f)
 
-            try:
-                for dictEntry in reader:
-                    total_read = total_read + 1
-                    if self._limit > 0:
-                        if total_read > self._limit:
-                            break
-                    if len(dictEntry) == 1:
-                        if self._logger:
-                            self._logger.warning("Warning: only one field in "
-                                                 "input line. Do you have the "
-                                                 "right delimiter set ? "
-                                                 "( current delimiter is : '%s')",
-                                                 self._config.delimiter())
-                            self._logger.warning("input line : '%s'", "".join(dictEntry.values()))
+        doc_generator = self._parser.parse_file(filename, add_locator=True)
 
-                    d = self._parser.createDoc(dictEntry)
 
-                    d = self.add_locator(self._collection, d, filename, total_read)
+        time_start = time.time()
+        inserted_this_quantum = 0
+        total_read = 0
+        insert_list = []
 
-                    insert_list.append(d)
-                    if total_read % self._batch_size == 0:
-                        results = self._collection.insert_many(insert_list)
-                        total_written = total_written + len(results.inserted_ids)
-                        insertedThisQuantum = insertedThisQuantum + len(results.inserted_ids)
-                        insert_list = []
-                        time_now = time.time()
-                        elapsed = time_now - timeStart
-                        docs_per_second = self._batch_size / elapsed
-                        timeStart = time_now
-                        if self._logger:
-                            self._logger.info(
-                                "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format(filename, docs_per_second,
-                                                                                             total_written))
+        try:
+            for doc in doc_generator:
+                # total_read = total_read + 1
+                # if self._limit > 0:
+                #     if total_read > self._limit:
+                #         break
+                # if len(dictEntry) == 1:
+                #     if self._logger:
+                #         self._logger.warning("Warning: only one field in "
+                #                              "input line. Do you have the "
+                #                              "right delimiter set ? "
+                #                              "( current delimiter is : '%s')",
+                #                              self._config.delimiter())
+                #         self._logger.warning("input line : '%s'", "".join(dictEntry.values()))
+                #
+                # d = self._parser.parse_line(dictEntry)
+                #
+                # d = self.add_locator(self._collection, d, filename, total_read)
 
-            except UnicodeDecodeError as exp:
-                if self._logger:
-                    self._logger.error(exp)
-                    self._logger.error("Error on line:%i", total_read + 1)
-                raise;
-
-            if len(insert_list) > 0:
-                # print(insert_list)
-                try:
+                insert_list.append(doc)
+                if total_read % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)
+                    inserted_this_quantum = inserted_this_quantum + len(results.inserted_ids)
                     insert_list = []
+                    time_now = time.time()
+                    elapsed = time_now - time_start
+                    docs_per_second = self._batch_size / elapsed
+                    time_start = time_now
                     if self._logger:
-                        self._logger.info("Input: '%s' : Inserted %i records", filename, total_written)
-                except errors.BulkWriteError as e:
-                    self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
+                        self._logger.info(
+                            "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format(filename, docs_per_second,
+                                                                                         total_written))
+
+        except UnicodeDecodeError as exp:
+            if self._logger:
+                self._logger.error(exp)
+                self._logger.error("Error on line:%i", total_read + 1)
+            raise;
+
+        if len(insert_list) > 0:
+            # print(insert_list)
+            try:
+                results = self._collection.insert_many(insert_list)
+                total_written = total_written + len(results.inserted_ids)
+                insert_list = []
+                if self._logger:
+                    self._logger.info("Input: '%s' : Inserted %i records", filename, total_written)
+            except errors.BulkWriteError as e:
+                self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
 
         finish = time.time()
         if self._logger:

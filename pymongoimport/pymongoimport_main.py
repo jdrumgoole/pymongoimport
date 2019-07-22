@@ -217,7 +217,6 @@ def pymongoimport_main(input_args=None):
         log.info('Forcing hasheader true for --genfieldfile')
         cmd = GenerateFieldfileCommand(log)
         cmd.run(args.filenames[0])
-        sys.exit(0)
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
         client = pymongo.MongoClient(args.host, w=args.writeconcern)
@@ -251,28 +250,29 @@ def pymongoimport_main(input_args=None):
             cmd = Drop_Command(audit=audit, id=batch_ID, database=database)
             cmd.run(collection_name)
 
-    if args.filenames:
+    if not args.genfieldfile:
+        if args.filenames :
 
-        if args.audit:
-            audit = Audit(client=client)
-            batch_ID = audit.start_batch({"command": sys.argv})
-        else:
-            audit = None
-            batch_ID = None
-
-        process = SubProcess(audit, batch_ID, args)
-
-        for i in args.filenames:
-            if os.path.isfile(i):
-                process.run(i)
+            if args.audit:
+                audit = Audit(client=client)
+                batch_ID = audit.start_batch({"command": sys.argv})
             else:
-                log.warning("No such file:'{}' ignoring".format(i))
+                audit = None
+                batch_ID = None
 
-        if args.audit:
-            audit.end_batch(batch_ID)
+            process = SubProcess(audit, batch_ID, args)
 
-    else:
-        log.info("No input files: Nothing to do")
+            for i in args.filenames:
+                if os.path.isfile(i):
+                    process.run(i)
+                else:
+                    log.warning("No such file:'{}' ignoring".format(i))
+
+            if args.audit:
+                audit.end_batch(batch_ID)
+
+        else:
+            log.info("No input files: Nothing to do")
 
     return 1
 

@@ -18,6 +18,9 @@ class MyTestCase(unittest.TestCase):
     def test_main(self):
         collection = self._db["inventory"]
         self._db.drop_collection("inventory")
+        pymongoimport_main(["--genfieldfile",
+                            "--loglevel", "CRITICAL", # suppress output for test
+                            f("data/inventory.csv")])
         pymongoimport_main(["--database", "test",
                             "--loglevel", "CRITICAL", # suppress output for test
                             "--hasheader",
