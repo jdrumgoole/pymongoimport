@@ -109,7 +109,7 @@ class ConfigFile(object):
     def fields(self):
         return self._fields
 
-    def hasNewName(self, section):
+    def has_new_name(self, section):
         return section != self._fieldDict[section]['name']
 
     def type_value(self, fieldName):

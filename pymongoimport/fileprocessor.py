@@ -37,7 +37,7 @@ class FileProcessor(object):
         cmd = ImportCommand(collection=self._collection,
                             field_filename=field_filename,
                             delimiter=self._delimiter,
-                            hasheader=hasheader,
+                            has_header=hasheader,
                             onerror=self._onerror,
                             limit=self._limit)
 

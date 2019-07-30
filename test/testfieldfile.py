@@ -5,11 +5,14 @@ Created on 8 Aug 2017
 """
 import os
 import unittest
+from typing import List, Dict
+from datetime import datetime
 
 import pymongo
 
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.filewriter import FileWriter
+from pymongoimport.filereader import FileReader
 from pymongoimport.filesplitter import LineCounter
 from pymongoimport.logger import Logger
 from pymongoimport.type_converter import Converter
@@ -35,8 +38,7 @@ class Test(unittest.TestCase):
         self._col = self._db["FC_TEST"]
 
     def tearDown(self):
-        # self._db.drop_collection( "FC_TEST")
-        pass
+        self._db.drop_collection( "FC_TEST")
 
     def test_FieldConfig(self):
         fc = ConfigFile(f("data/test_fieldconfig.ff"))
@@ -46,7 +48,7 @@ class Test(unittest.TestCase):
         self.assertEqual(fc.fields()[3], "Test 4")
 
         fc = ConfigFile(f("data/uk_property_prices.ff"))
-        self.assertEqual(len(fc.fields()), 15)
+        self.assertEqual(len(fc.fields()), 16)
 
         self.assertEqual(fc.fields()[0], "txn")
         self.assertEqual(fc.fields()[2], "Date of Transfer")
@@ -55,17 +57,39 @@ class Test(unittest.TestCase):
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
         fc = ConfigFile(f("data/10k.ff"))
-        parser = CSVParser(fc, hasheader=False, delimiter="|")
-        bw = FileWriter(self._col, parser)
-        bw.insert_file(f("data/10k.txt"))
+        parser = CSVParser(fc, has_header=False, delimiter="|")
+        reader = FileReader(f("data/10k.txt"), parser)
+        bw = FileWriter(self._col, reader)
+        bw.write()
         self.assertEqual(self._col.count_documents({}) - start_count, 10000)
+
+    def test_fieldfile_nomatch(self):
+        fc = ConfigFile(f("data/AandE_Data_2011-04-10.ff"))
+        parser = CSVParser(fc, has_header=True)
+        reader = FileReader(f('data/inventory.csv'), parser)
+        bw = FileWriter(self._col, reader)
+        with self.assertRaises(ValueError):
+            bw.write()
+
+    def test_new_delimiter_and_timeformat_header(self):
+        start_count = self._col.count_documents({})
+        fc = ConfigFile(f("data/mot.ff"))
+        parser = CSVParser(fc, has_header=False, delimiter="|")
+        reader = FileReader(f('data/mot_test_set_small.csv'), parser)
+        bw = FileWriter(self._col, reader)
+        total=bw.write()
+        lines = LineCounter(f('data/mot_test_set_small.csv')).line_count
+        inserted_count = self._col.count_documents({}) - start_count
+        self.assertEqual(inserted_count, total)
+        self.assertEqual(inserted_count, lines)
 
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
         fc = ConfigFile(f("data/AandE_Data_2011-04-10.ff"))
-        parser = CSVParser(fc, hasheader=True)
-        bw = FileWriter(self._col, parser)
-        bw.insert_file(f("data/AandE_Data_2011-04-10.csv"))
+        parser = CSVParser(fc, has_header=True)
+        reader = FileReader(f('data/AandE_Data_2011-04-10.csv'), parser)
+        bw = FileWriter(self._col, reader)
+        bw.write()
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
 
     def test_generate_field_filename(self):
@@ -103,28 +127,25 @@ class Test(unittest.TestCase):
         fc = FieldFile(f("data/inventory.csv"))
         fc.generate_field_file()
         cfg = ConfigFile(fc.field_filename)
-        csv_parser = CSVParser(cfg, hasheader=True, delimiter=',')
-        with open(f("data/inventory.csv"), "r") as file:
-            if csv_parser.hasheader():
-                _ = file.readline()
-            reader = csv_parser.get_dict_reader(file)
-            for row in reader:
-                for field in cfg.fields():
-                    self.assertTrue(field in row)
+        parser = CSVParser(cfg, has_header=True, delimiter=',')
+        reader = FileReader(f("data/inventory.csv"), parser)
+        for row in reader.read_file():
+            for field in cfg.fields():
+                self.assertTrue(field in row)
 
         os.unlink(fc.field_filename)
 
         cfg = ConfigFile(f("data/uk_property_prices.ff"))
-        csv_parser = CSVParser(cfg, hasheader=False, delimiter=",")
-        with open(f("data/uk_property_prices.csv"), "r") as file:
-            if csv_parser.hasheader():
-                _ = file.readline()
-            reader = csv_parser.get_dict_reader(file)
-            for row in reader:
-                for field in cfg.fields():
-                    self.assertTrue(field in row)
-                    self.assertTrue(type(row["Price"]) == str)
-                    self.assertTrue(type(row["Date of Transfer"]) == str)
+        csv_parser = CSVParser(config_file=cfg, has_header=False, delimiter=",")
+        reader = FileReader(f("data/uk_property_prices.csv"), csv_parser)
+
+        for row in reader.read_file():
+            for field in cfg.fields():
+                if field == "txn": # converted to _id field
+                    continue
+                self.assertTrue(field in row, f"{field} not present")
+                self.assertTrue(type(row["Price"]) == int)
+                self.assertTrue(type(row["Date of Transfer"]) == datetime)
 
     def test_generate_fieldfile(self):
         fc = FieldFile(f("data/inventory.csv"), ext="testff")
@@ -132,56 +153,41 @@ class Test(unittest.TestCase):
         fc.generate_field_file()
         self.assertTrue(os.path.isfile(f("data/inventory.testff")), f("data/inventory.testff"))
         config = ConfigFile(fc.field_filename)
-        csv_parser = CSVParser(config, hasheader=True, delimiter=",")
+        parser = CSVParser(config, has_header=True, delimiter=",")
+        reader = FileReader(f("data/inventory.csv"), parser)
         start_count = self._col.count_documents({})
-        writer = FileWriter(self._col, csv_parser)
-        writer.insert_file(f("data/inventory.csv"))
+        writer = FileWriter(self._col, reader)
+        write_count=writer.write()
         line_count = LineCounter(f("data/inventory.csv")).line_count
-        self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
-
+        new_inserted_count = self._col.count_documents({}) - start_count
+        self.assertEqual(new_inserted_count, write_count)  # header must be subtracted
+        self.assertEqual(new_inserted_count, line_count - 1 ) # header must be subtracted
         os.unlink(f("data/inventory.testff"))
-
-        c = Converter()
-        fc = FieldFile(f("data/inventory.csv"))
-        fc.generate_field_file()
-        cfg = ConfigFile(fc.field_filename)
-        parser = CSVParser(cfg, hasheader=True)
-        with open(f("data/inventory.csv"), "r")  as file:
-            if parser.hasheader():
-                _ = file.readline()
-            reader = parser.get_dict_reader(file)
-            fields = config.fields()
-            for row in reader:
-                # print( row )
-                for field in fields:
-                    row[field] = c.convert(config.type_value(field), row[field])  # remember we type convert fields
-
-                doc = self._col.find_one(row)
-                self.assertTrue(doc)
 
     def test_date(self):
         config = ConfigFile(f("data/inventory_dates.ff"))
-        parser = CSVParser(config, hasheader=True)
+        parser = CSVParser(config, has_header=True)
+        reader = FileReader(f("data/inventory.csv"),parser, parse_doc=False)
         start_count = self._col.count_documents({})
-        writer = FileWriter(self._col, parser)
-        writer.insert_file(f("data/inventory.csv"))
+        writer = FileWriter(self._col, reader)
+        writer.write()
         line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
 
         c = Converter()
+        fields = config.fields()
+        result_doc: Dict[str, object] = {}
+        for row,raw_row in zip(reader.read_file(), reader.read_file_raw()):
+            # print( row )
+            for i,field in enumerate(fields):
+                result_doc[field] = c.convert(config.type_value(field), raw_row[i])  # remember we type convert fields
 
-        with open(f("data/inventory.csv"), "r") as file:
-            if parser.hasheader():
-                _ = file.readline()
-            reader = parser.get_dict_reader(file)
-            fields = config.fields()
-            for row in reader:
-                # print( row )
-                for field in fields:
-                    row[field] = c.convert(config.type_value(field), row[field])  # remember we type convert fields
+            self.assertEqual(result_doc, row)
 
-                doc = self._col.find_one(row)
-                self.assertTrue(doc)
+        db_doc = self._col.find_one(row)
+        del db_doc["_id"]
+        self.assertTrue(db_doc)
+        self.assertEqual(db_doc, row)
 
     def testFieldDict(self):
         d = ConfigFile(f("data/testresults.ff")).fieldDict()

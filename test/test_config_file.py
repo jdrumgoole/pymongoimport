@@ -22,7 +22,7 @@ class Test(unittest.TestCase):
 
     def test_property_prices(self):
         cfg = ConfigFile(f("data/uk_property_prices.ff"))
-        self.assertTrue(cfg.hasNewName("txn"))
+        self.assertTrue(cfg.has_new_name("txn"))
         self.assertFalse(cfg.name_value("txn") is None)
 
     def test_dict_to_fields(self):

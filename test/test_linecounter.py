@@ -7,7 +7,7 @@ from pymongoimport.liner import make_line_file
 
 class MyTestCase(unittest.TestCase):
 
-    def _test_file(self, count, doseol=False,filename="liner.txt", unlink=False):
+    def _test_file(self, count, doseol=False,filename="liner.txt", unlink=True):
         f = make_line_file(count=count, doseol=doseol, filename=filename)
         self.assertEqual(count, LineCounter(f).line_count)
         if unlink:

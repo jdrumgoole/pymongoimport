@@ -66,7 +66,7 @@ class Test(unittest.TestCase):
                             collection=collection,
                             field_filename=f("data/10k.ff"),
                             delimiter="|",
-                            hasheader=False,
+                            has_header=False,
                             onerror="warn",
                             limit=0)
 

@@ -29,3 +29,5 @@ type=str
 type=str
 [PPD Category Type]
 type=str
+[Record Status]
+type=str

@@ -12,8 +12,7 @@ import logging
 import pymongo
 from pymongo import errors
 
-from pymongoimport.csvparser import CSVParser
-
+from pymongoimport.filereader import FileReader
 
 def seconds_to_duration(seconds):
     delta = timedelta(seconds=seconds)
@@ -24,28 +23,23 @@ def seconds_to_duration(seconds):
 class FileWriter(object):
 
     def __init__(self, collection : pymongo.collection,
-                 parser: CSVParser,
-                 limit : int = 0):
+                 reader: FileReader,
+                 batch_size: int = 1000):
 
         self._logger = logging.getLogger(__name__)
         self._collection = collection
-        self._batch_size = 500
+        self._batch_size = batch_size
         self._totalWritten = 0
+        self._reader = reader
 
-        self._parser = parser
-
-        self._limit = limit
-
-    def get_config(self):
-        return self._config
-
-    def get_batch_size(self):
+    @property
+    def batch_size(self):
         return self._batch_size
 
-    def set_batch_size(self, size:int):
+    @batch_size.setter
+    def batch_size(self, size: int) -> None:
         if size < 1:
-            raise ValueError("Invalid batchsize: {}".format(size))
-
+            raise ValueError(f"Invalid batchsize: {size}")
         self._batch_size = size
 
     @staticmethod
@@ -67,55 +61,13 @@ class FileWriter(object):
                 dummy = f.readline()
         return line_count
 
-    def has_locator(self, collection, filename):
-
-        result = collection.find_one({"locator": {"f": filename}})
-        return result
-
-    def add_locator(self, collection, doc, filename, record_number):
-
-        if filename and record_number:
-            doc['locator'] = {"f": filename, "n": record_number}
-        elif filename:
-            doc['locator'] = {"f": filename}
-        elif record_number:
-            doc['locator'] = {"n": record_number}
-
-        return doc
-
-    def download_file(url):
-        """
-
-        :return:
-        """
-        local_filename = url.split('/')[-1]
-        # NOTE the stream=True parameter below
-        with requests.get(url, stream=True) as r:
-            r.raise_for_status()
-            with open(local_filename, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    if chunk:  # filter out keep-alive new chunks
-                        f.write(chunk)
-                        # f.flush()
-        return local_filename
-
-    def insert_file(self, filename, restart=False):
+    def write(self, restart=False):
 
         start = time.time()
         total_written = 0
         results = None
 
-        # with open( filename, "r", encoding = "ISO-8859-1") as f :
-
-        # with open(filename, newline="") as f:
-
-            # if self._parser.hasheader():
-            #     self.skipLines(f, 1)  # skips header if present
-
-            # reader = self._parser.get_dict_reader(f)
-
-        doc_generator = self._parser.parse_file(filename, add_locator=True)
-
+        docs_generator = self._reader.read_file()
 
         time_start = time.time()
         inserted_this_quantum = 0
@@ -123,24 +75,7 @@ class FileWriter(object):
         insert_list = []
 
         try:
-            for doc in doc_generator:
-                # total_read = total_read + 1
-                # if self._limit > 0:
-                #     if total_read > self._limit:
-                #         break
-                # if len(dictEntry) == 1:
-                #     if self._logger:
-                #         self._logger.warning("Warning: only one field in "
-                #                              "input line. Do you have the "
-                #                              "right delimiter set ? "
-                #                              "( current delimiter is : '%s')",
-                #                              self._config.delimiter())
-                #         self._logger.warning("input line : '%s'", "".join(dictEntry.values()))
-                #
-                # d = self._parser.parse_line(dictEntry)
-                #
-                # d = self.add_locator(self._collection, d, filename, total_read)
-
+            for doc in docs_generator:
                 insert_list.append(doc)
                 if total_read % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)
@@ -151,10 +86,9 @@ class FileWriter(object):
                     elapsed = time_now - time_start
                     docs_per_second = self._batch_size / elapsed
                     time_start = time_now
-                    if self._logger:
-                        self._logger.info(
-                            "Input:'{}': docs per sec:{:7.0f}, total docs:{:>10}".format(filename, docs_per_second,
-                                                                                         total_written))
+                    self._logger.info(
+                            f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, \
+                            total docs:{total_written:>10}")
 
         except UnicodeDecodeError as exp:
             if self._logger:
@@ -167,13 +101,10 @@ class FileWriter(object):
             try:
                 results = self._collection.insert_many(insert_list)
                 total_written = total_written + len(results.inserted_ids)
-                insert_list = []
-                if self._logger:
-                    self._logger.info("Input: '%s' : Inserted %i records", filename, total_written)
+                self._logger.info("Input: '%s' : Inserted %i records", self._reader.name, total_written)
             except errors.BulkWriteError as e:
                 self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
 
         finish = time.time()
-        if self._logger:
-            self._logger.info("Total elapsed time to upload '%s' : %s", filename, seconds_to_duration(finish - start))
+        self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - start))
         return total_written

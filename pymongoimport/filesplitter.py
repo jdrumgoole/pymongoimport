@@ -109,10 +109,15 @@ class LineCounter(object):
     def file_size(self):
         return self._file_size
 
-    def count_now(self, filename):
+    def count_now(self, filename=None):
 
+        if filename:
+            count_filename = filename
+        else:
+            count_filename = self._filename
         count = 0
-        with open(filename, "r") as input_file:
+
+        with open(count_filename, "r") as input_file:
             for count,line in enumerate(input_file, 1):
                 #print(f"{filename}:{line}:{self._line_count}")
                 pass

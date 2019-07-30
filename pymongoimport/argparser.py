@@ -6,6 +6,8 @@ Created on 12 Aug 2017
 from pymongoimport.logger import Logger
 from pymongoimport.version import __VERSION__
 from pymongoimport.csvparser import ErrorResponse
+from pymongoimport.doctimestamp import DocTimeStamp
+from argparse import ArgumentParser
 
 def add_standard_args(parser):
     """
@@ -14,10 +16,13 @@ def add_standard_args(parser):
     """
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
-    parser.add_argument('--database', help='specify the database name [default: %(default)s]')
-    parser.add_argument('--collection', help='specify the collection name [default: %(default)s]')
+    parser.add_argument('--database', default="PYIM", help='specify the database name [default: %(default)s]')
+    parser.add_argument('--collection', default="imported", help='specify the collection name [default: %(default)s]')
     parser.add_argument('--host', default="mongodb://localhost:27017/test",
                         help='mongodb URI. [default: %(default)s]')
+    parser.add_argument('--locator', default=False, action="store_true",
+                        help="add a locator field consisting of filename and \
+                        input record line to each doc [default: %(default)s]")
     parser.add_argument('--batchsize', type=int, default=500,
                         help='set batch os_size for bulk inserts [default: %(default)s]')
     parser.add_argument('--restart', default=False, action="store_true",
@@ -30,8 +35,8 @@ def add_standard_args(parser):
                         help="The delimiter string used to split fields [default: %(default)s]")
     parser.add_argument("filenames", nargs="*", help='list of files')
     parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry")
-    parser.add_argument('--addtimestamp', default="none", choices=["none", "now", "gen"],
-                        help="Add a timestamp to each record [default: %(default)s]")
+    parser.add_argument('--addtimestamp', default=DocTimeStamp.NO_TIMESTAMP, type=DocTimeStamp, choices=list(DocTimeStamp),
+                        help="Add a timestamp to each doc, either generate per doc('doc'), or per batch {'batch') [default: %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
                         help="Use header line for column names [default: %(default)s]")
     parser.add_argument('--genfieldfile', default=False, action="store_true",
@@ -62,3 +67,11 @@ def add_standard_args(parser):
     #
     # parser.add_argument( '--encoding', default="utf-8", help="Unicode encoding for input file [default: %(default)s]")
     return parser
+
+
+if __name__ == "__main__":
+
+    parser = ArgumentParser()
+    parser = add_standard_args(parser)
+    args = parser.parse_args()
+    print(args)

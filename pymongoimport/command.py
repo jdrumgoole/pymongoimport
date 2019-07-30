@@ -8,13 +8,18 @@ Author: joe@joedrumgoole.com
 import os
 import logging
 
+import pymongo
+
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.filewriter import FileWriter
 from pymongoimport.configfile import ConfigFile
 from pymongoimport.csvparser import CSVParser
 from pymongoimport.csvparser import ErrorResponse
+from pymongoimport.filereader import FileReader
+from pymongoimport.doctimestamp import DocTimeStamp
 
-class Command(object):
+
+class Command:
 
     def __init__(self, audit=None, id=None):
         self._name = None
@@ -84,8 +89,17 @@ class GenerateFieldfileCommand(Command):
 
 class ImportCommand(Command):
 
-    def __init__(self, collection, field_filename=None, delimiter=",", hasheader=True, onerror=ErrorResponse.Warn, limit=0,
-                 audit=None, id=None):
+    def __init__(self,
+                 collection:pymongo.collection,
+                 field_filename:str= None,
+                 delimiter:str= ",",
+                 has_header:bool= True,
+                 onerror:ErrorResponse=ErrorResponse.Warn,
+                 limit:int= 0,
+                 locator=False,
+                 timestamp:DocTimeStamp= DocTimeStamp.NO_TIMESTAMP,
+                 audit:bool= None,
+                 id:object= None):
 
         super().__init__(audit, id)
 
@@ -94,49 +108,48 @@ class ImportCommand(Command):
         self._name = "import"
         self._field_filename = field_filename
         self._delimiter = delimiter
-        self._hasheader = hasheader
+        self._has_header = has_header
+        self._parser = None
+        self._reader = None
+        self._writer = None
         self._onerror = onerror
         self._limit = limit
+        self._locator = locator
+        self._timestamp = timestamp
         self._total_written = 0
         self._config = None
 
-        if self._log:
-            self._log.info("Auditing output")
+        self._log.info("Auditing output")
 
     def pre_execute(self, arg):
         # print(f"'{arg}'")
         super().pre_execute(arg)
-        if self._log:
-            self._log.info("Using collection:'{}'".format(self._collection.full_name))
+        self._log.info("Using collection:'{}'".format(self._collection.full_name))
 
         if not self._field_filename:
             # print( "arg:'{}".format(arg))
             self._field_filename = FieldFile(arg).field_filename
 
-        if self._log:
-            self._log.info("Using field file:'{}'".format(self._field_filename))
+        self._log.info(f"Using field file:'{self._field_filename}'")
 
         if not os.path.isfile(self._field_filename):
-            raise OSError("No such field file:'{}'".format(self._field_filename))
+            raise OSError("No such field file:'{self._field_filename}'")
+
+        self._config = ConfigFile(self._field_filename)
+        self._parser = CSVParser(self._config,
+                                 self._has_header,
+                                 self._delimiter,
+                                 self._onerror)
+        self._reader = FileReader(arg,
+                                  parser=self._parser,
+                                  limit=self._limit,
+                                  locator=self._locator,
+                                  timestamp=self._timestamp)
+        self._writer = FileWriter(self._collection, self._reader)
 
     def execute(self, arg):
 
-        if self._field_filename:
-            field_filename = self._field_filename
-        else:
-            field_filename = FieldFile(arg).field_filename
-
-        if not os.path.isfile(field_filename):
-            error_msg = "The fieldfile '{}' does not exit".format(field_filename)
-            self._log.error(error_msg)
-            raise ValueError(error_msg)
-
-        if self._log:
-            self._log.info("using field file: '%s'", field_filename)
-        self._config = ConfigFile(field_filename)
-        csv_parser = CSVParser(self._config, self._hasheader, self._delimiter, self._onerror)
-        self._fw = FileWriter(self._collection, csv_parser, self._limit)
-        self._total_written = self._total_written + self._fw.insert_file(arg)
+        self._total_written = self._writer.write()
 
         return self._total_written
 

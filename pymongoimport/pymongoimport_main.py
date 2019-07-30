@@ -82,60 +82,54 @@ class SubProcess(object):
         self._database_name = args.database
         self._collection_name = args.collection
         self._fieldfile = args.fieldfile
-        self._hasheader = args.hasheader
+        self._has_header = args.hasheader
         self._delimiter = args.delimiter
         self._onerror = args.onerror
         self._limit = args.limit
-        self._limit = args.limit
+        self._locator = args.locator
+        self._timestamp = args.addtimestamp
+        self._locator = args.locator
         self._args = args
 
     def setup_log_handlers(self):
-        if self._log:
-            self._log = Logger(self._args.logname, self._args.loglevel).log()
+        self._log = Logger(self._args.logname, self._args.loglevel).log()
 
-            # Logger.add_file_handler(args.logname)
+        # Logger.add_file_handler(args.logname)
 
-            if not self._args.silent:
-                Logger.add_stream_handler(self._args.logname)
+        if not self._args.silent:
+            Logger.add_stream_handler(self._args.logname)
 
     def run(self, filename):
-        if self._log:
-            self._log.info("Started pymongoimport")
-        else:
+        if not self._log:
             self._log = Logger(self._args.logname, self._args.loglevel).log()
 
-            # Logger.add_file_handler(args.logname)
+        if not self._args.silent:
+            Logger.add_stream_handler(self._args.logname)
 
-            if not self._args.silent:
-                Logger.add_stream_handler(self._args.logname)
+        self._log.info("Started pymongoimport")
 
         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
             client = pymongo.MongoClient(self._host, w=self._write_concern)
         else:
             client = pymongo.MongoClient(self._host, w=self._write_concern, fsync=self._fsync, j=self._journal)
 
-        if not self._database_name:
-            self._database_name = "PYIM"
-
-        if not self._collection_name:
-            self._collection_name = "ported"
-
         database = client[self._database_name]
         self._collection = database[self._collection_name]
 
-        if self._log:
-            self._log.info("Write concern : %i", self._write_concern)
-            self._log.info("journal       : %i", self._journal)
-            self._log.info("fsync         : %i", self._fsync)
-            self._log.info("hasheader     : %s", self._hasheader)
+        self._log.info(f"Write concern : {self._write_concern}" )
+        self._log.info(f"journal       : {self._journal}")
+        self._log.info(f"fsync         : {self._fsync}")
+        self._log.info(f"has header    : {self._has_header}")
 
         cmd = ImportCommand(collection=self._collection,
                             field_filename=self._fieldfile,
                             delimiter=self._delimiter,
-                            hasheader=self._hasheader,
+                            has_header=self._has_header,
                             onerror=self._onerror,
                             limit=self._limit,
                             audit=self._audit,
+                            locator=self._locator,
+                            timestamp=self._timestamp,
                             id=self._batch_ID)
 
         cmd.run(filename)
