@@ -67,24 +67,25 @@ class Drop_Command(Command):
 
 class GenerateFieldfileCommand(Command):
 
-    def __init__(self, audit=None, id=None):
+    def __init__(self, audit=None, id=None,delimiter=","):
         super().__init__(audit, id)
         self._name = "generate"
         self._log = logging.getLogger(__name__)
         self._field_filename = None
+        self._delimiter = delimiter
 
     def field_filename(self):
         return self._field_filename
 
     def execute(self, arg):
         ff= FieldFile(arg)
-        ff.generate_field_file()
+        ff.generate_field_file(self._delimiter)
         self._field_filename = ff.field_filename
 
         return self._field_filename
 
     def post_execute(self, arg):
-        self._log.info("Creating field filename '%s' from '%s'", self._name, arg)
+        self._log.info(f"Creating field filename \n'{self._field_filename}' from '{arg}'")
 
 
 class ImportCommand(Command):

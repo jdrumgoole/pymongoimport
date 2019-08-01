@@ -61,13 +61,13 @@ class FileWriter(object):
                 dummy = f.readline()
         return line_count
 
-    def write(self, restart=False):
+    def write(self, limit=0, restart=False):
 
         start = time.time()
         total_written = 0
         results = None
 
-        docs_generator = self._reader.read_file()
+        docs_generator = self._reader.read_file(limit=limit)
 
         time_start = time.time()
         inserted_this_quantum = 0
@@ -77,15 +77,16 @@ class FileWriter(object):
         try:
             for doc in docs_generator:
                 insert_list.append(doc)
-                if total_read % self._batch_size == 0:
+                if len(insert_list) % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)
                     inserted_this_quantum = inserted_this_quantum + len(results.inserted_ids)
-                    insert_list = []
+
                     time_now = time.time()
                     elapsed = time_now - time_start
-                    docs_per_second = self._batch_size / elapsed
+                    docs_per_second = len(insert_list) / elapsed
                     time_start = time_now
+                    insert_list = []
                     self._logger.info(
                             f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, \
                             total docs:{total_written:>10}")

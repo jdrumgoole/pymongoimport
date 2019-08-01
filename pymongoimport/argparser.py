@@ -61,6 +61,8 @@ def add_standard_args(parser):
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
     # parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
 
+    parser.add_argument("--fieldinfo", default="", type=str,
+                        help="Report field info from a field file [default: %(default)s]")
     parser.add_argument("--limit", default=0, type=int, help="Limit the number of records we read in")
     #
     # Also try ISO-8859-1

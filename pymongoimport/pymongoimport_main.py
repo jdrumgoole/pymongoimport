@@ -22,6 +22,7 @@ from pymongoimport.argparser import add_standard_args
 from pymongoimport.audit import Audit
 from pymongoimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
 from pymongoimport.logger import Logger
+from pymongoimport.configfile import ConfigFile
 
 
 # from monglog import MongoHandler
@@ -209,7 +210,7 @@ def pymongoimport_main(input_args=None):
     if args.genfieldfile:
         args.hasheader = True
         log.info('Forcing hasheader true for --genfieldfile')
-        cmd = GenerateFieldfileCommand(log)
+        cmd = GenerateFieldfileCommand(delimiter=args.delimiter)
         cmd.run(args.filenames[0])
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
@@ -243,6 +244,13 @@ def pymongoimport_main(input_args=None):
         else:
             cmd = Drop_Command(audit=audit, id=batch_ID, database=database)
             cmd.run(collection_name)
+
+    if args.fieldinfo:
+        cfg = ConfigFile(args.fieldinfo)
+
+        for i,field in enumerate(cfg.fields(), 1 ):
+            print(f"{i:3}. {field:25}:{cfg.type_value(field)}")
+        print(f"Total fields: {len(cfg.fields())}")
 
     if not args.genfieldfile:
         if args.filenames :

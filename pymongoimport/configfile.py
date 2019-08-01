@@ -6,10 +6,12 @@ Valid subfields are:
    format: The format to parse the input. Only used for datetime objects.
 """
 
+import toml
+
 from collections import OrderedDict
 from configparser import RawConfigParser
 
-import toml
+
 
 
 def dict_to_fields(d):

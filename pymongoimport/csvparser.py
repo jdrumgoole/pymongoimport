@@ -179,12 +179,13 @@ class CSVParser:
             self._logger.warning(f"input line : {csv_line}")
 
         if len(csv_line) != len(self._config.fields()):
-            raise ValueError(f"\n{csv_line}(len={len(csv_line)}) and\n"
+            raise ValueError(f"\nrecord:{record_number}:{csv_line}(len={len(csv_line)}) and fields required\n"
                              f"{self._config.fields()}(len={len(self._config.fields())})"
                              f"don't match in length")
 
         # print( "dictEntry: %s" % dictEntry )
         field_count = 0
+
         for i,k in enumerate(self._config.fields()):
             # print( "field: %s" % k )
             # print( "value: %s" % dictEntry[ k ])

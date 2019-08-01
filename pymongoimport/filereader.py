@@ -14,6 +14,9 @@ class FileReader:
     lines as key->value pairs, where the keys are the column names.
     """
 
+    UTF_ENCODING = "utf-8"
+    URL_CHUNK_SIZE = 8192
+
     def __init__(self,
                  name : str,
                  parser : CSVParser,
@@ -39,20 +42,24 @@ class FileReader:
 
     def iterate_rows(self, iterator, limit:int= 0, raw:bool= False)->Generator[str, None, None]:
 
-        for i, row in enumerate(iterator, 1):
+        processed_lines = 0
+
+        if self._parser.hasheader():
+            next(iterator)
+
+        size = 0
+        for processed_lines, row in enumerate(iterator, 1):
             if limit > 0:
-                if i >= limit:
+                if processed_lines > limit:
                     break
-
-            if self._parser.hasheader() and i == 1:  # skip header line
-                continue
-
             if raw:
                 yield row
             else:
-                doc = self._parser.parse_csv_line(row, i)
+                size = size + len(row)
+                print(f"{processed_lines}:size={size}:length={len(row)}:'{row}'")
+                doc = self._parser.parse_csv_line(row, processed_lines)
                 if self._locator:
-                    doc['locator'] = {"f": self._name, "n": i + 1}
+                    doc['locator'] = {"f": self._name, "n": processed_lines}
                 if self._timestamp == DocTimeStamp.DOC_TIMESTAMP:
                     doc['timestamp'] = datetime.utcnow()
                 elif self._timestamp == DocTimeStamp.BATCH_TIMESTAMP:
@@ -71,16 +78,32 @@ class FileReader:
         else:
             yield from self.read_local_file(limit=limit)
 
+    def read_remote(self, limit: int= 0) -> Iterator[str]:
+
+        with requests.get(self._name, stream=True) as r:
+            r.raise_for_status()
+            for line in r.iter_lines():
+                if line:
+                    decoded_line = line.decode(FileReader.UTF_ENCODING)
+                    yield decoded_line
+                # print(f"Chunksize:{len(chunk)}")
+                # if chunk:  # filter out keep-alive new chunks
+                #     char_block = chunk.decode(FileReader.UTF_ENCODING)
+                #     residue = None
+                #     for i in char_block.splitlines(keepends=True):
+                #         if residue:
+                #             yield f"{residue}{i}".rstrip()
+                #             residue = None
+                #         if i[-1] == "\n":
+                #             yield i.rstrip()
+                #         else:
+                #             residue = i
+
     def read_url_file(self,
                       limit: int= 0,
                       raw:bool= False)->Iterator[object]:
-
-        # NOTE the stream=True parameter below
-        with requests.get(self._name, stream=True) as r:
-            r.raise_for_status()
-            for chunk in r.iter_content(chunk_size=8192):
-                if chunk:  # filter out keep-alive new chunks
-                    yield from self.iterate_rows(chunk.splitlines(),limit, raw=raw)
+        reader = csv.reader(self.read_remote(self._name), delimiter=self._parser.delimiter())
+        yield from self.iterate_rows(reader,limit, raw=raw)
 
     def read_local_file(self, limit:int=0, raw=False)->Iterator[object]:
 

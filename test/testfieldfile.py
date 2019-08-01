@@ -123,6 +123,11 @@ class Test(unittest.TestCase):
         self.assertEqual(fc.field_filename, f("data/test_results_2016_10.ff"), fc.field_filename)
         os.unlink(fc.field_filename)
 
+    def test_nyc_2016_genfieldfile(self):
+
+        fc = FieldFile(f('data/2018_Yellow_Taxi_Trip_Data_1000.csv'))
+        fc.generate_field_file(delimiter=";")
+
     def test_dict_reader(self):
         fc = FieldFile(f("data/inventory.csv"))
         fc.generate_field_file()
