@@ -22,51 +22,8 @@ from pymongoimport.argparser import add_standard_args
 from pymongoimport.audit import Audit
 from pymongoimport.command import Drop_Command, GenerateFieldfileCommand, ImportCommand
 from pymongoimport.logger import Logger
-from pymongoimport.configfile import ConfigFile
+from pymongoimport.fieldfile import FieldFile
 
-
-# from monglog import MongoHandler
-
-# def mongo_import_one( log, client, args, filename):
-#
-# def mongo_import( log, client, args, filenames):
-#
-#     if args.database:
-#         database_name= args.database
-#     else:
-#         database_name = "PYIM"
-#
-#     if args.collection:
-#         collection_name = args.collection
-#     else:
-#         collection_name = "ported"
-#
-#     database = client[database_name]
-#     collection = database[collection_name]
-#
-#
-#
-#
-#
-#     if args.batchsize < 1:
-#         log.warn("Chunksize must be 1 or more. Chunksize : %i", args.batchsize)
-#         sys.exit(1)
-#     try:
-#
-#         cmd = Import
-#
-#         file_processor = FileProcessor(collection, args.delimiter, args.onerror, args.id, args.batchsize, args.limit )
-#         file_processor.processFiles(filenames=args.filenames,
-#                                     field_filename=args.fieldfile,
-#                                     hasheader=args.hasheader,
-#                                     restart=args.restart,
-#                                     audit=audit, batchID=batchID)
-#
-#         if args.audit:
-#             audit.end_batch(batchID)
-#
-#     except KeyboardInterrupt:
-#         log.warn("exiting due to keyboard interrupt...")
 
 class SubProcess(object):
 
@@ -82,7 +39,7 @@ class SubProcess(object):
         self._audit = args.audit
         self._database_name = args.database
         self._collection_name = args.collection
-        self._fieldfile = args.fieldfile
+        self._field_filename = args.fieldfile
         self._has_header = args.hasheader
         self._delimiter = args.delimiter
         self._onerror = args.onerror
@@ -91,6 +48,7 @@ class SubProcess(object):
         self._timestamp = args.addtimestamp
         self._locator = args.locator
         self._args = args
+
 
     def setup_log_handlers(self):
         self._log = Logger(self._args.logname, self._args.loglevel).log()
@@ -109,6 +67,9 @@ class SubProcess(object):
 
         self._log.info("Started pymongoimport")
 
+        if self._field_filename is None:
+            self._field_filename = FieldFile.make_default_ff_name(filename)
+
         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
             client = pymongo.MongoClient(self._host, w=self._write_concern)
         else:
@@ -123,7 +84,7 @@ class SubProcess(object):
         self._log.info(f"has header    : {self._has_header}")
 
         cmd = ImportCommand(collection=self._collection,
-                            field_filename=self._fieldfile,
+                            field_filename=self._field_filename,
                             delimiter=self._delimiter,
                             has_header=self._has_header,
                             onerror=self._onerror,
@@ -246,7 +207,7 @@ def pymongoimport_main(input_args=None):
             cmd.run(collection_name)
 
     if args.fieldinfo:
-        cfg = ConfigFile(args.fieldinfo)
+        cfg = FieldFile(args.fieldinfo)
 
         for i,field in enumerate(cfg.fields(), 1 ):
             print(f"{i:3}. {field:25}:{cfg.type_value(field)}")

@@ -12,7 +12,6 @@ import pymongo
 
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.filewriter import FileWriter
-from pymongoimport.configfile import ConfigFile
 from pymongoimport.csvparser import CSVParser
 from pymongoimport.csvparser import ErrorResponse
 from pymongoimport.filereader import FileReader
@@ -78,27 +77,25 @@ class GenerateFieldfileCommand(Command):
         return self._field_filename
 
     def execute(self, arg):
-        ff= FieldFile(arg)
-        ff.generate_field_file(self._delimiter)
+        ff = FieldFile.generate_field_file(arg)
         self._field_filename = ff.field_filename
-
         return self._field_filename
 
     def post_execute(self, arg):
-        self._log.info(f"Creating field filename \n'{self._field_filename}' from '{arg}'")
+        self._log.info(f"Created field filename \n'{self._field_filename}' from '{arg}'")
 
 
 class ImportCommand(Command):
 
     def __init__(self,
                  collection:pymongo.collection,
-                 field_filename:str= None,
-                 delimiter:str= ",",
-                 has_header:bool= True,
-                 onerror:ErrorResponse=ErrorResponse.Warn,
-                 limit:int= 0,
+                 field_filename: str = None,
+                 delimiter:str = ",",
+                 has_header:bool = True,
+                 onerror: ErrorResponse = ErrorResponse.Warn,
+                 limit: int = 0,
                  locator=False,
-                 timestamp:DocTimeStamp= DocTimeStamp.NO_TIMESTAMP,
+                 timestamp: DocTimeStamp = DocTimeStamp.NO_TIMESTAMP,
                  audit:bool= None,
                  id:object= None):
 
@@ -108,6 +105,7 @@ class ImportCommand(Command):
         self._collection = collection
         self._name = "import"
         self._field_filename = field_filename
+        self._fieldinfo = None
         self._delimiter = delimiter
         self._has_header = has_header
         self._parser = None
@@ -127,17 +125,16 @@ class ImportCommand(Command):
         super().pre_execute(arg)
         self._log.info("Using collection:'{}'".format(self._collection.full_name))
 
-        if not self._field_filename:
-            # print( "arg:'{}".format(arg))
-            self._field_filename = FieldFile(arg).field_filename
+        if self._field_filename is None:
+            self._field_filename = FieldFile.make_default_ff_name(arg)
 
         self._log.info(f"Using field file:'{self._field_filename}'")
 
         if not os.path.isfile(self._field_filename):
-            raise OSError("No such field file:'{self._field_filename}'")
+            raise OSError(f"No such field file:'{self._field_filename}'")
 
-        self._config = ConfigFile(self._field_filename)
-        self._parser = CSVParser(self._config,
+        self._fieldinfo = FieldFile(self._field_filename)
+        self._parser = CSVParser(self._fieldinfo,
                                  self._has_header,
                                  self._delimiter,
                                  self._onerror)
@@ -157,8 +154,9 @@ class ImportCommand(Command):
     def total_written(self):
         return self._total_written
 
-    def get_config(self):
-        return self._config
+    @property
+    def fieldinfo(self):
+        return self._fieldinfo
 
     def post_execute(self, arg):
         super().post_execute(arg)

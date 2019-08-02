@@ -16,7 +16,6 @@ from pymongoimport.filereader import FileReader
 from pymongoimport.filesplitter import LineCounter
 from pymongoimport.logger import Logger
 from pymongoimport.type_converter import Converter
-from pymongoimport.configfile import ConfigFile
 from pymongoimport.csvparser import CSVParser
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
@@ -41,13 +40,13 @@ class Test(unittest.TestCase):
         self._db.drop_collection( "FC_TEST")
 
     def test_FieldConfig(self):
-        fc = ConfigFile(f("data/test_fieldconfig.ff"))
+        fc = FieldFile(f("data/test_fieldconfig.ff"))
         self.assertEqual(len(fc.fields()), 4)
 
         self.assertEqual(fc.fields()[0], "Test 1")
         self.assertEqual(fc.fields()[3], "Test 4")
 
-        fc = ConfigFile(f("data/uk_property_prices.ff"))
+        fc = FieldFile(f("data/uk_property_prices.ff"))
         self.assertEqual(len(fc.fields()), 16)
 
         self.assertEqual(fc.fields()[0], "txn")
@@ -56,7 +55,7 @@ class Test(unittest.TestCase):
 
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
-        fc = ConfigFile(f("data/10k.ff"))
+        fc = FieldFile(f("data/10k.ff"))
         parser = CSVParser(fc, has_header=False, delimiter="|")
         reader = FileReader(f("data/10k.txt"), parser)
         bw = FileWriter(self._col, reader)
@@ -64,7 +63,7 @@ class Test(unittest.TestCase):
         self.assertEqual(self._col.count_documents({}) - start_count, 10000)
 
     def test_fieldfile_nomatch(self):
-        fc = ConfigFile(f("data/AandE_Data_2011-04-10.ff"))
+        fc = FieldFile(f("data/AandE_Data_2011-04-10.ff"))
         parser = CSVParser(fc, has_header=True)
         reader = FileReader(f('data/inventory.csv'), parser)
         bw = FileWriter(self._col, reader)
@@ -73,7 +72,7 @@ class Test(unittest.TestCase):
 
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
-        fc = ConfigFile(f("data/mot.ff"))
+        fc = FieldFile(f("data/mot.ff"))
         parser = CSVParser(fc, has_header=False, delimiter="|")
         reader = FileReader(f('data/mot_test_set_small.csv'), parser)
         bw = FileWriter(self._col, reader)
@@ -85,7 +84,7 @@ class Test(unittest.TestCase):
 
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
-        fc = ConfigFile(f("data/AandE_Data_2011-04-10.ff"))
+        fc = FieldFile(f("data/AandE_Data_2011-04-10.ff"))
         parser = CSVParser(fc, has_header=True)
         reader = FileReader(f('data/AandE_Data_2011-04-10.csv'), parser)
         bw = FileWriter(self._col, reader)
@@ -93,59 +92,52 @@ class Test(unittest.TestCase):
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
 
     def test_generate_field_filename(self):
-        fc = FieldFile(f('data/inventory.csv'), ext="xx")
-        fc.generate_field_file()
+        fc = FieldFile.generate_field_file(f('data/inventory.csv'), ext="xx")
         self.assertEqual(fc.field_filename, f("data/inventory.xx"))
         os.unlink(fc.field_filename)
 
-        fc = FieldFile(f('data/inventory.csv'))
-        fc.generate_field_file()
+        fc = FieldFile.generate_field_file(f('data/inventory.csv'))
         self.assertEqual(fc.field_filename, f("data/inventory.ff"))
         os.unlink(fc.field_filename)
 
-        fc = FieldFile(f('data/inventory.csv.1'))
-        fc.generate_field_file()
-        self.assertEqual(fc.field_filename, f("data/inventory.ff"), fc.field_filename)
+        fc = FieldFile.generate_field_file(f('data/inventory.csv.1'))
+        self.assertEqual(fc.field_filename, f("data/inventory.csv.ff"), fc.field_filename)
         os.unlink(fc.field_filename)
 
-        fc = FieldFile(f('data/yellow_tripdata_2015-01-06-200k.csv.1'))
-        fc.generate_field_file()
-        self.assertEqual(fc.field_filename, f("data/yellow_tripdata_2015-01-06-200k.ff"), fc.field_filename)
+        fc = FieldFile.generate_field_file(f('data/yellow_tripdata_2015-01-06-200k.csv.1'))
+        self.assertEqual(fc.field_filename, f("data/yellow_tripdata_2015-01-06-200k.csv.ff"), fc.field_filename)
         os.unlink(fc.field_filename)
 
-        fc = FieldFile(f('data/yellow_tripdata_2015-01-06-200k.csv.10'))
-        fc.generate_field_file()
-        self.assertEqual(fc.field_filename, f("data/yellow_tripdata_2015-01-06-200k.ff"), fc.field_filename)
+        fc = FieldFile.generate_field_file(f('data/yellow_tripdata_2015-01-06-200k.csv.10'))
+        self.assertEqual(fc.field_filename, f("data/yellow_tripdata_2015-01-06-200k.csv.ff"), fc.field_filename)
         os.unlink(fc.field_filename)
 
-        fc = FieldFile(f('data/test_results_2016_10.txt.1'))
-        fc.generate_field_file()
-        self.assertEqual(fc.field_filename, f("data/test_results_2016_10.ff"), fc.field_filename)
+        fc = FieldFile.generate_field_file(f('data/test_results_2016_10.txt.1'))
+        self.assertEqual(fc.field_filename, f("data/test_results_2016_10.txt.ff"), fc.field_filename)
         os.unlink(fc.field_filename)
 
     def test_nyc_2016_genfieldfile(self):
 
-        fc = FieldFile(f('data/2018_Yellow_Taxi_Trip_Data_1000.csv'))
-        fc.generate_field_file(delimiter=";")
+        fc = FieldFile.generate_field_file(f('data/2018_Yellow_Taxi_Trip_Data_1000.csv'),
+                                           delimiter=";")
 
     def test_dict_reader(self):
-        fc = FieldFile(f("data/inventory.csv"))
-        fc.generate_field_file()
-        cfg = ConfigFile(fc.field_filename)
-        parser = CSVParser(cfg, has_header=True, delimiter=',')
+        fc = FieldFile.generate_field_file(f("data/inventory.csv"))
+        ff = FieldFile(fc.field_filename)
+        parser = CSVParser(ff, has_header=True, delimiter=',')
         reader = FileReader(f("data/inventory.csv"), parser)
         for row in reader.read_file():
-            for field in cfg.fields():
+            for field in ff.fields():
                 self.assertTrue(field in row)
 
         os.unlink(fc.field_filename)
 
-        cfg = ConfigFile(f("data/uk_property_prices.ff"))
-        csv_parser = CSVParser(config_file=cfg, has_header=False, delimiter=",")
+        ff = FieldFile(f("data/uk_property_prices.ff"))
+        csv_parser = CSVParser(field_file=ff, has_header=False, delimiter=",")
         reader = FileReader(f("data/uk_property_prices.csv"), csv_parser)
 
         for row in reader.read_file():
-            for field in cfg.fields():
+            for field in ff.fields():
                 if field == "txn": # converted to _id field
                     continue
                 self.assertTrue(field in row, f"{field} not present")
@@ -153,12 +145,10 @@ class Test(unittest.TestCase):
                 self.assertTrue(type(row["Date of Transfer"]) == datetime)
 
     def test_generate_fieldfile(self):
-        fc = FieldFile(f("data/inventory.csv"), ext="testff")
+        fc = FieldFile.generate_field_file(f("data/inventory.csv"), ext="testff")
         self.assertEqual(fc.field_filename, f("data/inventory.testff"), fc.field_filename)
-        fc.generate_field_file()
         self.assertTrue(os.path.isfile(f("data/inventory.testff")), f("data/inventory.testff"))
-        config = ConfigFile(fc.field_filename)
-        parser = CSVParser(config, has_header=True, delimiter=",")
+        parser = CSVParser(fc, has_header=True, delimiter=",")
         reader = FileReader(f("data/inventory.csv"), parser)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader)
@@ -170,7 +160,7 @@ class Test(unittest.TestCase):
         os.unlink(f("data/inventory.testff"))
 
     def test_date(self):
-        config = ConfigFile(f("data/inventory_dates.ff"))
+        config = FieldFile(f("data/inventory_dates.ff"))
         parser = CSVParser(config, has_header=True)
         reader = FileReader(f("data/inventory.csv"),parser, parse_doc=False)
         start_count = self._col.count_documents({})
@@ -195,14 +185,14 @@ class Test(unittest.TestCase):
         self.assertEqual(db_doc, row)
 
     def testFieldDict(self):
-        d = ConfigFile(f("data/testresults.ff")).fieldDict()
+        d = FieldFile(f("data/testresults.ff")).field_dict
         self.assertTrue("TestID" in d)
         self.assertTrue("FirstUseDate" in d)
         self.assertTrue("Colour" in d)
         self.assertTrue(d["TestID"]["type"] == "int")
 
     def test_duplicate_id(self):
-        self.assertRaises(ValueError, ConfigFile, f("data/duplicate_id.ff"))
+        self.assertRaises(ValueError, FieldFile, f("data/duplicate_id.ff"))
 
 
 if __name__ == "__main__":

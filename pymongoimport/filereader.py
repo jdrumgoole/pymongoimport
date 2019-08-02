@@ -47,7 +47,7 @@ class FileReader:
         if self._parser.hasheader():
             next(iterator)
 
-        size = 0
+        #size = 0
         for processed_lines, row in enumerate(iterator, 1):
             if limit > 0:
                 if processed_lines > limit:
@@ -55,8 +55,8 @@ class FileReader:
             if raw:
                 yield row
             else:
-                size = size + len(row)
-                print(f"{processed_lines}:size={size}:length={len(row)}:'{row}'")
+                #size = size + len(row)
+                #print(f"{processed_lines}:size={size}:length={len(row)}:'{row}'")
                 doc = self._parser.parse_csv_line(row, processed_lines)
                 if self._locator:
                     doc['locator'] = {"f": self._name, "n": processed_lines}

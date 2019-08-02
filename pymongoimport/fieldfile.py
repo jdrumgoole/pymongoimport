@@ -4,7 +4,22 @@ Created on 2 Mar 2016
 @author: jdrumgoole
 """
 
+import os
+
+from configparser import RawConfigParser
+
 from pymongoimport.type_converter import Converter
+
+
+def dict_to_fields(d):
+    f = []
+    for k, v in d.items():
+        if type(v) == dict:
+            f.extend(dict_to_fields(v))
+        else:
+            f.append(k)
+    return f
+
 
 class FieldFile(object):
     """
@@ -38,83 +53,40 @@ class FieldFile(object):
 
     """
 
-    def __init__(self, csv_filename: str, ext: str = ".ff"):
+    def __init__(self, name):
 
-        self._csv_filename = csv_filename
+        self._name = name
+        self._cfg = RawConfigParser()
+        self._fields = None
+        self._field_dict = {}
+        self._idField = None
+        self._tags = ["name", "type", "format"]
 
-        if ext.startswith('.'):
-            self._ext = ext
+        if os.path.exists(self._name):
+            self.read(self._name)
         else:
-            self._ext = "." + ext
+            raise OSError(f"No such file {self._name}")
 
-        pieces = csv_filename.split(".")
-        self._ff_name = f"{pieces[0]}{self._ext}"
+    @staticmethod
+    def make_default_ff_name(name):
+        return f"{os.path.splitext(name)[0]}.ff"
 
     @property
     def field_filename(self):
-        return self._ff_name
+        return self._name
 
+    @staticmethod
+    def generate_field_file(csv_filename, ff_filename=None, ext=".ff", delimiter=","):
 
-    # def add_filename(self, filename):
-    #     self._doc_template["filename"] = os.path.basename(filename)
-    #     return self._doc_template
+        if not ext.startswith("."):
+            ext = f".{ext}"
 
+        if ff_filename is None:
+            ff_filename = os.path.splitext(csv_filename)[0] + ext
 
-
-    # def duplicateIDMsg(self, firstSection, secondSection):
-    #     msg = textwrap.dedent("""\
-    #     The type defintion '_id" occurs in more that one section (there can only be one
-    #     _id definition). The first section is [%s] and the second section is [%s]
-    #     """)
-    #
-    #     return msg % (firstSection, secondSection)
-
-
-    # def doc_template(self):
-    #     return self._doc_template
-
-    # def type_convert(self, v, t):
-    #     '''
-    #     Use type entry for the field in the fieldConfig file (.ff) to determine what type
-    #     conversion to use.
-    #     '''
-    #     v = v.strip()
-    #
-    #     if t == "timestamp":
-    #         v = datetime.datetime.fromtimestamp(int(v))
-    #     elif t == "int":  # Ints can be floats
-    #         try:
-    #             # print( "converting : '%s' to int" % v )
-    #             v = int(v)
-    #         except ValueError:
-    #             v = float(v)
-    #     elif t == "float":
-    #         v = float(v)
-    #     elif t == "str":
-    #         v = str(v)
-    #     elif t == "datetime" or t == "date":
-    #         if v == "NULL":
-    #             v = None
-    #         else:
-    #             v = parse(v)
-    #     else:
-    #         raise ValueError
-    #
-    #     return v
-
-
-    def generate_field_file(self, delimiter=","):
-        """
-        Create a default filed file using the data from the file.
-        :param path: CSV file to use for input
-        :param delimiter: delimiter character used to seperate fields in CSV file
-        :param ext: File extension for field file.
-        :return: The name of the generated file
-        """
-
-        with open(self._ff_name, "w") as ff_file:
+        with open(ff_filename, "w") as ff_file:
             # print( "The field file will be '%s'" % genfilename)
-            with open(self._csv_filename, "r") as input_file:
+            with open(csv_filename, "r") as input_file:
                 column_names = input_file.readline().rstrip().split(delimiter)  # strip newline
                 column_values = input_file.readline().rstrip().split(delimiter)
                 if len(column_names) > len(column_values):
@@ -139,4 +111,67 @@ class FieldFile(object):
                 ff_file.write(f"[{name}]\n")
                 ff_file.write(f"type={t}\n")
 
-        return self._ff_name
+        return FieldFile(ff_filename)
+
+    def read(self, filename):
+
+        result = self._cfg.read(filename)
+        if len(result) == 0:
+            raise OSError("Couldn't open '{}'".format(filename))
+
+        self._fields = self._cfg.sections()
+
+        for s in self._fields:
+            # print( "section: '%s'" % s )
+            self._field_dict[s] = {}
+            for o in self._cfg.options(s):
+                # print("option : '%s'" % o )
+                if not o in self._tags:
+                    raise ValueError("No such field type: %s in section: %s" % (o, s))
+                if (o == "name"):
+                    if (self._cfg.get(s, o) == "_id"):
+                        if self._idField == None:
+                            self._idField = s
+                        else:
+                            raise ValueError("Duplicate _id field:{} and {}".format(self._idField, s))
+
+                self._field_dict[s][o] = self._cfg.get(s, o)
+
+            if not "name" in self._field_dict[s]:
+                # assert( s != None)
+                self._field_dict[s]["name"] = s
+            #
+            # format is optional for datetime input fields. It is used if present.
+            #
+            if not "format" in self._field_dict[s]:
+                self._field_dict[s]["format"] = None
+
+        return self._field_dict
+
+    @property
+    def field_dict(self):
+        if self._field_dict is None:
+            raise ValueError("trying retrieve a field_dict which has a 'None' value")
+        else:
+            return self._field_dict
+
+    def fields(self):
+        return self._fields
+
+    def has_new_name(self, section):
+        return section != self._field_dict[section]['name']
+
+    def type_value(self, fieldName):
+        return self._field_dict[fieldName]["type"]
+        # return self._cfg.get(fieldName, "type")
+
+    def format_value(self, fieldName):
+        return self._field_dict[fieldName]["format"]
+        # return self._cfg.get(fieldName, "format")
+
+    def name_value(self, fieldName):
+        return self._field_dict[fieldName]["name"]
+        # return self._cfg.get(fieldName, "name")
+
+    def __repr__(self):
+        return f"filename:{self._name}\ndict:\n{self._field_dict}\n"

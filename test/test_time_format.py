@@ -24,7 +24,7 @@ class Test(unittest.TestCase):
         cmd = ImportCommand(collection=self._collection, delimiter="|")
         cmd.run(os.path.join(self._dir, "data", "mot_time_format_test.txt"))
 
-        fc = cmd.get_config()
+        fc = cmd.fieldinfo
         format = fc.format_value("test_date")
         self.assertEqual(format, "%Y-%m-%d")
         self.assertTrue(fc)

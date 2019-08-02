@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from pymongoimport.configfile import ConfigFile, dict_to_fields
+from pymongoimport.fieldfile import FieldFile, dict_to_fields
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -13,17 +13,17 @@ def f(path):
 class Test(unittest.TestCase):
 
     def test_Config_File(self):
-        cfg = ConfigFile(f("data/10k.ff"))
-        self.assertTrue("test_id" in cfg.fields())
-        self.assertTrue("cylinder_capacity" in cfg.fields())
+        ff= FieldFile(f("data/10k.ff"))
+        self.assertTrue("test_id" in ff.fields())
+        self.assertTrue("cylinder_capacity" in ff.fields())
 
-        self.assertEqual(cfg.type_value("test_id"), "int")
-        self.assertEqual(cfg.type_value("test_date"), "datetime")
+        self.assertEqual(ff.type_value("test_id"), "int")
+        self.assertEqual(ff.type_value("test_date"), "datetime")
 
     def test_property_prices(self):
-        cfg = ConfigFile(f("data/uk_property_prices.ff"))
-        self.assertTrue(cfg.has_new_name("txn"))
-        self.assertFalse(cfg.name_value("txn") is None)
+        ff = FieldFile(f("data/uk_property_prices.ff"))
+        self.assertTrue(ff.has_new_name("txn"))
+        self.assertFalse(ff.name_value("txn") is None)
 
     def test_dict_to_fields(self):
         a = {"a": 1, "b": 2, "c": 3}
@@ -41,20 +41,6 @@ class Test(unittest.TestCase):
         fields = dict_to_fields(c)
         self.assertEqual(len(fields), 7)
         self.assertEqual(["a", "b", "c", "w", "a", "b", "c"], fields)
-
-    # def test_dict_walker(self):
-    #
-    #     d1 = {"a":1 }
-    #     paths = dict_walker(d1)
-    #     self.assertEqual(paths, ["a"])
-    #
-    #     d2 = {"a": 1, "b":2}
-    #     paths = dict_walker(d2)
-    #     self.assertEqual(paths, ["a", "b"])
-    #
-    #     d3 = {"a": 1, "b":2, "c": { "d" : 3, "e" : 4 }}
-    #     paths = dict_walker(d3)
-    #     self.assertEqual(paths, ["a", "b", "c.d", "c.e"], paths)
 
 
 if __name__ == "__main__":

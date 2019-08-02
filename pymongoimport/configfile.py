@@ -11,9 +11,6 @@ import toml
 from collections import OrderedDict
 from configparser import RawConfigParser
 
-
-
-
 def dict_to_fields(d):
     f = []
     for k, v in d.items():
@@ -22,18 +19,6 @@ def dict_to_fields(d):
         else:
             f.append(k)
     return f
-
-
-# def dict_walker(d):
-#
-#     paths = []
-#     for k,v in d.items():
-#         if type(v) == dict:
-#             paths.extend(f"{k}.{dict_walker(v)}")
-#         else:
-#             paths.append(k)
-#
-#     return paths
 
 
 class TOMLFile:
@@ -57,6 +42,7 @@ class ConfigFile(object):
         self._cfg = RawConfigParser()
         self._tags = ["name", "type", "format"]
         self._filename = filename
+        self._fields = None
         self._fieldDict = None
         self._idField = None
         if self._filename:
