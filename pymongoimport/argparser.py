@@ -7,7 +7,7 @@ from pymongoimport.logger import Logger
 from pymongoimport.version import __VERSION__
 from pymongoimport.csvparser import ErrorResponse
 from pymongoimport.doctimestamp import DocTimeStamp
-from argparse import ArgumentParser
+from configargparse import ArgumentParser
 
 
 def add_standard_args(parser):

@@ -19,6 +19,7 @@ toml = "*"
 requests = "*"
 ipython = "*"
 configargparse = "*"
+configargparser = "*"
 
 [requires]
 python_version = "3.7"

@@ -4,7 +4,7 @@ import os
 import pymongo
 import requests
 
-from pymongoimport.configfile import ConfigFile
+from pymongoimport.fieldfile import FieldFile
 from pymongoimport.csvparser import CSVParser
 from pymongoimport.filereader import FileReader
 from pymongoimport.filewriter import FileWriter
@@ -31,8 +31,8 @@ class TestHTTPImport(unittest.TestCase):
         self._client = pymongo.MongoClient()
         self._db = self._client[ "PYIM_HTTP_TEST"]
         self._collection = self._db["PYIM_HTTP_TEST"]
-        self._cfg = ConfigFile(f("data/2018_Yellow_Taxi_Trip_Data_1000.ff"))
-        self._parser = CSVParser(self._cfg, has_header=True, delimiter=";")
+        self._ff = FieldFile(f("data/2018_Yellow_Taxi_Trip_Data_1000.ff"))
+        self._parser = CSVParser(self._ff, has_header=True, delimiter=";")
 
     def tearDown(self):
         self._db.drop_collection("PYIM_HTTP_TEST")
@@ -65,7 +65,7 @@ class TestHTTPImport(unittest.TestCase):
 
     def test_http_import(self):
         if check_internet():
-            csv_parser = CSVParser(self._cfg, has_header=True, delimiter=";")
+            csv_parser = CSVParser(self._ff, has_header=True, delimiter=";")
             reader = FileReader("https://data.cityofnewyork.us/api/views/biws-g3hs/rows.csv?accessType=DOWNLOAD&bom=true&format=true&delimiter=%3B",
                                 csv_parser)
 
