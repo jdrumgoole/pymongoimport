@@ -32,10 +32,10 @@ type : str
 [Colour]
 type : str
 
-[FuelType] : 
+[FuelType]
 type: str
 	
-[CylinderCapacity] : 
+[CylinderCapacity] 
 type: int
 	
 [FirstUseDate]

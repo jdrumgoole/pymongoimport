@@ -126,7 +126,7 @@ class ImportCommand(Command):
         self._log.info("Using collection:'{}'".format(self._collection.full_name))
 
         if self._field_filename is None:
-            self._field_filename = FieldFile.make_default_ff_name(arg)
+            self._field_filename = FieldFile.make_default_tff_name(arg)
 
         self._log.info(f"Using field file:'{self._field_filename}'")
 

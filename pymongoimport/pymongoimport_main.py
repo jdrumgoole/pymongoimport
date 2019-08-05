@@ -68,7 +68,7 @@ class SubProcess(object):
         self._log.info("Started pymongoimport")
 
         if self._field_filename is None:
-            self._field_filename = FieldFile.make_default_ff_name(filename)
+            self._field_filename = FieldFile.make_default_tff_name(filename)
 
         if self._write_concern == 0:  # pymongo won't allow other args with w=0 even if they are false
             client = pymongo.MongoClient(self._host, w=self._write_concern)

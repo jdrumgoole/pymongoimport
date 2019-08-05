@@ -84,7 +84,7 @@ class Test(unittest.TestCase):
         fp = FileProcessor(col, onerror="ignore", delimiter="tab")
         fp.processOneFile(input_filename=f("data/gdelt.tsv"),
                           hasheader=False,
-                          field_filename=f("data/GDELT_columns.ff"))
+                          field_filename=f("data/GDELT_columns.tff"))
         lines = LineCounter(f("data/gdelt.tsv")).line_count
         self.assertEqual(lines, col.count_documents({}) - start_count)
         self.assertTrue(col.find_one(

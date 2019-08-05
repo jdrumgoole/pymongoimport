@@ -49,8 +49,8 @@ class Test(unittest.TestCase):
         shutil.copy(f("data/yellow_tripdata_2015-01-06-200k.csv"),
                     f("data/test_generate_ff.csv"))
         cmd.run(f("data/test_generate_ff.csv"))
-        self.assertTrue(os.path.isfile(f("data/test_generate_ff.ff")))
-        os.unlink(f("data/test_generate_ff.ff"))
+        self.assertTrue(os.path.isfile(f("data/test_generate_ff.tff")))
+        os.unlink(f("data/test_generate_ff.tff"))
         os.unlink(f("data/test_generate_ff.csv"))
 
     def test_Import_Command(self):
@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
         cmd = ImportCommand(audit=self._audit,
                             id=batch_id,
                             collection=collection,
-                            field_filename=f("data/10k.ff"),
+                            field_filename=f("data/10k.tff"),
                             delimiter="|",
                             has_header=False,
                             onerror="warn",

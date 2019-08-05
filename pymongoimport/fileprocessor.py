@@ -33,7 +33,7 @@ class FileProcessor(object):
     def processOneFile(self, input_filename, field_filename=None, hasheader=False, restart=False, batchID=None):
 
         if not field_filename:
-            field_filename = FieldFile.make_default_ff_name(input_filename)
+            field_filename = FieldFile.make_default_tff_name(input_filename)
 
         cmd = ImportCommand(collection=self._collection,
                             field_filename=field_filename,

@@ -13,7 +13,7 @@ def f(path):
 class Test(unittest.TestCase):
 
     def test_Config_File(self):
-        ff= FieldFile(f("data/10k.ff"))
+        ff= FieldFile(f("data/10k.tff"))
         self.assertTrue("test_id" in ff.fields())
         self.assertTrue("cylinder_capacity" in ff.fields())
 
@@ -21,7 +21,7 @@ class Test(unittest.TestCase):
         self.assertEqual(ff.type_value("test_date"), "datetime")
 
     def test_property_prices(self):
-        ff = FieldFile(f("data/uk_property_prices.ff"))
+        ff = FieldFile(f("data/uk_property_prices.tff"))
         self.assertTrue(ff.has_new_name("txn"))
         self.assertFalse(ff.name_value("txn") is None)
 
