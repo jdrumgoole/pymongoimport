@@ -32,7 +32,7 @@ class TestHTTPImport(unittest.TestCase):
         self._db = self._client[ "PYIM_HTTP_TEST"]
         self._collection = self._db["PYIM_HTTP_TEST"]
         self._ff = FieldFile(f("data/2018_Yellow_Taxi_Trip_Data_1000.ff"))
-        self._parser = CSVParser(self._ff, has_header=True, delimiter=";")
+        self._parser = CSVParser(self._ff)
 
     def tearDown(self):
         self._db.drop_collection("PYIM_HTTP_TEST")
@@ -43,7 +43,8 @@ class TestHTTPImport(unittest.TestCase):
         #
 
         reader = FileReader(f("data/2018_Yellow_Taxi_Trip_Data_1000.csv"),
-                            parser=self._parser)
+                            parser=self._parser, delimiter=";",
+                            has_header=True)
         count = 0
         for doc in reader.read_file(limit=10):
             count = count + 1
@@ -52,7 +53,9 @@ class TestHTTPImport(unittest.TestCase):
 
     def test_local_import(self):
         reader = FileReader(f("data/2018_Yellow_Taxi_Trip_Data_1000.csv"),
-                            parser=self._parser)
+                            parser=self._parser,
+                            has_header=True,
+                            delimiter=";")
 
         before_doc_count = self._collection.count_documents({})
 
@@ -65,9 +68,11 @@ class TestHTTPImport(unittest.TestCase):
 
     def test_http_import(self):
         if check_internet():
-            csv_parser = CSVParser(self._ff, has_header=True, delimiter=";")
+            csv_parser = CSVParser(self._ff)
             reader = FileReader("https://data.cityofnewyork.us/api/views/biws-g3hs/rows.csv?accessType=DOWNLOAD&bom=true&format=true&delimiter=%3B",
-                                csv_parser)
+                                csv_parser,
+                                has_header=True,
+                                delimiter=';')
 
             writer = FileWriter(self._collection, reader)
             before_doc_count = self._collection.count_documents({})

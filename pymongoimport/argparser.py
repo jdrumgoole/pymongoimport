@@ -41,7 +41,7 @@ def add_standard_args(parser):
     parser.add_argument('--hasheader', default=False, action="store_true",
                         help="Use header line for column names [default: %(default)s]")
     parser.add_argument('--genfieldfile', default=False, action="store_true",
-                        help="Generate a fieldfile from the data file, we set hasheader to true [default: %(default)s]")
+                        help="Generate a fieldfile from the data file, we set has_header to true [default: %(default)s]")
     parser.add_argument('--id', default="mongodb", choices=["mongodb", "gen"],
                         help="Autogenerate ID default [ %(default)s ]")
     parser.add_argument('--onerror', type=ErrorResponse,  default=ErrorResponse.Warn, choices=list(ErrorResponse),

@@ -187,13 +187,13 @@ The default is `mongodb://localhost:27017/test`
       for each batch of records as they are inserted. Note that each batch of records (defined by 
       --batchsize) will have the same timestamp when *gen* is the arguement. [default: none]
 
-**--hasheader**
+**--has_header**
       The input file has a header line. We can use header line for column names [default: False]
 
   **--genfieldfile**        
 
       Generate a fieldfile from the data file, we set
-      hasheader to true [default: False]
+      has_header to true [default: False]
 
 --id {mongodb,gen}    
       Autogenerate ID default [ mongodb ]

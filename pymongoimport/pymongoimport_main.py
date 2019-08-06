@@ -169,8 +169,8 @@ def pymongoimport_main(input_args=None):
     log.info("Started pymongoimport")
     #print(args.filenames)
     if args.genfieldfile:
-        args.hasheader = True
-        log.info('Forcing hasheader true for --genfieldfile')
+        args.has_header = True
+        log.info('Forcing has_header true for --genfieldfile')
         cmd = GenerateFieldfileCommand(delimiter=args.delimiter)
         cmd.run(args.filenames[0])
 

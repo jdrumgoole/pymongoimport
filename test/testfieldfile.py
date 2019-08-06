@@ -56,16 +56,16 @@ class Test(unittest.TestCase):
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
         fc = FieldFile(f("data/10k.tff"))
-        parser = CSVParser(fc, has_header=False, delimiter="|")
-        reader = FileReader(f("data/10k.txt"), parser)
+        parser = CSVParser(fc)
+        reader = FileReader(f("data/10k.txt"), parser, has_header=False, delimiter="|")
         bw = FileWriter(self._col, reader)
         bw.write()
         self.assertEqual(self._col.count_documents({}) - start_count, 10000)
 
     def test_fieldfile_nomatch(self):
         fc = FieldFile(f("data/AandE_Data_2011-04-10.tff"))
-        parser = CSVParser(fc, has_header=True)
-        reader = FileReader(f('data/inventory.csv'), parser)
+        parser = CSVParser(fc)
+        reader = FileReader(f('data/inventory.csv'), parser, has_header=True)
         bw = FileWriter(self._col, reader)
         with self.assertRaises(ValueError):
             bw.write()
@@ -73,8 +73,8 @@ class Test(unittest.TestCase):
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
         fc = FieldFile(f("data/mot.tff"))
-        parser = CSVParser(fc, has_header=False, delimiter="|")
-        reader = FileReader(f('data/mot_test_set_small.csv'), parser)
+        parser = CSVParser(fc)
+        reader = FileReader(f('data/mot_test_set_small.csv'), parser, has_header=False, delimiter="|")
         bw = FileWriter(self._col, reader)
         total=bw.write()
         lines = LineCounter(f('data/mot_test_set_small.csv')).line_count
@@ -85,8 +85,8 @@ class Test(unittest.TestCase):
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
         fc = FieldFile(f("data/AandE_Data_2011-04-10.tff"))
-        parser = CSVParser(fc, has_header=True)
-        reader = FileReader(f('data/AandE_Data_2011-04-10.csv'), parser)
+        parser = CSVParser(fc)
+        reader = FileReader(f('data/AandE_Data_2011-04-10.csv'), parser, has_header=True)
         bw = FileWriter(self._col, reader)
         bw.write()
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
@@ -126,8 +126,8 @@ class Test(unittest.TestCase):
     def test_reader(self):
         fc = FieldFile.generate_field_file(f("data/inventory.csv"))
         ff = FieldFile(fc.field_filename)
-        parser = CSVParser(ff, has_header=True, delimiter=',')
-        reader = FileReader(f("data/inventory.csv"), parser)
+        parser = CSVParser(ff)
+        reader = FileReader(f("data/inventory.csv"), parser, has_header=True)
         for row in reader.read_file():
             for field in ff.fields():
                 self.assertTrue(field in row)
@@ -135,8 +135,8 @@ class Test(unittest.TestCase):
         os.unlink(fc.field_filename)
 
         ff = FieldFile(f("data/uk_property_prices.tff"))
-        csv_parser = CSVParser(field_file=ff, has_header=False, delimiter=",")
-        reader = FileReader(f("data/uk_property_prices.csv"), csv_parser)
+        csv_parser = CSVParser(field_file=ff)
+        reader = FileReader(f("data/uk_property_prices.csv"), csv_parser, has_header=True)
 
         for row in reader.read_file():
             for field in ff.fields():
@@ -150,8 +150,8 @@ class Test(unittest.TestCase):
         fc = FieldFile.generate_field_file(f("data/inventory.csv"), ext="testff")
         self.assertEqual(fc.field_filename, f("data/inventory.testff"), fc.field_filename)
         self.assertTrue(os.path.isfile(f("data/inventory.testff")), f("data/inventory.testff"))
-        parser = CSVParser(fc, has_header=True, delimiter=",")
-        reader = FileReader(f("data/inventory.csv"), parser)
+        parser = CSVParser(fc)
+        reader = FileReader(f("data/inventory.csv"), parser, has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader)
         write_count=writer.write()
@@ -163,18 +163,19 @@ class Test(unittest.TestCase):
 
     def test_date(self):
         config = FieldFile(f("data/inventory_dates.tff"))
-        parser = CSVParser(config, has_header=True)
-        reader = FileReader(f("data/inventory.csv"),parser, parse_doc=False)
+        parser = CSVParser(config, locator=False) # screws up comparison later if locator is true
+        reader = FileReader(f("data/inventory.csv"),parser, has_header=True)
+        raw_reader = FileReader(f("data/inventory.csv"),parser=None, has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader)
-        writer.write()
+        docs_written = writer.write()
         line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
-
+        self.assertEqual(self._col.count_documents({}), docs_written)
         c = Converter()
         fields = config.fields()
         result_doc: Dict[str, object] = {}
-        for row,raw_row in zip(reader.read_file(), reader.read_file_raw()):
+        for row,raw_row in zip(reader.read_file(), raw_reader.read_file()):
             # print( row )
             for i,field in enumerate(fields):
                 result_doc[field] = c.convert(config.type_value(field), raw_row[i])  # remember we type convert fields

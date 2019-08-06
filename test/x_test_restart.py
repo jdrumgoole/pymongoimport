@@ -27,7 +27,7 @@ class Test(unittest.TestCase):
     #         return i
     #
     # def test_Restart(self):
-    #     fc = FieldFile( self._root.root_path( "data", "10k.ff"), hasheader=False, delimiter="|")
+    #     fc = FieldFile( self._root.root_path( "data", "10k.ff"), has_header=False, delimiter="|")
     #     bw = FileWriter( self._collection, fc)
     #     bw.write( self._root.root_path( "data", "10k.txt"), restart=True )
     #     audit = self._db[ "audit"]

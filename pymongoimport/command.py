@@ -135,14 +135,14 @@ class ImportCommand(Command):
 
         self._fieldinfo = FieldFile(self._field_filename)
         self._parser = CSVParser(self._fieldinfo,
-                                 self._has_header,
-                                 self._delimiter,
-                                 self._onerror)
+                                 locator=self._locator,
+                                 timestamp=self._timestamp,
+                                 onerror=self._onerror)
         self._reader = FileReader(arg,
                                   parser=self._parser,
                                   limit=self._limit,
-                                  locator=self._locator,
-                                  timestamp=self._timestamp)
+                                  has_header=self._has_header,
+                                  delimiter=self._delimiter)
         self._writer = FileWriter(self._collection, self._reader)
 
     def execute(self, arg):

@@ -135,13 +135,13 @@ Add filename field to every entry
                         
 Add a timestamp to each record [default: none]
 
-**--hasheader**
+**--has_header**
 
 Use header line for column names [default: False]
 
 **--genfieldfile**        
   
-Generate automatically a typed field file *filename.tt* from the data file *filename.xxx*, we set the option *hasheader* to true [default: False]
+Generate automatically a typed field file *filename.tt* from the data file *filename.xxx*, we set the option *has_header* to true [default: False]
 
 **--id [mongodb|gen]**
     
