@@ -24,7 +24,7 @@ class FileReader:
                  delimiter : str = ",",
                  limit: int = 0):
 
-        self._name = name
+        self._name: str = name
         self._parser = parser
         self._limit = limit
         self._has_header = has_header

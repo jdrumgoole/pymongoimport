@@ -7,8 +7,10 @@ Created on 23 Jul 2017
 """
 import time
 from datetime import datetime, timedelta
-import requests
+import os
 import logging
+import stat
+
 import pymongo
 from pymongo import errors
 
@@ -22,15 +24,26 @@ def seconds_to_duration(seconds):
 
 class FileWriter(object):
 
-    def __init__(self, collection : pymongo.collection,
+    def __init__(self,
+                 doc_collection : pymongo.collection,
                  reader: FileReader,
+                 audit_collection : pymongo.collection =None,
                  batch_size: int = 1000):
 
         self._logger = logging.getLogger(__name__)
-        self._collection = collection
+        self._collection = doc_collection
+        self._audit_collection = audit_collection
         self._batch_size = batch_size
         self._totalWritten = 0
         self._reader = reader
+
+        #
+        # Need to work out stat manipulation for mongodb insertion
+        #
+
+        if self._audit_collection:
+            self._audit_collection.insert_one({"filestamp": self._reader.name,
+                                               "timestamp": datetime.utcnow()})
 
     @property
     def batch_size(self):

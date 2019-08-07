@@ -75,8 +75,9 @@ class Test(unittest.TestCase):
         fc = FieldFile(f("data/mot.tff"))
         parser = CSVParser(fc)
         reader = FileReader(f('data/mot_test_set_small.csv'), parser, has_header=False, delimiter="|")
+        self.assertTrue( type(reader.name)==str)
         bw = FileWriter(self._col, reader)
-        total=bw.write()
+        total = bw.write()
         lines = LineCounter(f('data/mot_test_set_small.csv')).line_count
         inserted_count = self._col.count_documents({}) - start_count
         self.assertEqual(inserted_count, total)
