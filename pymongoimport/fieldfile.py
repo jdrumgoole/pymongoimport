@@ -8,9 +8,10 @@ import os
 import toml
 from enum import Enum
 from datetime import datetime
-from configparser import RawConfigParser
 
 from pymongoimport.type_converter import Converter
+from pymongoimport.filereader import FileReader
+
 
 class FieldFileException(Exception):
     pass
@@ -71,7 +72,6 @@ class FieldFile(object):
     def __init__(self, name):
 
         self._name = name
-        self._cfg = RawConfigParser()
         self._fields = None
         self._field_dict = {}
         self._idField = None
@@ -92,27 +92,28 @@ class FieldFile(object):
     @staticmethod
     def generate_field_file(csv_filename, ff_filename=None, ext=DEFAULT_EXTENSION, delimiter=","):
 
+        toml_dict:dict = {}
         if not ext.startswith("."):
             ext = f".{ext}"
 
         if ff_filename is None:
-            ff_filename = os.path.splitext(csv_filename)[0] + ext
+            if csv_filename.startswith("http://") or csv_filename.startswith("https://"):
+                ff_filename = csv_filename.split('/')[-1]
+                ff_filename = os.path.splitext(ff_filename)[0] + ext
+            else:
+                ff_filename = os.path.splitext(csv_filename)[0] + ext
 
-        with open(csv_filename, "r") as input_file:
-
-            # print( "The field file will be '%s'" % genfilename)
-
-            column_names = input_file.readline().rstrip().split(delimiter)  # strip newline
-            column_values = input_file.readline().rstrip().split(delimiter)
-            if len(column_names) > len(column_values):
-                raise ValueError(f"Header line has more columns than first "
-                                 "line: {len(column_names)} > {len(column_values)}")
-            elif len(column_names) < len(column_values):
+        reader = FileReader( csv_filename, has_header=True, delimiter=delimiter)
+        first_line = next(reader.read_file())
+        header_line = reader.header_line
+        if len(first_line) > len(header_line):
+            raise ValueError(f"Header line has more columns than first "
+                             "line: {len(column_names)} > {len(column_values)}")
+        elif len(first_line) < len(header_line):
                 raise ValueError(f"Header line has less columns"
                                  "than first line: {len(column_names)} < {len(column_values)}")
-
-            toml_dict = {}
-            for i, name in enumerate(column_names):
+        else:
+            for i, key, value  in enumerate(zip(header_line, first_line)):
                 name=name.strip()
                 if name == "":
                     name = f"blank-{i}"
@@ -124,7 +125,7 @@ class FieldFile(object):
                     name = name.strip("'")
                 name = name.replace('$', '_')  # not valid keys for mongodb
                 name = name.replace('.', '_')  # not valid keys for mongodb
-                t = Converter.guess_type(column_values[i])
+                t = Converter.guess_type(value)
                 toml_dict[name] = {}
                 toml_dict[name]["type"] = t
                 toml_dict[name]["name"] = name
@@ -132,15 +133,15 @@ class FieldFile(object):
                 # ff_file.write(f"type={t}\n")
                 # ff_file.write(f"name={name}")
 
-        with open(ff_filename, "w") as ff_file:
-            #print(toml_dict)
-            toml_string = toml.dumps(toml_dict)
-            ff_file.write("#\n")
-            ts=datetime.utcnow()
-            ff_file.write(f"# Created at UTC:{ts} by {__name__}\n")
-            ff_file.write("#\n")
-            ff_file.write(toml_string)
-            ff_file.write(f"#end\n")
+            with open(ff_filename, "w") as ff_file:
+                #print(toml_dict)
+                toml_string = toml.dumps(toml_dict)
+                ff_file.write("#\n")
+                ts=datetime.utcnow()
+                ff_file.write(f"# Created at UTC:{ts} by {__name__}\n")
+                ff_file.write("#\n")
+                ff_file.write(toml_string)
+                ff_file.write(f"#end\n")
 
         return FieldFile(ff_filename)
 

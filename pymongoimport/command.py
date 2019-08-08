@@ -134,16 +134,16 @@ class ImportCommand(Command):
             raise OSError(f"No such field file:'{self._field_filename}'")
 
         self._fieldinfo = FieldFile(self._field_filename)
+
+        self._reader = FileReader(arg,
+                                  limit=self._limit,
+                                  has_header=self._has_header,
+                                  delimiter=self._delimiter)
         self._parser = CSVParser(self._fieldinfo,
                                  locator=self._locator,
                                  timestamp=self._timestamp,
                                  onerror=self._onerror)
-        self._reader = FileReader(arg,
-                                  parser=self._parser,
-                                  limit=self._limit,
-                                  has_header=self._has_header,
-                                  delimiter=self._delimiter)
-        self._writer = FileWriter(self._collection, self._reader)
+        self._writer = FileWriter(self._collection,self._reader,self._parser)
 
     def execute(self, arg):
 

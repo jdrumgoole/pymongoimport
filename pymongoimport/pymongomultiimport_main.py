@@ -133,12 +133,12 @@ def multi_import(*argv):
             proc_list = []
             for i in arg_list:
                 if os.path.isfile(i):
-                    log.info("Processing:'%s'", i)
+                    log.info(f"Processing:'{i}'")
                     proc = Process(target=subprocess.run, args=(i,), name=i)
                     proc.start()
                     proc_list.append(proc)
                 else:
-                    log.warning("No such file:'{}' ignoring".format(i))
+                    log.warning("No such file: '{i}' ignoring")
 
             for proc in proc_list:
                 proc.join()

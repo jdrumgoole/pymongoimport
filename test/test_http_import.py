@@ -43,23 +43,23 @@ class TestHTTPImport(unittest.TestCase):
         #
 
         reader = FileReader(f("data/2018_Yellow_Taxi_Trip_Data_1000.csv"),
-                            parser=self._parser, delimiter=";",
+                            delimiter=";",
+                            limit=10,
                             has_header=True)
         count = 0
-        for doc in reader.read_file(limit=10):
+        for doc in reader.read_file():
             count = count + 1
 
         self.assertEqual(count, 10)
 
     def test_local_import(self):
         reader = FileReader(f("data/2018_Yellow_Taxi_Trip_Data_1000.csv"),
-                            parser=self._parser,
                             has_header=True,
                             delimiter=";")
 
         before_doc_count = self._collection.count_documents({})
 
-        writer = FileWriter(self._collection, reader)
+        writer = FileWriter(self._collection, reader=reader,parser=self._parser)
         writer.write(10)
 
         after_doc_count = self._collection.count_documents({})

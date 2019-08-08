@@ -15,7 +15,7 @@ import pymongo
 from pymongo import errors
 
 from pymongoimport.filereader import FileReader
-
+from pymongoimport.csvparser import CSVParser
 def seconds_to_duration(seconds):
     delta = timedelta(seconds=seconds)
     d = datetime(1, 1, 1) + delta
@@ -27,6 +27,7 @@ class FileWriter(object):
     def __init__(self,
                  doc_collection : pymongo.collection,
                  reader: FileReader,
+                 parser: CSVParser,
                  audit_collection : pymongo.collection =None,
                  batch_size: int = 1000):
 
@@ -36,7 +37,7 @@ class FileWriter(object):
         self._batch_size = batch_size
         self._totalWritten = 0
         self._reader = reader
-
+        self._parser = parser
         #
         # Need to work out stat manipulation for mongodb insertion
         #
@@ -76,20 +77,14 @@ class FileWriter(object):
 
     def write(self, limit=0, restart=False):
 
-        start = time.time()
         total_written = 0
-        results = None
-
-        docs_generator = self._reader.read_file(limit=limit)
-
         time_start = time.time()
         inserted_this_quantum = 0
         total_read = 0
         insert_list = []
-
         try:
-            for doc in docs_generator:
-                insert_list.append(doc)
+            for i, line in enumerate(self._reader.read_file(limit=limit),1):
+                insert_list.append(self._parser.parse_csv_line(line, i))
                 if len(insert_list) % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)
@@ -120,5 +115,5 @@ class FileWriter(object):
                 self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
 
         finish = time.time()
-        self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - start))
+        self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - time_start))
         return total_written

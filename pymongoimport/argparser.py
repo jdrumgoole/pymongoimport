@@ -35,6 +35,7 @@ def add_standard_args(parser):
     parser.add_argument("--delimiter", default=",", type=str,
                         help="The delimiter string used to split fields [default: %(default)s]")
     parser.add_argument("filenames", nargs="*", help='list of files')
+    parser.add_argument("--filelist", default=None, help="Read files from an input file one per line")
     parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry")
     parser.add_argument('--addtimestamp', default=DocTimeStamp.NO_TIMESTAMP, type=DocTimeStamp, choices=list(DocTimeStamp),
                         help="Add a timestamp to each doc, either generate per doc('doc'), or per batch {'batch') [default: %(default)s]")

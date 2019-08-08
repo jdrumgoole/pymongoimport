@@ -1,11 +1,8 @@
 import csv
 from datetime import datetime
-from typing import Iterator
+from typing import Iterator, List
 
 import requests
-
-from pymongoimport.csvparser import CSVParser
-from pymongoimport.doctimestamp import DocTimeStamp
 
 
 class FileReader:
@@ -19,15 +16,14 @@ class FileReader:
 
     def __init__(self,
                  name: str,
-                 parser: CSVParser = None,
                  has_header: bool = False,
-                 delimiter : str = ",",
+                 delimiter: str = ",",
                  limit: int = 0):
 
         self._name: str = name
-        self._parser = parser
         self._limit = limit
         self._has_header = has_header
+        self._header_line = None
 
         if delimiter == "tab":
             self._delimiter = "\t"
@@ -35,45 +31,51 @@ class FileReader:
             self._delimiter = delimiter
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
-    def iterate_rows(self, iterator,
-                     parser: CSVParser = None,
-                     limit: int = 0) -> Iterator[object]:
+    @property
+    def header_line(self) -> List[str]:
+        return self._header_line
+
+    @property
+    def delimiter(self):
+        return self._delimiter
+
+    def iterate_rows(self,
+                     iterator: Iterator[str],
+                     limit:int=0) -> Iterator[List[str]]:
         """
         Iterate rows in a presumed CSV file. If the parser object passed
         in by the constructor is not None then parse each line into a doc. Otherwise
         just return the raw line.
 
         :param iterator: Read from this iterator
-        :param parser: The CSV parser. may be none.
         :param limit: Only read up to limit lines (0 for all lines)
         :return: An iterator providing parsed lines.
         """
 
         if self._has_header:
-            next(iterator)
+            self._header_line = next(iterator)
 
         # size = 0
-        for processed_lines, row in enumerate(iterator, 1):
-            if limit > 0:
-                if processed_lines > limit:
+
+        reader = csv.reader(iterator, delimiter=self._delimiter)
+
+        for i, row in enumerate(reader, 1):
+            if (limit > 0) and (i > limit):
                     break
-            if parser:
-                doc = parser.parse_csv_line(row, processed_lines)
-                yield doc
             else:
                 yield row
 
-    def read_file(self, limit: int = 0) -> object:
+    def read_file(self,limit :int = 0) -> Iterator[List[str]]:
         if self._name.startswith("http"):
             yield from self.read_url_file(limit=limit)
         else:
             yield from self.read_local_file(limit=limit)
 
     @staticmethod
-    def read_remote_by_line(url: str) -> Iterator[str]:
+    def read_remote_by_line(url: str) -> Iterator[List[str]]:
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
             for line in r.iter_lines():
@@ -81,14 +83,11 @@ class FileReader:
                     decoded_line = line.decode(FileReader.UTF_ENCODING)
                     yield decoded_line
 
-    def read_url_file(self,
-                      limit: int = 0) -> Iterator[object]:
-        reader = csv.reader(FileReader.read_remote_by_line(self._name),
-                            delimiter=self._delimiter)
-        yield from self.iterate_rows(reader, self._parser, limit)
+    def read_url_file(self, limit: int = 0) -> Iterator[List[str]]:
+        yield from self.iterate_rows(FileReader.read_remote_by_line(self._name),
+                                     limit=limit)
 
-    def read_local_file(self, limit: int = 0) -> Iterator[object]:
+    def read_local_file(self, limit: int = 0) -> Iterator[List[str]]:
 
         with open(self._name, newline="") as csv_file:
-            reader = csv.reader(csv_file, delimiter=self._delimiter)
-            yield from self.iterate_rows(reader, self._parser, limit)
+            yield from self.iterate_rows(csv_file, limit=limit)

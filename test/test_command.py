@@ -64,7 +64,7 @@ class Test(unittest.TestCase):
         cmd = ImportCommand(audit=self._audit,
                             id=batch_id,
                             collection=collection,
-                            field_filename=f("data/10k.tff"),
+                            field_filename=f("data/10k.t<<ff"),
                             delimiter="|",
                             has_header=False,
                             onerror="warn",

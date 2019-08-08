@@ -25,7 +25,7 @@ from pymongoimport.logger import Logger
 from pymongoimport.fieldfile import FieldFile
 
 
-class SubProcess(object):
+class Importer(object):
 
     def __init__(self, audit, batch_ID, args):
 
@@ -166,18 +166,27 @@ def pymongoimport_main(input_args=None):
     if not args.silent:
         Logger.add_stream_handler(args.logname)
 
-    log.info("Started pymongoimport")
     #print(args.filenames)
-    if args.genfieldfile:
-        args.has_header = True
-        log.info('Forcing has_header true for --genfieldfile')
-        cmd = GenerateFieldfileCommand(delimiter=args.delimiter)
-        cmd.run(args.filenames[0])
+
+    if args.filelist:
+        try:
+            with open(args.filelist) as input_file:
+                for line in input_file.readlines():
+                    args.filenames.append(line)
+        except OSError as e:
+            log.error(f"{e}")
 
     if args.writeconcern == 0:  # pymongo won't allow other args with w=0 even if they are false
         client = pymongo.MongoClient(args.host, w=args.writeconcern)
     else:
         client = pymongo.MongoClient(args.host, w=args.writeconcern, fsync=args.fsync, j=args.journal)
+
+    if args.genfieldfile:
+        args.has_header = True
+        log.info('Forcing has_header true for --genfieldfile')
+        cmd = GenerateFieldfileCommand(delimiter=args.delimiter)
+        for i in args.filenames:
+            cmd.run(i)
 
     if args.audit:
         audit = Audit(client=client)
@@ -223,7 +232,7 @@ def pymongoimport_main(input_args=None):
                 audit = None
                 batch_ID = None
 
-            process = SubProcess(audit, batch_ID, args)
+            process = Importer(audit, batch_ID, args)
 
             for i in args.filenames:
                 if os.path.isfile(i):
