@@ -8,6 +8,7 @@ from pymongoimport.fieldfile import FieldFile
 from pymongoimport.csvparser import CSVParser
 from pymongoimport.filereader import FileReader
 from pymongoimport.filewriter import FileWriter
+from pymongoimport.fieldfile import FieldFile
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -66,6 +67,21 @@ class TestHTTPImport(unittest.TestCase):
 
         self.assertEqual( after_doc_count - before_doc_count, 10)
 
+    def test_http_generate_fieldfile(self):
+        if check_internet():
+            # Demographic_Statistics_By_Zip_Code.csv
+            url = "https://data.cityofnewyork.us/api/views/kku6-nxdu/rows.csv?accessType=DOWNLOAD"
+
+            ff_file = FieldFile.generate_field_file(url,
+                                                    delimiter=",",
+                                                    ff_filename="Demographic_Statistics_By_Zip_Code.tff")
+
+            self.assertTrue("JURISDICTION NAME" in ff_file.fields(), ff_file.fields())
+            self.assertEqual(len(ff_file.fields()), 46)
+            self.assertTrue("PERCENT PUBLIC ASSISTANCE TOTAL" in ff_file.fields())
+        else:
+            print("Warning:No internet: Skipping test for generating field files from URLs")
+
     def test_http_import(self):
         if check_internet():
             csv_parser = CSVParser(self._ff)
@@ -79,7 +95,7 @@ class TestHTTPImport(unittest.TestCase):
             after_doc_count = writer.write(1000)
             self.assertEqual(after_doc_count - before_doc_count, 1000)
         else:
-            print("Warning: No internet: test_http_import() skipped")
+            print("Warning:No internet: test_http_import() skipped")
 
 
 

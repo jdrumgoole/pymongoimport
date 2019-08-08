@@ -95,6 +95,10 @@ class Test(unittest.TestCase):
     def test_generate_field_filename(self):
         fc = FieldFile.generate_field_file(f('data/inventory.csv'), ext="xx")
         self.assertEqual(fc.field_filename, f("data/inventory.xx"))
+        self.assertTrue("Inventory Item" in fc.fields())
+        self.assertTrue("Amount" in fc.fields())
+        self.assertTrue("Last Order", fc.fields())
+        self.assertEqual(len(fc.fields()), 3)
         os.unlink(fc.field_filename)
 
         fc = FieldFile.generate_field_file(f('data/inventory.csv'))

@@ -103,7 +103,7 @@ class FieldFile(object):
             else:
                 ff_filename = os.path.splitext(csv_filename)[0] + ext
 
-        reader = FileReader( csv_filename, has_header=True, delimiter=delimiter)
+        reader = FileReader(csv_filename, has_header=True, delimiter=delimiter)
         first_line = next(reader.read_file())
         header_line = reader.header_line
         if len(first_line) > len(header_line):
@@ -113,8 +113,8 @@ class FieldFile(object):
                 raise ValueError(f"Header line has less columns"
                                  "than first line: {len(column_names)} < {len(column_values)}")
         else:
-            for i, key, value  in enumerate(zip(header_line, first_line)):
-                name=name.strip()
+            for i, (key, value)  in enumerate(zip(header_line, first_line)):
+                name=value.strip()
                 if name == "":
                     name = f"blank-{i}"
                 # print( i )
@@ -126,9 +126,9 @@ class FieldFile(object):
                 name = name.replace('$', '_')  # not valid keys for mongodb
                 name = name.replace('.', '_')  # not valid keys for mongodb
                 t = Converter.guess_type(value)
-                toml_dict[name] = {}
-                toml_dict[name]["type"] = t
-                toml_dict[name]["name"] = name
+                toml_dict[key] = {}
+                toml_dict[key]["type"] = t
+                toml_dict[key]["name"] = name
                 # ff_file.write(f"[{name}]\n")
                 # ff_file.write(f"type={t}\n")
                 # ff_file.write(f"name={name}")
@@ -138,7 +138,7 @@ class FieldFile(object):
                 toml_string = toml.dumps(toml_dict)
                 ff_file.write("#\n")
                 ts=datetime.utcnow()
-                ff_file.write(f"# Created at UTC:{ts} by {__name__}\n")
+                ff_file.write(f"# Created '{ff_filename}' at UTC:{ts} by class {__name__}\n")
                 ff_file.write("#\n")
                 ff_file.write(toml_string)
                 ff_file.write(f"#end\n")

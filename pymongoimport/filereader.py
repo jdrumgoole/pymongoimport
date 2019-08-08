@@ -43,8 +43,8 @@ class FileReader:
         return self._delimiter
 
     def iterate_rows(self,
-                     iterator: Iterator[str],
-                     limit:int=0) -> Iterator[List[str]]:
+                     iterator: Iterator[List[str]],
+                     limit: int = 0) -> Iterator[List[str]]:
         """
         Iterate rows in a presumed CSV file. If the parser object passed
         in by the constructor is not None then parse each line into a doc. Otherwise
@@ -55,12 +55,12 @@ class FileReader:
         :return: An iterator providing parsed lines.
         """
 
-        if self._has_header:
-            self._header_line = next(iterator)
-
         # size = 0
 
         reader = csv.reader(iterator, delimiter=self._delimiter)
+
+        if self._has_header and self._header_line is None:
+            self._header_line = next(reader)
 
         for i, row in enumerate(reader, 1):
             if (limit > 0) and (i > limit):
