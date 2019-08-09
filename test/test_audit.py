@@ -19,7 +19,7 @@ class Test_Audit(unittest.TestCase):
         self._audit = Audit(self._database)
 
     def tearDown(self):
-        self._audit.drop_collection()
+        self._client.drop_database("TEST_AUDIT")
 
     # @unittest.skip
     def test_get_current_batch_id(self):

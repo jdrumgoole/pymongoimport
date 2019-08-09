@@ -9,6 +9,7 @@ from typing import Dict
 from datetime import datetime
 
 import pymongo
+import dateutil
 
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.filewriter import FileWriter
@@ -93,13 +94,14 @@ class Test(unittest.TestCase):
         self.assertEqual(self._col.count_documents({}) - start_count, 300)
 
     def test_generate_field_filename(self):
-        fc = FieldFile.generate_field_file(f('data/inventory.csv'), ext="xx")
-        self.assertEqual(fc.field_filename, f("data/inventory.xx"))
-        self.assertTrue("Inventory Item" in fc.fields())
-        self.assertTrue("Amount" in fc.fields())
-        self.assertTrue("Last Order", fc.fields())
-        self.assertEqual(len(fc.fields()), 3)
-        os.unlink(fc.field_filename)
+        gfc = FieldFile.generate_field_file(f('data/inventory.csv'), ext="xx")
+        self.assertEqual(gfc.field_filename, f("data/inventory.xx"))
+        rfc = FieldFile(gfc.field_filename)
+        self.assertTrue("Inventory Item" in rfc.fields())
+        self.assertTrue("Amount" in rfc.fields())
+        self.assertTrue("Last Order", rfc.fields())
+        self.assertEqual(len(rfc.fields()), 3)
+        os.unlink(gfc.field_filename)
 
         fc = FieldFile.generate_field_file(f('data/inventory.csv'))
         self.assertEqual(fc.field_filename, f("data/inventory.tff"))
@@ -128,25 +130,29 @@ class Test(unittest.TestCase):
         fc = FieldFile(fc.field_filename)
 
     def test_reader(self):
-        fc = FieldFile.generate_field_file(f("data/inventory.csv"))
+        fc = FieldFile.generate_field_file(f("data/inventory.csv"), f("data/inventory_test.tff"))
         ff = FieldFile(fc.field_filename)
         reader = FileReader(f("data/inventory.csv"), has_header=True)
-        for row in reader.read_file():
+        parser = CSVParser(ff)
+        for i, row in enumerate(reader.read_file(), 1):
+            doc = parser.parse_csv_line(row,i)
             for field in ff.fields():
-                self.assertTrue(field in row)
+                self.assertTrue(field in doc, f"'{field}'")
 
         os.unlink(fc.field_filename)
 
         ff = FieldFile(f("data/uk_property_prices.tff"))
         reader = FileReader(f("data/uk_property_prices.csv"), has_header=True)
 
-        for row in reader.read_file():
+        parser = CSVParser(ff)
+        for i, row in enumerate(reader.read_file(),i):
+            doc = parser.parse_csv_line(row,i)
             for field in ff.fields():
                 if field == "txn":  # converted to _id field
                     continue
-                self.assertTrue(field in row, f"{field} not present")
-                self.assertTrue(type(row["Price"]) == int)
-                self.assertTrue(type(row["Date of Transfer"]) == datetime)
+                self.assertTrue(field in doc, f"{field} not present")
+                self.assertTrue(type(doc["Price"]) == int)
+                self.assertTrue(type(doc["Date of Transfer"]) == datetime)
 
     def test_generate_fieldfile(self):
         fc = FieldFile.generate_field_file(f("data/inventory.csv"), ext="testff")
@@ -167,27 +173,15 @@ class Test(unittest.TestCase):
         config = FieldFile(f("data/inventory_dates.tff"))
         parser = CSVParser(config, locator=False)  # screws up comparison later if locator is true
         reader = FileReader(f("data/inventory.csv"), has_header=True)
-        raw_reader = FileReader(f("data/inventory.csv"), has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader=reader, parser=parser)
         docs_written = writer.write()
         line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
         self.assertEqual(self._col.count_documents({}), docs_written)
-        c = Converter()
-        fields = config.fields()
-        result_doc: Dict[str, object] = {}
-        for row, raw_row in zip(reader.read_file(), raw_reader.read_file()):
-            # print( row )
-            for i, field in enumerate(fields):
-                result_doc[field] = c.convert(config.type_value(field), raw_row[i])  # remember we type convert fields
 
-            self.assertEqual(result_doc, row)
-
-        db_doc = self._col.find_one(row)
-        del db_doc["_id"]
-        self.assertTrue(db_doc)
-        self.assertEqual(db_doc, row)
+        nuts_doc = self._col.find_one({"Last Order": dateutil.parser.parse("29-Feb-2016")})
+        self.assertTrue(nuts_doc)
 
     def testFieldDict(self):
         d = FieldFile(f("data/testresults.tff")).field_dict

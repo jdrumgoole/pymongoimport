@@ -46,9 +46,7 @@ class FileReader:
                      iterator: Iterator[List[str]],
                      limit: int = 0) -> Iterator[List[str]]:
         """
-        Iterate rows in a presumed CSV file. If the parser object passed
-        in by the constructor is not None then parse each line into a doc. Otherwise
-        just return the raw line.
+        Iterate rows in a presumed CSV file.
 
         :param iterator: Read from this iterator
         :param limit: Only read up to limit lines (0 for all lines)
@@ -68,7 +66,13 @@ class FileReader:
             else:
                 yield row
 
-    def read_file(self,limit :int = 0) -> Iterator[List[str]]:
+    def __iter__(self):
+        return self
+
+    def __next__(self, limit:int = 0):
+        yield from self.read_file(limit)
+
+    def read_file(self,limit:int = 0) -> Iterator[List[str]]:
         if self._name.startswith("http"):
             yield from self.read_url_file(limit=limit)
         else:

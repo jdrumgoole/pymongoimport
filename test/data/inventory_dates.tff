@@ -2,5 +2,5 @@
 type="str"
 ["Amount"]
 type="int"
-[" Last Order"]
+["Last Order"]
 type="date"

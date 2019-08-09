@@ -52,6 +52,7 @@ class Audit(object):
 
         self._auditCollection = self._database[collection]
         self._open_batch_count = 0
+        self._auditCollection.create_index("batchID")
 
     def collection(self):
         return self._auditCollection

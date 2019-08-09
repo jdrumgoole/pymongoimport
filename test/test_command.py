@@ -25,8 +25,7 @@ class Test(unittest.TestCase):
         self._collection.insert_one({"hello": "world"})
 
     def tearDown(self):
-        # self._client.drop_database( "TEST_CMD")
-        pass
+        self._client.drop_database( "TEST_CMD")
 
     def test_Drop_Command(self):
         self._audit = Audit(database=self._client["TEST_AUDIT"])
@@ -64,7 +63,7 @@ class Test(unittest.TestCase):
         cmd = ImportCommand(audit=self._audit,
                             id=batch_id,
                             collection=collection,
-                            field_filename=f("data/10k.t<<ff"),
+                            field_filename=f("data/10k.tff"),
                             delimiter="|",
                             has_header=False,
                             onerror="warn",

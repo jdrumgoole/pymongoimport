@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
         self._dir = os.path.dirname(os.path.realpath(__file__))
 
     def tearDown(self):
-        pass  # self._client.drop_database(self._db)
+        self._client.drop_database(self._db)
 
     def test_data_format(self):
 

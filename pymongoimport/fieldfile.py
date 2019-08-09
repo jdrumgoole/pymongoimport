@@ -114,21 +114,22 @@ class FieldFile(object):
                                  "than first line: {len(column_names)} < {len(column_values)}")
         else:
             for i, (key, value)  in enumerate(zip(header_line, first_line)):
-                name=value.strip()
-                if name == "":
-                    name = f"blank-{i}"
+                value=value.strip()
+                if value == "":
+                    value = f"blank-{i}"
                 # print( i )
 
-                if name.startswith('"'):  # strip out quotes if they exist
-                    name = name.strip('"')
-                if name.startswith("'"):
-                    name = name.strip("'")
-                name = name.replace('$', '_')  # not valid keys for mongodb
-                name = name.replace('.', '_')  # not valid keys for mongodb
+                if value.startswith('"'):  # strip out quotes if they exist
+                    value = value.strip('"')
+                if value.startswith("'"):
+                    value = value.strip("'")
+                key = key.replace('$', '_')  # not valid keys for mongodb
+                key = key.replace('.', '_')  # not valid keys for mongodb
                 t = Converter.guess_type(value)
+                key = key.strip() # remove any white space inside quotes
                 toml_dict[key] = {}
                 toml_dict[key]["type"] = t
-                toml_dict[key]["name"] = name
+                toml_dict[key]["name"] = key
                 # ff_file.write(f"[{name}]\n")
                 # ff_file.write(f"type={t}\n")
                 # ff_file.write(f"name={name}")

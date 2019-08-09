@@ -48,7 +48,7 @@ class TestHTTPImport(unittest.TestCase):
                             limit=10,
                             has_header=True)
         count = 0
-        for doc in reader.read_file():
+        for doc in reader.read_file(limit=10):
             count = count + 1
 
         self.assertEqual(count, 10)
@@ -74,11 +74,14 @@ class TestHTTPImport(unittest.TestCase):
 
             ff_file = FieldFile.generate_field_file(url,
                                                     delimiter=",",
-                                                    ff_filename="Demographic_Statistics_By_Zip_Code.tff")
+                                                    ff_filename=f("data/Demographic_Statistics_By_Zip_Code.tff"))
 
             self.assertTrue("JURISDICTION NAME" in ff_file.fields(), ff_file.fields())
             self.assertEqual(len(ff_file.fields()), 46)
             self.assertTrue("PERCENT PUBLIC ASSISTANCE TOTAL" in ff_file.fields())
+
+            os.unlink(f("data/Demographic_Statistics_By_Zip_Code.tff"))
+
         else:
             print("Warning:No internet: Skipping test for generating field files from URLs")
 
@@ -86,11 +89,10 @@ class TestHTTPImport(unittest.TestCase):
         if check_internet():
             csv_parser = CSVParser(self._ff)
             reader = FileReader("https://data.cityofnewyork.us/api/views/biws-g3hs/rows.csv?accessType=DOWNLOAD&bom=true&format=true&delimiter=%3B",
-                                csv_parser,
                                 has_header=True,
                                 delimiter=';')
 
-            writer = FileWriter(self._collection, reader)
+            writer = FileWriter(self._collection, reader, csv_parser)
             before_doc_count = self._collection.count_documents({})
             after_doc_count = writer.write(1000)
             self.assertEqual(after_doc_count - before_doc_count, 1000)
