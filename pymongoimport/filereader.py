@@ -82,10 +82,18 @@ class FileReader:
     def read_remote_by_line(url: str) -> Iterator[List[str]]:
         with requests.get(url, stream=True) as r:
             r.raise_for_status()
-            for line in r.iter_lines():
-                if line:
-                    decoded_line = line.decode(FileReader.UTF_ENCODING)
-                    yield decoded_line
+            residue=None
+            for chunk in r.iter_content(FileReader.URL_CHUNK_SIZE, decode_unicode=True):
+                if chunk:
+                    for line in chunk.splitlines(keepends=True):
+                        if residue:
+                            line = residue + line
+                            residue=None
+                        if line[-1:] == "\n" or line[-1:] == "\r":
+                            yield line
+                        else:
+                            residue = line
+            assert residue is None
 
     def read_url_file(self, limit: int = 0) -> Iterator[List[str]]:
         yield from self.iterate_rows(FileReader.read_remote_by_line(self._name),
