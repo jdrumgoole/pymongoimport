@@ -66,18 +66,18 @@ class Drop_Command(Command):
 
 class GenerateFieldfileCommand(Command):
 
-    def __init__(self, audit=None, id=None,delimiter=","):
+    def __init__(self, audit=None, field_filename=None, id=None,delimiter=","):
         super().__init__(audit, id)
         self._name = "generate"
         self._log = logging.getLogger(__name__)
-        self._field_filename = None
+        self._field_filename = field_filename
         self._delimiter = delimiter
 
     def field_filename(self):
         return self._field_filename
 
     def execute(self, arg):
-        ff = FieldFile.generate_field_file(arg)
+        ff = FieldFile.generate_field_file(csv_filename=arg, ff_filename=self._field_filename)
         self._field_filename = ff.field_filename
         return self._field_filename
 

@@ -17,6 +17,7 @@ from multiprocessing import Process
 import logging
 
 import pymongo
+from requests import exceptions
 
 from pymongoimport.argparser import add_standard_args
 from pymongoimport.audit import Audit
@@ -184,7 +185,7 @@ def pymongoimport_main(input_args=None):
     if args.genfieldfile:
         args.has_header = True
         log.info('Forcing has_header true for --genfieldfile')
-        cmd = GenerateFieldfileCommand(delimiter=args.delimiter)
+        cmd = GenerateFieldfileCommand(field_filename=args.fieldfile, delimiter=args.delimiter)
         for i in args.filenames:
             cmd.run(i)
 
@@ -235,10 +236,13 @@ def pymongoimport_main(input_args=None):
             process = Importer(audit, batch_ID, args)
 
             for i in args.filenames:
-                if os.path.isfile(i):
+                try:
                     process.run(i)
-                else:
-                    log.warning("No such file:'{}' ignoring".format(i))
+                except OSError as e:
+                    log.error(f"{e}")
+                except exceptions.HTTPError as e:
+                    log.error(f"{e}")
+
 
             if args.audit:
                 audit.end_batch(batch_ID)
