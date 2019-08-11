@@ -30,7 +30,7 @@ def add_standard_args(parser):
                         help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument('--drop', default=False, action="store_true",
                         help="drop collection before loading [default: %(default)s]")
-    parser.add_argument('--ordered', default=False, action="store_true", help="forced ordered inserts")
+    #parser.add_argument('--ordered', default=False, action="store_true", help="forced ordered inserts")
     parser.add_argument("--fieldfile", default=None, type=str, help="Field and type mappings")
     parser.add_argument("--delimiter", default=",", type=str,
                         help="The delimiter string used to split fields [default: %(default)s]")
@@ -43,8 +43,6 @@ def add_standard_args(parser):
                         help="Use header line for column names [default: %(default)s]")
     parser.add_argument('--genfieldfile', default=False, action="store_true",
                         help="Generate a fieldfile from the data file, we set has_header to true [default: %(default)s]")
-    parser.add_argument('--id', default="mongodb", choices=["mongodb", "gen"],
-                        help="Autogenerate ID default [ %(default)s ]")
     parser.add_argument('--onerror', type=ErrorResponse,  default=ErrorResponse.Warn, choices=list(ErrorResponse),
                         help="What to do when we hit an error parsing a csv file [default: %(default)s]")
     parser.add_argument('--logname', default=Logger.LOGGER_NAME,

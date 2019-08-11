@@ -22,7 +22,10 @@ with new CSV files there is the ``--genfieldfile`` option which will automatical
 generate a typed field file for the specified input file. Even with a field file ``pymongoimport``
 will fall back to the string type if type conversion fails on any input column.
 
-``pymongoimport`` allows you to use the ``--addlocator``
+``pymongoimport`` allows you to use the ``--addlocator`` argument to automatically
+include a locator in each document that is inserted. This locator will
+indicate the file name and the line number of the line that was the input
+for the generated document.
 
 pymongoimport also has the ability to restart  an upload from the
 point where is finished. This restart capability is recorded in an

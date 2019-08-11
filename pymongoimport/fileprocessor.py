@@ -20,12 +20,11 @@ class InputFileException(Exception):
 
 class FileProcessor(object):
 
-    def __init__(self, collection, delimiter, onerror="warn", gen_id="mongodb", batchsize=500, limit=0):
+    def __init__(self, collection, delimiter, onerror="warn", batchsize=500, limit=0):
         self._logger = logging.getLogger(Logger.LOGGER_NAME)
         self._collection = collection
         self._delimiter = delimiter
         self._onerror = onerror
-        self._gen_id = gen_id
         self._batchsize = batchsize
         self._files = []
         self._limit = limit
