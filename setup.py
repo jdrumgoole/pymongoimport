@@ -3,12 +3,13 @@
 from setuptools import setup, find_packages
 import os
 import glob
+from pymongoimport.version import __VERSION__
 
 pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongoimport",
-    version="1.5.6",
+    version=__VERSION__,
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",

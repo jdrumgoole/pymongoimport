@@ -3,16 +3,16 @@
 pymongoimport
 ===============================
 
-pymongoimport is a python program that will import data into a MongoDB
-database (default 'test' ) and a MongoDB collection (default 'test' ).
+``pymongoimport`` is a python program that will import data into a MongoDB
+database (default ``PYIM`` ) and a MongoDB collection (default ``imported`` ).
 
-Why do we have pymongoimport?
+Why do we have ``pymongoimport``?
 
 MongoDB already has a perfectly good (and much faster)
 `mongoimport <https://docs.mongodb.com/manual/reference/program/mongoimport/>`_ program
 that is available for free in the standard MongoDB `community download <https://www.mongodb.com/download-center#community>`_.
 
-Well pymonogodbimport does a few things that mongoimport doesn't do (yet). For people
+Well ``pymonogoimport`` does a few things that ``mongoimport`` doesn't do (yet). For people
 with new CSV files there is the ``--genfieldfile`` option which will automatically
 generate a typed field file for the specified input file. Even with a field file pymongoimport
 will fall back to the string type if type conversion fails on any

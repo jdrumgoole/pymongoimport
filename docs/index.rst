@@ -7,21 +7,22 @@
 pymongoimport - Import csv files into MongoDB
 ========================================================
 
-pymongoimport is a collection of python programs for importing CSV
+``pymongoimport`` is a collection of python programs for importing CSV
 files into `MongoDB <http://mongodb.com/>`_.
 
  
-Why do we have pymongo_import?
+Why do we have ``pymongoimport``?
 
 MongoDB already has a perfectly good (and much faster)
 `mongoimport <https://docs.mongodb.com/manual/reference/program/mongoimport/>`_ program 
 that is available for free in the standard MongoDB `community download <https://www.mongodb.com/download-center#community>`_.
 
-Well pymonogoimport does a few things that mongoimport doesn't do (yet). For people
+Well ``pymonogoimport`` does a few things that ``mongoimport`` doesn't do (yet). For people
 with new CSV files there is the ``--genfieldfile`` option which will automatically
-generate a typed field file for the specified input file. Even with a field file pymongo_import
-will fall back to the string type if type conversion fails on any
-input column.
+generate a typed field file for the specified input file. Even with a field file ``pymongoimport``
+will fall back to the string type if type conversion fails on any input column.
+
+``pymongoimport`` allows you to use the ``--addlocator``
 
 pymongoimport also has the ability to restart  an upload from the
 point where is finished. This restart capability is recorded in an

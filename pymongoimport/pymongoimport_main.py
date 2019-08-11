@@ -79,7 +79,7 @@ class Importer(object):
         database = client[self._database_name]
         self._collection = database[self._collection_name]
 
-        self._log.info(f"Write concern : {self._write_concern}" )
+        self._log.info(f"Write concern : {self._write_concern}")
         self._log.info(f"journal       : {self._journal}")
         self._log.info(f"fsync         : {self._fsync}")
         self._log.info(f"has header    : {self._has_header}")

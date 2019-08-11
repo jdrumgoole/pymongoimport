@@ -15,7 +15,7 @@ import pymongo
 from pymongo import errors
 
 from pymongoimport.filereader import FileReader
-from pymongoimport.csvparser import CSVParser
+from pymongoimport.linetodictparser import LineToDictParser
 def seconds_to_duration(seconds):
     delta = timedelta(seconds=seconds)
     d = datetime(1, 1, 1) + delta
@@ -27,7 +27,7 @@ class FileWriter(object):
     def __init__(self,
                  doc_collection : pymongo.collection,
                  reader: FileReader,
-                 parser: CSVParser,
+                 parser: LineToDictParser,
                  audit_collection : pymongo.collection =None,
                  batch_size: int = 1000):
 
@@ -84,7 +84,7 @@ class FileWriter(object):
         insert_list = []
         try:
             for i, line in enumerate(self._reader.read_file(limit=limit),1):
-                insert_list.append(self._parser.parse_csv_line(line, i))
+                insert_list.append(self._parser.parse_list(line, i))
                 if len(insert_list) % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)

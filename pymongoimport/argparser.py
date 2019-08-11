@@ -5,7 +5,7 @@ Created on 12 Aug 2017
 """
 from pymongoimport.logger import Logger
 from pymongoimport.version import __VERSION__
-from pymongoimport.csvparser import ErrorResponse
+from pymongoimport.linetodictparser import ErrorResponse
 from pymongoimport.doctimestamp import DocTimeStamp
 from configargparse import ArgumentParser
 
@@ -24,8 +24,8 @@ def add_standard_args(parser):
     parser.add_argument('--locator', default=False, action="store_true",
                         help="add a locator field consisting of filename and \
                         input record line to each doc [default: %(default)s]")
-    parser.add_argument('--batchsize', type=int, default=500,
-                        help='set batch os_size for bulk inserts [default: %(default)s]')
+    parser.add_argument('--batchsize', type=int, default=1000,
+                        help='set mongodb batch size for bulk inserts [default: %(default)s]')
     parser.add_argument('--restart', default=False, action="store_true",
                         help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument('--drop', default=False, action="store_true",
@@ -63,9 +63,10 @@ def add_standard_args(parser):
     parser.add_argument('--info', default="", help="Info string to be added to audit record")
     # parser.add_argument('--tag', default=False, action="store_true", help="Tag each record with filename:<record number>")
 
-    parser.add_argument("--fieldinfo", default="", type=str,
-                        help="Report field info from a field file [default: %(default)s]")
-    parser.add_argument("--limit", default=0, type=int, help="Limit the number of records we read in")
+    parser.add_argument("--fieldinfo", default=None, type=str,
+                        help="Report field info from a named field file e.g. --fieldinfo <filename>.tff")
+    parser.add_argument("--limit", default=0, type=int,
+                        help="Limit the number of records we read in (0 means read all records) [default: %(default)s]")
     #
     # Also try ISO-8859-1
     #
