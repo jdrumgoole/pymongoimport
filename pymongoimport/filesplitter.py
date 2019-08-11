@@ -132,7 +132,7 @@ class LineCounter(object):
     #     self._reader = Block_Reader(self._blocksize)
     #     # disable universal newlines with "newline=''" so that sizes are correct when
     #     # reading DOS and Linux files.
-    #     for i in self._reader.read_file(filename):
+    #     for i in self._reader.readline(filename):
     #         block = i
     #         self._line_count = self._line_count + str(block).count("\n")
     #         self._file_size = self._file_size + len(i)

@@ -105,7 +105,6 @@ class ImportCommand(Command):
         self._collection = collection
         self._name = "import"
         self._field_filename = field_filename
-        self._fieldinfo = None
         self._delimiter = delimiter
         self._has_header = has_header
         self._parser = None
@@ -116,9 +115,6 @@ class ImportCommand(Command):
         self._locator = locator
         self._timestamp = timestamp
         self._total_written = 0
-        self._config = None
-
-        self._log.info("Auditing output")
 
     def pre_execute(self, arg):
         # print(f"'{arg}'")

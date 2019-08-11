@@ -69,10 +69,10 @@ class FileReader:
     def __iter__(self):
         return self
 
-    def __next__(self, limit:int = 0):
-        yield from self.read_file(limit)
+    def __next__(self):
+        yield from self.readline(limit=0)
 
-    def read_file(self,limit:int = 0) -> Iterator[List[str]]:
+    def readline(self, limit:int = 0) -> Iterator[List[str]]:
         if self._name.startswith("http"):
             yield from self.read_url_file(limit=limit)
         else:

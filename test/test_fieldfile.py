@@ -134,7 +134,7 @@ class Test(unittest.TestCase):
         ff = FieldFile(fc.field_filename)
         reader = FileReader(f("data/inventory.csv"), has_header=True)
         parser = LineToDictParser(ff)
-        for i, row in enumerate(reader.read_file(), 1):
+        for i, row in enumerate(reader.readline(), 1):
             doc = parser.parse_list(row, i)
             for field in ff.fields():
                 self.assertTrue(field in doc, f"'{field}'")
@@ -145,7 +145,7 @@ class Test(unittest.TestCase):
         reader = FileReader(f("data/uk_property_prices.csv"), has_header=True)
 
         parser = LineToDictParser(ff)
-        for i, row in enumerate(reader.read_file(),i):
+        for i, row in enumerate(reader.readline(), i):
             doc = parser.parse_list(row, i)
             for field in ff.fields():
                 if field == "txn":  # converted to _id field

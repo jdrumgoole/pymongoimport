@@ -83,7 +83,7 @@ class FileWriter(object):
         total_read = 0
         insert_list = []
         try:
-            for i, line in enumerate(self._reader.read_file(limit=limit),1):
+            for i, line in enumerate(self._reader.readline(limit=limit), 1):
                 insert_list.append(self._parser.parse_list(line, i))
                 if len(insert_list) % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)

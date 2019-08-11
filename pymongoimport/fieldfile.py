@@ -104,7 +104,7 @@ class FieldFile(object):
                 ff_filename = os.path.splitext(csv_filename)[0] + ext
 
         reader = FileReader(csv_filename, has_header=True, delimiter=delimiter)
-        first_line = next(reader.read_file())
+        first_line = next(reader.readline())
         header_line = reader.header_line
         if len(first_line) > len(header_line):
             raise ValueError(f"Header line has more columns than first "

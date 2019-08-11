@@ -48,7 +48,7 @@ class TestHTTPImport(unittest.TestCase):
                             limit=10,
                             has_header=True)
         count = 0
-        for doc in reader.read_file(limit=10):
+        for doc in reader.readline(limit=10):
             count = count + 1
 
         self.assertEqual(count, 10)
