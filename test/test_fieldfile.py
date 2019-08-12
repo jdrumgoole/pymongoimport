@@ -127,7 +127,11 @@ class Test(unittest.TestCase):
 
         fc = FieldFile.generate_field_file(f('data/2018_Yellow_Taxi_Trip_Data_1000.csv'),
                                            delimiter=";")
-        fc = FieldFile(fc.field_filename)
+        fc_new = FieldFile(fc.field_filename)
+
+        self.assertEqual(fc.fields(), fc_new.fields())
+
+        os.unlink(fc.field_filename)
 
     def test_reader(self):
         fc = FieldFile.generate_field_file(f("data/inventory.csv"), f("data/inventory_test.tff"))
