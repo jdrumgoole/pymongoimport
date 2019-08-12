@@ -93,3 +93,6 @@ ENV/
 .project
 .pydevproject
 .idea/
+
+#Mac
+.DS_Store
