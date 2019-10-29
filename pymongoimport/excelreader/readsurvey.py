@@ -10,6 +10,8 @@ question_doc = {
     "row" : 12,
     "column": 3,
     "Gender": {
+        "row" : 12,
+        "column": 4,
         "Male" : 1015,
         "Female": 501,
     },
@@ -24,7 +26,7 @@ question_doc = {
     },
     "Country" : {
         "row": 12,
-        "Column": 11,
+        "column": 11,
         "Germany" : 513,
         "UK" : 502,
         "France" : 501,
@@ -58,7 +60,6 @@ question_doc = {
     "IT Decision Maker vs Developers" : {
         "IT Decision Maker" :756,
         "Developers": 760
-
     }
 }
 
@@ -80,6 +81,50 @@ def get_responses(ws:worksheet, row=16):
         row = row + 2
     return responses
 
+
+def get_last_column(template:dict):
+    column = 0
+    for key, value in template.items():
+        if type(value) is dict:
+            column = column + get_last_column(value)
+        elif key == "row":
+            continue
+        elif key == "column":
+            continue
+        else:
+            column = column + 1
+    return column
+
+
+def get_response_values(ws:worksheet, template:dict, responses, init_row:int, init_column:int):
+    """
+
+    :param ws: Worksheet
+    :param template: example doc we expect to get, gives us the keys
+    :param responses: the document of values we are constructing
+    :param init_row: Which row to start reading responses from
+    :param init_column: Which column to start reading responses fromn
+    :return:
+    """
+    response_values = {}
+    width = get_last_column(template)
+
+    max_response_rows = (len(responses) * 2) + init_row - 1
+    for col in ws.iter_cols(min_row=init_row, max_row=max_response_rows, min_col=init_column, max_col=init_column+width-1, values_only=True):
+        for k,v in template.items():
+            response_values[k] = None
+            if k == "row" or k == "column":
+                continue
+            elif type(v) is dict:
+                for nk in v.keys():
+                    if k == "row" or k == "column":
+                        continue
+                    else:
+                        response_values[k][nk] = col[template[k][nk]["column"]]
+            else:
+                response_values[k] = col[template["column"]]
+    print(response_values)
+
 def get_questions(ws:worksheet, row=16):
 
     question = {}
@@ -93,8 +138,11 @@ def get_questions(ws:worksheet, row=16):
             responses = get_responses(ws, row=row)
             question["responses"]=responses
             pprint.pprint(question)
+
             # k=input("Next..")
         row = row + len(responses) * 2 + 1
+
+    get_response_values(ws=ws, template=question_doc, responses=responses, init_row=16, init_column=3)
 
 for name in wb.sheetnames:
     ws = wb[name]
