@@ -1,17 +1,46 @@
 from enum import Enum
 import pprint
+from urllib import parse
+import argparse
 
+import pymongo
 from openpyxl import load_workbook,workbook, worksheet
 
 
 MainGroups={
- #   "Total" :3,
-    "Gender": (4,2),
-    "Age": (6,5),
-    "Country": (11,3),
-    "Industry Sector": (14, 13),
-    "Company Size": (27,7),
-    "IT Decision Maker vs Developers": (34,2)
+    "Total" : {"Total" :3},
+    "Gender": { "Male" : 4,
+                "Female" : 5,},
+    "Age": {"16-24" : 6,
+            "25-34" : 7,
+            "35-44" : 8,
+            "45-54" : 9,
+            "55+" : 10,},
+    "Country": {"Germany" : 11,
+                "UK" : 12,
+                "France" : 13,},
+    "Industry Sector": {"Architecture Engineering & Building" : 14,
+                        "Arts & Culture" : 15,
+                        "Education" : 16,
+                        "Finance" : 17,
+                        "Healthcare" : 18,
+                        "HR" : 19,
+                        "IT & Telecoms": 20,
+                        "Legal" : 21,
+                        "Manufacturing & Utilities" : 22,
+                        "Retail, Catering & Leisure" : 23,
+                        "Sales, Media & Marketing" : 24,
+                        "Travel & Transport" : 25,
+                        "Other" : 26,},
+    "Company Size": {"Sole Trader": 27,
+                     "1 - 9 employees": 28,
+                     "10 - 49 employees": 29,
+                     "50 - 99 employees": 30,
+                     "100 - 249 employees": 31,
+                     "250 - 500 employees": 32,
+                     "More than 500 employees" : 33,},
+    "IT Decision Maker vs Developers": {"IT Decision Maker" : 34,
+                                        "Developers": 35,}
 }
 
 SubGroups = {
@@ -153,32 +182,41 @@ class CensusSheet:
         top={self.question_id : self.question,
              "statement" : self.statement}
 
-        for top_group, position in MainGroups.items():
+        for k in MainGroups.keys():
             field_count = 0
-            for field_name,column in SubGroups.items():
-                rdoc= self.response_doc(top_group, field_name, column)
-                field_count = field_count + 1
-                if field_count > position[1]:
-                    break
+            for field_name,column in MainGroups[k].items():
+
+                for response, value in zip(self.responses, self.column_values(column)):
+                    top[field_name] = { k: {"response": response,
+                                            "value": value }}
+
+                #top[field_name] = dict(list(zip(self.responses, self.column_values(column))))
+
+        return top
 
     @property
     def question_count(self):
         return len(self._responses)
 
 
-
-
-
-
-
 if __name__ == "__main__":
 
     cb = CensusWorkbook("emeadevit.xlsx")
-    print(cb.sheet_names)
     q3 = CensusSheet(cb.workbook, "Q3")
-    print(q3.question)
-    print(q3.responses)
 
-    q =CensusSheet(cb.workbook, f"Q1")
-    for doc in q.response_docs():
-        pprint.pprint(doc)
+    parser = argparse.ArgumentParser()
+
+
+    parser.add_argument("--host", default="mongodb://localhost:2017")
+
+    args = parser.parse_args()
+
+    client = pymongo.MongoClient(args.host)
+
+    db = client["census"]
+    collection = db["survey"]
+    for sheet_name in cb.sheet_names:
+        cs = CensusSheet(cb.workbook, sheet_name)
+        print(f"Processing sheet: {sheet_name}")
+        collection.insert_one(cs.response_docs())
+
