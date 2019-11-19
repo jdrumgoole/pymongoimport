@@ -62,6 +62,7 @@ if __name__ == "__main__":
     parser.add_argument("--collection", default="survey")
     parser.add_argument("--lowerright")
     parser.add_argument("--drop", action="store_true", default=False)
+    parser.add_argument("--colorder", action="store_true", default=False)
     args = parser.parse_args()
 
     client = pymongo.MongoClient(args.host)
@@ -95,6 +96,10 @@ if __name__ == "__main__":
 
     col_index = {}
     count = 1
+
+    #
+    # Get the column keys
+    print("Column keys")
     for row in sh.sheet.iter_rows(min_row=args.minrow,
                                    min_col=args.mincol,
                                    max_row=args.minrow,
@@ -113,6 +118,10 @@ if __name__ == "__main__":
 
     row_index = {}
     count = 1
+
+    #
+    # get the row keys
+    print("Row keys")
     for row in sh.sheet.iter_rows(min_row=args.minrow,
                                   min_col=args.mincol,
                                   max_row=args.maxrow,
@@ -123,11 +132,12 @@ if __name__ == "__main__":
                 continue
             else:
                 row_index[count] = v
-                print(f"{count}. {v}")
+                print(f"x{count}. {v}", end=" ")
                 count = count + 1
-
+    print("")
     row_count = 1
     col_count = 1
+
     for row in sh.sheet.iter_rows(min_row=args.minrow+1,
                                   min_col=args.mincol+1,
                                   max_row=args.maxrow,
@@ -135,58 +145,26 @@ if __name__ == "__main__":
                                   values_only=True):
 
         col_count=1
-        for v in row:
-            doc = {}
-            result={}
-            #doc[col_index[col_count]]=v
-            #result[row_index[row_count]] = doc
-            doc["title"] = row_index[row_count]
-            doc[col_index[col_count]] = v
-            print(doc)
-            collection.insert_one(doc)
+        if args.colorder:
+            for v in row:
+                doc = {}
+                doc["title"] = col_index[col_count]
+                doc[row_index[row_count]] = v
+                col_count = col_count + 1
+            row_count = row_count + 1
+        else:
+            for v in row:
+                doc = {}
+                doc["title"] = row_index[row_count]
+                doc[col_index[col_count]] = v
+                row_count = row_count + 1
             col_count = col_count + 1
 
-        row_count = row_count + 1
-
-        # if count == 1 :
-        #     for x_axis,i in enumerate(row, 1):
-        #         if i == 1 :
-        #             continue
-        #         else:
-        #             doc[x_axis]= {}
-        #
-        # else:
-        #     for y_axis,i in enumerate(row, 1):
-        #         if i == 1:
-        #             doc[x_axis][y_axis ] = {}
-        #         else:
-        #             doc[x_axis][y_axis]
+        print(doc)
+        collection.insert_one(doc)
 
 
 
 
 
-
-    # for row_count, row in enumerate(range, 1):
-    #     for column_count, column in enumerate(row, 1):
-    #         if row_count == 1 and column_count == 1 :
-    #             continue
-    #         elif row_count == 1:
-    #             doc[column.value] = {}
-    #         elif row_count > 1:
-    #             doc
-    #         doc[row.value][column.value] = {}
-    #         if row_count > 1 and column_count > 1 :
-    #             print(f" {row_count},{column_count} {row.value} ", end="")
-    #
-    #
-    #
-    #     print("")
-
-    # db = client["census"]
-    # collection = db["survey"]
-    # for sheet_name in cb.sheet_names:
-    #     cs = CensusSheet(cb.workbook, sheet_name)
-    #     print(f"Processing sheet: {sheet_name}")
-    #     collection.insert_one(cs.response_docs())
 
