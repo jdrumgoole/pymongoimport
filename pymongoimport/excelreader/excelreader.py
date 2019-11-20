@@ -77,6 +77,9 @@ if __name__ == "__main__":
     if args.excelfile:
         if os.path.isfile(args.excelfile):
             cb = ExcelWorkbook(args.excelfile)
+        else:
+            print(f"{args.excelfile} is not a file")
+            sys.exit(1)
     else:
         print(f'--excelfile is not specified')
         sys.exit(1)
