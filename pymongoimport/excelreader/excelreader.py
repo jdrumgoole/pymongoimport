@@ -1,9 +1,45 @@
 import argparse
 import os
 import sys
+from typing import List
 
 import pymongo
 from openpyxl import load_workbook,workbook, worksheet
+
+class Array2d:
+
+    def __init__(self, tuples:List):
+        self._array = []
+
+        compare = None
+        for i,t in enumerate(tuples):
+            self._array.append(t)
+            if compare is None:
+                compare = t
+            elif len(compare) != len(t) :
+                raise ValueError("List of tuples to ctor are not uniform (lengths differ")
+
+    def xy(self,  x, y):
+        return self.array[y][x]
+
+    def row_first(self):
+        for row in self._array:
+            for col in row:
+                yield col
+
+    def col_first(self):
+        for x in range(len(self._array)):
+            for y in range(len(self._array[0])):
+                yield self._array[y][x]
+
+    def __repr__(self):
+        s="[\n"
+        for row in self._array:
+            for col in row:
+                s = f"{s} {col:5},"
+            s = f"{s}\n"
+        s=f"{s}]\n"
+        return s
 
 class ExcelWorkbook:
 
@@ -62,6 +98,7 @@ if __name__ == "__main__":
     parser.add_argument("--collection", default="survey")
     parser.add_argument("--lowerright")
     parser.add_argument("--drop", action="store_true", default=False)
+    parser.add_argument("--colorder", action="store_true", default=False)
     args = parser.parse_args()
 
     client = pymongo.MongoClient(args.host)
@@ -98,6 +135,10 @@ if __name__ == "__main__":
 
     col_index = {}
     count = 1
+
+    #
+    # Get the column keys
+    print("Row keys")
     for row in sh.sheet.iter_rows(min_row=args.minrow,
                                    min_col=args.mincol,
                                    max_row=args.minrow,
@@ -110,12 +151,16 @@ if __name__ == "__main__":
             else:
 
                 col_index[count] = v
-                print(f"{count}. {v}")
+                print(f"{count}. {v}", end=" ")
                 count = count + 1
-
+        print("")
 
     row_index = {}
     count = 1
+
+    #
+    # get the row keys
+    print("Column keys")
     for row in sh.sheet.iter_rows(min_row=args.minrow,
                                   min_col=args.mincol,
                                   max_row=args.maxrow,
@@ -128,68 +173,80 @@ if __name__ == "__main__":
                 row_index[count] = v
                 print(f"{count}. {v}")
                 count = count + 1
-
+    print("")
     row_count = 1
     col_count = 1
+
+    doc_count = 0
+
+    array2d = []
+    index = 1
     for row in sh.sheet.iter_rows(min_row=args.minrow+1,
                                   min_col=args.mincol+1,
                                   max_row=args.maxrow,
                                   max_col=args.maxcol,
                                   values_only=True):
+        array2d.append(row)
 
-        col_count=1
-        for v in row:
+    for i in array2d:
+        print(i)
+
+    print(array2d[0][0])
+    y = len(array2d)
+    x= len(array2d[0])
+    print(f"x={x} y={y}")
+    print(f"x=3,y=2 {array2d[2][3]}")
+    a2d = Array2d(array2d)
+    print(a2d)
+    for i in a2d.row_first():
+        print(f"{i:5}", end=" ")
+    print("")
+
+    for i in a2d.col_first():
+        print(f"{i:5}", end=" ")
+    print("")
+
+
+    if args.colorder:
+        for v in a2d.col_first():
             doc = {}
-            result={}
-            #doc[col_index[col_count]]=v
-            #result[row_index[row_count]] = doc
-            doc["title"] = row_index[row_count]
-            doc[col_index[col_count]] = v
-            print(doc)
-            collection.insert_one(doc)
+            doc_count = doc_count + 1
+            doc["title"] = col_index[col_count]
             col_count = col_count + 1
+            row_count = 1
+            for v in row:
+                doc[row_index[row_count]] = v
+                row_count = row_count + 1
+                #print(f"colorder {doc}")
+    for row in sh.sheet.iter_rows(min_row=args.minrow+1,
+                                  min_col=args.mincol+1,
+                                  max_row=args.maxrow,
+                                  max_col=args.maxcol,
+                                  values_only=True):
+        doc={}
+        doc_count = doc_count + 1
+        if args.colorder:
+            doc["title"] = col_index[col_count]
+            col_count = col_count + 1
+            row_count = 1
+            for v in row:
+                doc[row_index[row_count]] = v
+                row_count = row_count + 1
+                #print(f"colorder {doc}")
+        else:
+            doc["title"] = row_index[row_count]
+            row_count = row_count + 1
+            col_count = 1
+            for v in row:
+                doc[col_index[col_count]] = v
+                col_count = col_count + 1
 
-        row_count = row_count + 1
 
-        # if count == 1 :
-        #     for x_axis,i in enumerate(row, 1):
-        #         if i == 1 :
-        #             continue
-        #         else:
-        #             doc[x_axis]= {}
-        #
-        # else:
-        #     for y_axis,i in enumerate(row, 1):
-        #         if i == 1:
-        #             doc[x_axis][y_axis ] = {}
-        #         else:
-        #             doc[x_axis][y_axis]
+        print(f"{doc_count} {doc}")
+        collection.insert_one(doc)
 
 
 
 
 
-
-    # for row_count, row in enumerate(range, 1):
-    #     for column_count, column in enumerate(row, 1):
-    #         if row_count == 1 and column_count == 1 :
-    #             continue
-    #         elif row_count == 1:
-    #             doc[column.value] = {}
-    #         elif row_count > 1:
-    #             doc
-    #         doc[row.value][column.value] = {}
-    #         if row_count > 1 and column_count > 1 :
-    #             print(f" {row_count},{column_count} {row.value} ", end="")
-    #
-    #
-    #
-    #     print("")
-
-    # db = client["census"]
-    # collection = db["survey"]
-    # for sheet_name in cb.sheet_names:
-    #     cs = CensusSheet(cb.workbook, sheet_name)
-    #     print(f"Processing sheet: {sheet_name}")
-    #     collection.insert_one(cs.response_docs())
 
