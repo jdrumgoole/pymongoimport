@@ -22,6 +22,12 @@ class Array2d:
     def xy(self,  x, y):
         return self.array[y][x]
 
+    def len_x(self):
+        return len(self._array[0])
+
+    def len_y(self):
+        return len(self._array)
+
     def row_first(self):
         for row in self._array:
             for col in row:
@@ -31,6 +37,18 @@ class Array2d:
         for x in range(len(self._array)):
             for y in range(len(self._array[0])):
                 yield self._array[y][x]
+
+    def row_order(self):
+        for row in self._array:
+            yield row
+
+    def col_order(self):
+
+        for x in range(len(self._array[0])):
+            col = []
+            for y in range(len(self._array)):
+                col.append(self._array[y][x])
+            yield col
 
     def __repr__(self):
         s="[\n"
@@ -188,62 +206,87 @@ if __name__ == "__main__":
                                   values_only=True):
         array2d.append(row)
 
-    for i in array2d:
-        print(i)
 
-    print(array2d[0][0])
-    y = len(array2d)
-    x= len(array2d[0])
-    print(f"x={x} y={y}")
-    print(f"x=3,y=2 {array2d[2][3]}")
+
+    # print(array2d[0][0])
+    # y = len(array2d)
+    # x= len(array2d[0])
+    # print(f"x={x} y={y}")
+    # print(f"x=3,y=2 {array2d[2][3]}")
     a2d = Array2d(array2d)
-    print(a2d)
-    for i in a2d.row_first():
-        print(f"{i:5}", end=" ")
-    print("")
+    # print(a2d)
+    # print("row_order")
+    # for i in a2d.row_order():
+    #     print(i)
+    #
+    # print("col_order")
+    # for i in a2d.col_order():
+    #     print(i)
+    #
+    # for i in a2d.row_first():
+    #     print(f"{i:5}", end=" ")
+    # print("")
+    #
+    # for i in a2d.col_first():
+    #     print(f"{i:5}", end=" ")
+    # print("")
 
-    for i in a2d.col_first():
-        print(f"{i:5}", end=" ")
-    print("")
 
-
+    row_count = 1
+    col_count = 1
     if args.colorder:
-        for v in a2d.col_first():
+        for col in a2d.col_order():
             doc = {}
             doc_count = doc_count + 1
             doc["title"] = col_index[col_count]
             col_count = col_count + 1
             row_count = 1
-            for v in row:
+            for v in col:
                 doc[row_index[row_count]] = v
                 row_count = row_count + 1
                 #print(f"colorder {doc}")
-    for row in sh.sheet.iter_rows(min_row=args.minrow+1,
-                                  min_col=args.mincol+1,
-                                  max_row=args.maxrow,
-                                  max_col=args.maxcol,
-                                  values_only=True):
-        doc={}
-        doc_count = doc_count + 1
-        if args.colorder:
-            doc["title"] = col_index[col_count]
-            col_count = col_count + 1
-            row_count = 1
-            for v in row:
-                doc[row_index[row_count]] = v
-                row_count = row_count + 1
-                #print(f"colorder {doc}")
-        else:
+            print(f"{doc_count} {doc}")
+            collection.insert_one(doc)
+    else:
+        for row in a2d.row_order():
+            doc = {}
+            doc_count = doc_count + 1
             doc["title"] = row_index[row_count]
             row_count = row_count + 1
             col_count = 1
             for v in row:
                 doc[col_index[col_count]] = v
                 col_count = col_count + 1
+            print(f"{doc_count} {doc}")
+            collection.insert_one(doc)
 
 
-        print(f"{doc_count} {doc}")
-        collection.insert_one(doc)
+    # for row in sh.sheet.iter_rows(min_row=args.minrow+1,
+    #                               min_col=args.mincol+1,
+    #                               max_row=args.maxrow,
+    #                               max_col=args.maxcol,
+    #                               values_only=True):
+    #     doc={}
+    #     doc_count = doc_count + 1
+    #     if args.colorder:
+    #         doc["title"] = col_index[col_count]
+    #         col_count = col_count + 1
+    #         row_count = 1
+    #         for v in row:
+    #             doc[row_index[row_count]] = v
+    #             row_count = row_count + 1
+    #             #print(f"colorder {doc}")
+    #     else:
+    #         doc["title"] = row_index[row_count]
+    #         row_count = row_count + 1
+    #         col_count = 1
+    #         for v in row:
+    #             doc[col_index[col_count]] = v
+    #             col_count = col_count + 1
+    #
+    #
+    #     print(f"{doc_count} {doc}")
+    #     collection.insert_one(doc)
 
 
 
