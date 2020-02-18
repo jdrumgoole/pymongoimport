@@ -5,6 +5,7 @@ type="str"
 type="int"
 ["Date of Transfer"]
 type="date"
+format="%Y-%m-%d %H:%M"
 ["Postcode"]
 type="str"
 ["Property Type"]

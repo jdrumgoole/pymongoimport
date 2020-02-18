@@ -22,6 +22,7 @@ configargparse = "*"
 configargparser = "*"
 sphinx-rtd-theme = "*"
 openpyxl = "*"
+coverage = "*"
 
 [requires]
 python_version = "3.7"

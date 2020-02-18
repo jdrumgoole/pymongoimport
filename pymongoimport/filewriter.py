@@ -96,8 +96,7 @@ class FileWriter(object):
                     time_start = time_now
                     insert_list = []
                     self._logger.info(
-                            f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, \
-                            total docs:{total_written:>10}")
+                            f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
 
         except UnicodeDecodeError as exp:
             if self._logger:
