@@ -54,7 +54,7 @@ class Importer(object):
     def setup_log_handlers(self):
         self._log = Logger(self._args.logname, self._args.loglevel).log()
 
-        # Logger.add_file_handler(args.logname)
+        Logger.add_file_handler(self._args.logname)
 
         if not self._args.silent:
             Logger.add_stream_handler(self._args.logname)
@@ -62,9 +62,6 @@ class Importer(object):
     def run(self, filename):
         if not self._log:
             self._log = Logger(self._args.logname, self._args.loglevel).log()
-
-        if not self._args.silent:
-            Logger.add_stream_handler(self._args.logname)
 
         self._log.info("Started pymongoimport")
 

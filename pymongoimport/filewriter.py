@@ -17,9 +17,13 @@ from pymongo import errors
 from pymongoimport.filereader import FileReader
 from pymongoimport.linetodictparser import LineToDictParser
 def seconds_to_duration(seconds):
+    result=""
     delta = timedelta(seconds=seconds)
     d = datetime(1, 1, 1) + delta
-    return "%02d:%02d:%02d:%02d" % (d.day - 1, d.hour, d.minute, d.second)
+    if d.day - 1 > 0 :
+        result =f"{d.day -1} day(s)"
+    result = result + "%02d:%02d:%02d" % (d.hour, d.minute, d.second)
+    return result
 
 
 class FileWriter(object):
@@ -67,7 +71,7 @@ class FileWriter(object):
         line_count = 0
         if skip_count > 0:
             # print( "Skipping")
-            dummy = f.readline()  # skicaount may be bigger than the number of lines i  the file
+            dummy = f.readline()  # skipcount may be bigger than the number of lines i  the file
             while dummy:
                 line_count = line_count + 1
                 if line_count == skip_count:
@@ -83,6 +87,7 @@ class FileWriter(object):
         total_read = 0
         insert_list = []
         try:
+            interval_timer = time_start
             for i, line in enumerate(self._reader.readline(limit=limit), 1):
                 insert_list.append(self._parser.parse_list(line, i))
                 if len(insert_list) % self._batch_size == 0:
@@ -91,9 +96,9 @@ class FileWriter(object):
                     inserted_this_quantum = inserted_this_quantum + len(results.inserted_ids)
 
                     time_now = time.time()
-                    elapsed = time_now - time_start
+                    elapsed = time_now - interval_timer
                     docs_per_second = len(insert_list) / elapsed
-                    time_start = time_now
+                    interval_timer = time_now
                     insert_list = []
                     self._logger.info(
                             f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
@@ -113,6 +118,8 @@ class FileWriter(object):
             except errors.BulkWriteError as e:
                 self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
 
-        finish = time.time()
-        self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - time_start))
+        time_finish = time.time()
+        #self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - time_start))
+        self._logger.info(f"Total elapsed time to upload '{self._reader.name}' : {seconds_to_duration(time_finish - time_start)}")
+
         return total_written
