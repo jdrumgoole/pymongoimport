@@ -78,7 +78,7 @@ class Test(unittest.TestCase):
         reader = FileReader(f('data/mot_test_set_small.csv'), has_header=False, delimiter="|")
         self.assertTrue(type(reader.name) == str)
         bw = FileWriter(self._col, reader=reader, parser=parser)
-        total = bw.write()
+        total, elapsed = bw.write()
         lines = LineCounter(f('data/mot_test_set_small.csv')).line_count
         inserted_count = self._col.count_documents({}) - start_count
         self.assertEqual(inserted_count, total)
@@ -166,7 +166,7 @@ class Test(unittest.TestCase):
         reader = FileReader(f("data/inventory.csv"), has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader=reader, parser=parser)
-        write_count = writer.write()
+        write_count, elapsed = writer.write()
         line_count = LineCounter(f("data/inventory.csv")).line_count
         new_inserted_count = self._col.count_documents({}) - start_count
         self.assertEqual(new_inserted_count, write_count)  # header must be subtracted
@@ -179,7 +179,7 @@ class Test(unittest.TestCase):
         reader = FileReader(f("data/inventory.csv"), has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader=reader, parser=parser)
-        docs_written = writer.write()
+        docs_written, elapsed = writer.write()
         line_count = LineCounter(f("data/inventory.csv")).line_count
         self.assertEqual(self._col.count_documents({}) - start_count, line_count - 1)  # header must be subtracted
         self.assertEqual(self._col.count_documents({}), docs_written)

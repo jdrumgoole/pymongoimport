@@ -6,7 +6,7 @@ Created on 23 Jul 2017
 
 """
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import os
 import logging
 import stat
@@ -16,14 +16,7 @@ from pymongo import errors
 
 from pymongoimport.filereader import FileReader
 from pymongoimport.linetodictparser import LineToDictParser
-def seconds_to_duration(seconds):
-    result=""
-    delta = timedelta(seconds=seconds)
-    d = datetime(1, 1, 1) + delta
-    if d.day - 1 > 0 :
-        result =f"{d.day -1} day(s)"
-    result = result + "%02d:%02d:%02d" % (d.hour, d.minute, d.second)
-    return result
+
 
 
 class FileWriter(object):
@@ -120,6 +113,6 @@ class FileWriter(object):
 
         time_finish = time.time()
         #self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - time_start))
-        self._logger.info(f"Total elapsed time to upload '{self._reader.name}' : {seconds_to_duration(time_finish - time_start)}")
+        #self._logger.info(f"Total elapsed time to upload '{self._reader.name}' : {seconds_to_duration(time_finish - time_start)}")
 
-        return total_written
+        return total_written, time_finish - time_start

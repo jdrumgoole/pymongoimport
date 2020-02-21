@@ -7,6 +7,7 @@ Author: joe@joedrumgoole.com
 """
 import os
 import logging
+from datetime import datetime, timedelta
 
 import pymongo
 
@@ -17,6 +18,15 @@ from pymongoimport.linetodictparser import ErrorResponse
 from pymongoimport.filereader import FileReader
 from pymongoimport.doctimestamp import DocTimeStamp
 
+
+def seconds_to_duration(seconds):
+    result=""
+    delta = timedelta(seconds=seconds)
+    d = datetime(1, 1, 1) + delta
+    if d.day - 1 > 0 :
+        result =f"{d.day -1} day(s)"
+    result = result + "%02d:%02d:%02d" % (d.hour, d.minute, d.second)
+    return result
 
 class Command:
 
@@ -115,6 +125,7 @@ class ImportCommand(Command):
         self._locator = locator
         self._timestamp = timestamp
         self._total_written = 0
+        self._elapsed_time = 0
 
     def pre_execute(self, arg):
         # print(f"'{arg}'")
@@ -143,7 +154,7 @@ class ImportCommand(Command):
 
     def execute(self, arg):
 
-        self._total_written = self._writer.write()
+        self._total_written, self._elapsed_time = self._writer.write()
 
         return self._total_written
 
@@ -159,5 +170,6 @@ class ImportCommand(Command):
         if self._audit:
             self._audit.add_command(self._id, self.name(), {"filename": arg})
 
-        if self._log:
-            self._log.info("imported file: '%s'", arg)
+        self._log.info(f"imported file: '{arg}'")
+        self._log.info(f"Total elapsed time to upload '{arg}' : {seconds_to_duration(self._elapsed_time)}")
+

@@ -94,7 +94,7 @@ class TestHTTPImport(unittest.TestCase):
 
             writer = FileWriter(self._collection, reader, csv_parser)
             before_doc_count = self._collection.count_documents({})
-            after_doc_count = writer.write(1000)
+            after_doc_count, elapsed = writer.write(1000)
             self.assertEqual(after_doc_count - before_doc_count, 1000)
         else:
             print("Warning:No internet: test_http_import() skipped")
