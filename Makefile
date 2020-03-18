@@ -16,10 +16,10 @@ python_bin:
 	python -c "import os;print(os.environ.get('USERNAME'))"
 	which python
 
-prod_build:clean dist test
+prod_build:clean clean dist test
 	twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u jdrumgoole
 
-test_build:
+test_build: clean dist test
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u jdrumgoole
 
 #
@@ -48,7 +48,10 @@ nose:
 	nosetests
 
 dist:
-	python setup.py sdist
+	python setup.py bdist
+
+test_install:
+	pip install --extra-index-url=https://pypi.org/ -i https://test.pypi.org/simple/ pymongoimport
 
 clean:
 	rm -rf dist bdist sdist

@@ -8,7 +8,7 @@ pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongoimport",
-    version="1.5.8b1",
+    version="1.5.8b5",
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",
@@ -48,8 +48,14 @@ by the parser.
                       "nose",
                       "dnspython",
                       "dateutils",
+                      "configargparse",
                       "toml"],
-
+    setup_requires=["pymongo",
+                      "nose",
+                      "dnspython",
+                      "dateutils",
+                      "configargparse",
+                      "toml"],
     packages=find_packages(),
 
     data_files=[("test", glob.glob("data/*.ff") +
