@@ -8,7 +8,7 @@ pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongoimport",
-    version="1.5.8b5",
+    version="1.5.9b0",
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",
@@ -27,6 +27,12 @@ by the parser.
     keywords="MongoDB import csv tsv",
     url="https://github.com/jdrumgoole/pymongoimport",
 
+    install_requires=['pymongo',
+                      "nose",
+                      "dnspython",
+                      "dateutils",
+                      "configargparse",
+                      "toml"],
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -44,18 +50,13 @@ by the parser.
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 3.7'],
 
-    install_requires=["pymongo",
-                      "nose",
-                      "dnspython",
-                      "dateutils",
-                      "configargparse",
-                      "toml"],
-    setup_requires=["pymongo",
-                      "nose",
-                      "dnspython",
-                      "dateutils",
-                      "configargparse",
-                      "toml"],
+    # setup_requires=["pymongo",
+    #                   "nose",
+    #                   "dnspython",
+    #                   "dateutils",
+    #                   "configargparse",
+    #                   "toml"],
+
     packages=find_packages(),
 
     data_files=[("test", glob.glob("data/*.ff") +

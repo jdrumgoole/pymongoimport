@@ -19,7 +19,7 @@ python_bin:
 prod_build:clean clean dist test
 	twine upload --repository-url https://upload.pypi.org/legacy/ dist/* -u jdrumgoole
 
-test_build: clean dist test
+test_build: clean sdist test
 	twine upload --repository-url https://test.pypi.org/legacy/ dist/* -u jdrumgoole
 
 #
@@ -49,6 +49,12 @@ nose:
 
 dist:
 	python setup.py bdist
+
+sdist:
+	python setup.py sdist
+
+bdist_wheel:
+	python setup.py bdist_wheel
 
 test_install:
 	pip install --extra-index-url=https://pypi.org/ -i https://test.pypi.org/simple/ pymongoimport

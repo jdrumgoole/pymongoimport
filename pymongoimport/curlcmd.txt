@@ -1,0 +1,1 @@
+curl -H "Content-Type: application/json" -d '{"this":"that"}' https://eu-west-1.aws.webhooks.mongodb-stitch.com/api/client/v2.0/app/iceberg-wctfh/service/iceberg/incoming_webhook/upload?secret=iceberg
