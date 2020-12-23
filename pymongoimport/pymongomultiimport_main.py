@@ -14,7 +14,7 @@ import pymongo
 from pymongoimport.argparser import add_standard_args
 from pymongoimport.audit import Audit
 from pymongoimport.logger import Logger
-from pymongoimport.pymongoimport_main import SubProcess
+from pymongoimport.pymongoimport_main import Importer
 
 
 def strip_arg(arg_list, remove_arg, has_trailing=False):
@@ -112,13 +112,7 @@ def multi_import(*argv):
     log.info("Poolsize:{}".format(poolsize))
 
     log.info("Fork using:'%s'", args.forkmethod)
-    if args.forkmethod == "fork":
-        subprocess = SubProcess(log=log, audit=audit, batch_ID=batch_ID, args=args)
-    elif args.forkmethod == "spawn":
-        subprocess = SubProcess(log=None, audit=audit, batch_ID=batch_ID, args=args)
-    elif args.forkmethod == "forkserver":
-        subprocess = SubProcess(log=None, audit=audit, batch_ID=batch_ID, args=args)
-
+    subprocess = Importer(audit=audit, batch_ID=batch_ID, args=args)
     subprocess.setup_log_handlers()
 
     try:
@@ -138,7 +132,7 @@ def multi_import(*argv):
                     proc.start()
                     proc_list.append(proc)
                 else:
-                    log.warning("No such file: '{i}' ignoring")
+                    log.warning(f"No such file: '{i}' ignoring")
 
             for proc in proc_list:
                 proc.join()

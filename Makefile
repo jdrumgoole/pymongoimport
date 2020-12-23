@@ -40,8 +40,7 @@ test_data:
 	(export PYTHONPATH=`pwd` && python pymongoimport/pymongomultiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null 2>&1)
 	(rm 100k.txt.* > /dev/null 2>&1)
 
-test_all: test_scripts
-	python setup.py test
+test_all: nose test_scripts
 
 nose:
 	which python

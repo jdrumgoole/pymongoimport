@@ -40,6 +40,7 @@ class Importer(object):
         self._audit = args.audit
         self._database_name = args.database
         self._collection_name = args.collection
+        self._collection = None
         self._field_filename = args.fieldfile
         self._has_header = args.hasheader
         self._delimiter = args.delimiter
@@ -49,7 +50,6 @@ class Importer(object):
         self._timestamp = args.addtimestamp
         self._locator = args.locator
         self._args = args
-
 
     def setup_log_handlers(self):
         self._log = Logger(self._args.logname, self._args.loglevel).log()
