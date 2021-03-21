@@ -108,10 +108,10 @@ class FieldFile(object):
         header_line = reader.header_line
         if len(first_line) > len(header_line):
             raise ValueError(f"Header line has more columns than first "
-                             "line: {len(column_names)} > {len(column_values)}")
+                             f"line: {len(column_names)} > {len(column_values)}")
         elif len(first_line) < len(header_line):
                 raise ValueError(f"Header line has less columns"
-                                 "than first line: {len(column_names)} < {len(column_values)}")
+                                 f"than first line: {len(column_names)} < {len(column_values)}")
         else:
             for i, (key, value)  in enumerate(zip(header_line, first_line)):
                 value=value.strip()
@@ -151,15 +151,15 @@ class FieldFile(object):
         toml_data = ""
 
         if not os.path.exists(filename):
-            raise OSError(f"No such TOML file: '{filename}'")
+            raise OSError(f"No such file: '{filename}'")
         with open(filename) as toml_file:
             for i in toml_file.readlines():
                 toml_data = toml_data + i
 
-        try :
+        try:
             toml_dict = toml.loads(toml_data)
         except toml.decoder.TomlDecodeError as e:
-            raise FieldFileException( f"Error: \'{e}\' in {filename}")
+            raise FieldFileException(f"Error: \'{e}\' in {filename}")
         # result = self._cfg.read(filename)
 
         if len(toml_data) == 0:
@@ -181,12 +181,12 @@ class FieldFile(object):
                         else:
                             raise ValueError(f"Duplicate _id field:{column_name} appears more than once as _id")
 
-            if not "name" in column_value.keys():
+            if "name" not in column_value.keys():
                 toml_dict[column_name]["name"] = column_name
             #
             # format is optional for datetime input fields. It is used if present.
             #
-            if not "format" in column_value.keys():
+            if "format" not in column_value.keys():
                 toml_dict[column_name]["format"] = None
 
         self._field_dict = toml_dict
