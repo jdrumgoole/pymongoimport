@@ -92,7 +92,7 @@ The TFF to convert the `longlat.csv` file will be:
   latitude: pickup_latitude
 ```
 
-`[location]` is a metafield know to the parser that indicates we are specifying a field that will
+`[$location]` is a metafield know to the parser that indicates we are specifying a field that will
 not be found as a column in the input CSV file. Instead this document will called by its name (it will
 default to `location` if name is not specified) and will specify a GeoJSON point.
 
