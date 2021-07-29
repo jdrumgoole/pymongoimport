@@ -46,7 +46,7 @@ python pymongoimport/pymongoimport_main.py test/data/dob.csv --hasheader
 This will generate the follow documents in the collection `imported` in
 the database `PYIM`:
 
-```json
+```json5
 { _id: ObjectId("61029dd9bcc4e7b1a1e90d41"),
   'Date Of Birth': 2000-01-02T00:00:00.000Z,
   'First Name': ' Peter',
