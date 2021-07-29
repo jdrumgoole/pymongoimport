@@ -76,7 +76,7 @@ We could covert the file but MongoDB would not be able to intepret it as a GeoSp
 MongoDB expects a [GeoJSON](https://docs.mongodb.com/manual/reference/geojson/) coordinate format.
 The format of a GeoJSON point is:
 
-```json
+```json5
 { type: "Point", coordinates: [ <longitude>, <latitude> ] }
 ```
 To convert to a GeoJSON point we must map the longtitude and latitude fields into this format.
@@ -85,7 +85,7 @@ To do this we must create a new TFF field type we will call `geo`.
 
 The TFF to convert the `longlat.csv` file will be:
 
-```json
+```json5
 [$location]
   name:pickup location
   longitude: pickup_longitude
@@ -98,7 +98,7 @@ default to `location` if name is not specified) and will specify a GeoJSON point
 
 Hence the output data will become:
 
-```json
+```json5
 { "type" : "Point", "coordinates" : [-73.987686157226562,40.724250793457031]}
 { "type" : "Point", "coordinates" : [-73.991569519042969,40.726932525634766]}
 { "type" : "Point", "coordinates" : [-73.981918334960938,40.783443450927734]}
