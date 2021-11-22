@@ -8,7 +8,7 @@ pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongoimport",
-    version="1.5.9b0",
+    version="1.6b0",
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",
