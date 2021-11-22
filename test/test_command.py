@@ -75,6 +75,27 @@ class Test(unittest.TestCase):
 
         self._audit.end_batch(batch_id)
 
+    def test_Import_Command_new(self):
+        self._audit = Audit(database=self._client["TEST_AUDIT"])
+        batch_id = self._audit.start_batch({"test": "test_batch"})
+        collection = self._database["import_test"]
+
+        start_size = collection.count_documents({})
+        size_test = LineCounter(f("data/test_date_data.csv")).line_count - 1
+        cmd = ImportCommand(audit=self._audit,
+                            id=batch_id,
+                            collection=collection,
+                            field_filename=f("data/10k.tff"),
+                            delimiter=",",
+                            has_header=True,
+                            onerror="warn",
+                            limit=0)
+
+        cmd.run(f("data/test_date_data.csv"))
+        new_size = collection.count_documents({})
+        self.assertEqual(size_test, new_size - start_size)
+
+        self._audit.end_batch(batch_id)
 
 if __name__ == "__main__":
     # import sys;sys.argv = ['', 'Test.test_FieldConfig']

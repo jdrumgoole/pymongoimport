@@ -33,11 +33,10 @@ test_scripts:
 	(export PYTHONPATH=`pwd` && python pymongoimport/splitfile.py -h > /dev/null 2>&1)
 
 test_data:
-	(export PYTHONPATH=`pwd` && python pymongoimport/splitfile.py --hasheader --autosplit 4 data/yellow_tripdata_2015-01-06-200k.csv > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongoimport/pymongo_multiimport_main.py --poolsize 2 yellow_tripdata_2015-01-06-200k.csv.[12] > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/pymongomultiimport_main.py --fieldfile data/yellow_tripdata.tff --poolsize 2  data/yellow_tripdata_2015-01-06-200k.csv.1 data/yellow_tripdata_2015-01-06-200k.csv.2  ) #> /dev/null 2>&1)
 	(rm yellow_tripdata_2015-01-06-200k.csv.*)
-	(export PYTHONPATH=`pwd` && python pymongoimport/splitfile.py --autosplit 4 data/100k.txt > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongoimport/pymongomultiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/splitfile.py --autosplit 4 data/100k.txt > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/pymongomultiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null 2>&1)
 	(rm 100k.txt.* > /dev/null 2>&1)
 
 test_all: nose test_scripts

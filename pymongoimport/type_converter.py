@@ -41,30 +41,35 @@ class Converter(object):
     def to_str(v):
         return str(v)
 
-    def to_datetime(self, v, format=None):
+    def to_datetime(self, v, format=None, line_number=0, line=""):
         if v == "NULL":
             return None
-        elif format is None:
+
+        if v == "":
+            return None
+
+        if format is None:
             return date_parse(v)  # much slower than strptime, avoid for large jobs
         else:
             try:
+                # print(f"v={v}")
+                # print(f"format={format}")
                 return datetime.datetime.strptime(v, format)
             except ValueError:
                 if self._log:
-                    self._log.warning("Using the slower date parse: for value '%s' as format '%s' has failed",
-                                      v, format)
+                    self._log.warning(f"Using the slower date parse: for value '{v}' as format '{format}' has failed at line: {line_number}. '{line}'")
                 return date_parse(v)
 
     @staticmethod
-    def to_timestamp(v):
+    def to_timestamp(v, line_number, line):
         return datetime.datetime.fromtimestamp(int(v))
 
     @staticmethod
     def to_timestamp_utc(v):
         return datetime.datetime.fromtimestamp(int(v), tz=timezone.utc)
 
-    def convert_time(self, t, v, f=None):
-        return self._converter[t](v, f)
+    def convert_time(self, t, v, f=None, line_number=0, line=""):
+        return self._converter[t](v, f, line_number, line)
 
     def convert(self, t, v):
         """
@@ -79,7 +84,7 @@ class Converter(object):
         return v
 
     @staticmethod
-    def guess_type(s:str)->str:
+    def guess_type(s: str) -> str:
         """
         Try and convert a string s to an object. Start with float, then try int
         and if that doesn't work return the string.

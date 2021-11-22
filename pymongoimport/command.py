@@ -107,7 +107,8 @@ class ImportCommand(Command):
                  locator=False,
                  timestamp: DocTimeStamp = DocTimeStamp.NO_TIMESTAMP,
                  audit:bool= None,
-                 id:object= None):
+                 id:object= None,
+                 batch_size=1000):
 
         super().__init__(audit, id)
 
@@ -123,6 +124,7 @@ class ImportCommand(Command):
         self._onerror = onerror
         self._limit = limit
         self._locator = locator
+        self._batch_size = batch_size
         self._timestamp = timestamp
         self._total_written = 0
         self._elapsed_time = 0
@@ -150,7 +152,7 @@ class ImportCommand(Command):
                                         locator=self._locator,
                                         timestamp=self._timestamp,
                                         onerror=self._onerror)
-        self._writer = FileWriter(self._collection,self._reader,self._parser)
+        self._writer = FileWriter(self._collection,self._reader,self._parser, batch_size=self._batch_size)
 
     def execute(self, arg):
 

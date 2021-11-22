@@ -50,6 +50,7 @@ class Importer(object):
         self._timestamp = args.addtimestamp
         self._locator = args.locator
         self._args = args
+        self._batch_size = args.batchsize
 
     def setup_log_handlers(self):
         self._log = Logger(self._args.logname, self._args.loglevel).log()
@@ -90,7 +91,8 @@ class Importer(object):
                             audit=self._audit,
                             locator=self._locator,
                             timestamp=self._timestamp,
-                            id=self._batch_ID)
+                            id=self._batch_ID,
+                            batch_size=self._batch_size)
 
         cmd.run(filename)
 

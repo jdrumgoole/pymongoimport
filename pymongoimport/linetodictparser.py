@@ -77,7 +77,7 @@ class LineToDictParser:
 
             if csv_line[i] is None:
 
-                msg = f"Value for field '{k}' at line {line_number} is 'None' which is not valid\n"
+                msg = f"Value for field '{k}' at line {line_number} is  '{csv_line[i]}' which is not valid\n"
                 # print(dictEntry)
                 msg = msg + f"\t\t\tline:{line_number}:'{csv_line}'"
                 if self._onerror == ErrorResponse.Fail:
@@ -101,7 +101,7 @@ class LineToDictParser:
                 type_field = self._field_file.type_value(k)
                 if type_field in ["date", "datetime"]:
                     fmt = self._field_file.format_value(k)
-                    v = self._converter.convert_time(type_field, csv_line[i], fmt)
+                    v = self._converter.convert_time(type_field, csv_line[i], fmt, line_number, ','.join(csv_line))
                 else:
                     v = self._converter.convert(type_field, csv_line[i])
 

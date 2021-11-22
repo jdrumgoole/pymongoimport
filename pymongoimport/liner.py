@@ -5,7 +5,6 @@ def write_file(file, count):
     for i in range(count):
         file.write(f"{i}\n")
 
-
 def make_line_file(count=1, doseol=False, filename="liner.txt"):
     if doseol:
         with open(filename, "w", newline="\r\n") as file:

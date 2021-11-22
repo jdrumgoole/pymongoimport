@@ -1,7 +1,7 @@
 import csv
 from datetime import datetime
 from typing import Iterator, List
-
+import _csv
 import requests
 
 
@@ -60,11 +60,15 @@ class FileReader:
         if self._has_header and self._header_line is None:
             self._header_line = next(reader)
 
-        for i, row in enumerate(reader, 1):
-            if (limit > 0) and (i > limit):
-                    break
-            else:
-                yield row
+        try:
+            for i, row in enumerate(reader, 1):
+                if (limit > 0) and (i > limit):
+                        break
+                else:
+                    yield row
+        except _csv.Error as e:
+            print(f"Exception: {e} at line {i}. {row}")
+            raise
 
     def __iter__(self):
         return self

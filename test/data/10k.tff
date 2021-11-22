@@ -4,6 +4,7 @@ type="int"
 type="int"
 ["test_date"]
 type="datetime"
+format="%Y-%m-%d"
 ["test_class_id"]
 type="int"
 ["test_type"]
@@ -26,3 +27,4 @@ type="str"
 type="int"
 ["first_use_date"]
 type="datetime"
+format="%Y-%m-%d"
