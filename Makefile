@@ -26,17 +26,17 @@ test_build: clean sdist test
 # Just test that these scripts run
 #
 test_scripts:
-	(export PYTHONPATH=`pwd` && python pymongoimport/pymongoimport_main.py -h > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongoimport/pymongoimport_main.py --delimiter '|' data/10k.txt > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongoimport/pymongomultiimport_main.py -h > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongoimport/pwc.py -h > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && python pymongoimport/splitfile.py -h > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && python pymongoimport/pymongoimport_main.py -h > /dev/null)
+	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/pymongoimport_main.py --delimiter '|' data/10k.txt > /dev/null)
+	(export PYTHONPATH=`pwd` && python pymongoimport/pymongomultiimport_main.py -h > /dev/null )
+	(export PYTHONPATH=`pwd` && python pymongoimport/pwc.py -h > /dev/null )
+	(export PYTHONPATH=`pwd` && python pymongoimport/splitfile.py -h > /dev/null )
 
 test_data:
 	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/pymongomultiimport_main.py --fieldfile data/yellow_tripdata.tff --poolsize 2  data/yellow_tripdata_2015-01-06-200k.csv.1 data/yellow_tripdata_2015-01-06-200k.csv.2  ) #> /dev/null 2>&1)
 	(rm yellow_tripdata_2015-01-06-200k.csv.*)
-	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/splitfile.py --autosplit 4 data/100k.txt > /dev/null 2>&1)
-	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/pymongomultiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null 2>&1)
+	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/splitfile.py --autosplit 4 data/100k.txt > /dev/null )
+	(export PYTHONPATH=`pwd` && cd test && python ../pymongoimport/pymongomultiimport_main.py --delimiter "|" --poolsize 2 100k.txt.[12] > /dev/null )
 	(rm 100k.txt.* > /dev/null 2>&1)
 
 test_all: nose test_scripts

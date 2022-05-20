@@ -21,6 +21,8 @@ configargparser = "*"
 sphinx-rtd-theme = "*"
 openpyxl = "*"
 coverage = "*"
+mtools = "*"
+psutil = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3"

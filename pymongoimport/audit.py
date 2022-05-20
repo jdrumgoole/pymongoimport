@@ -43,9 +43,9 @@ class Audit(object):
 
         self._lock = Lock()
 
-        if database:
+        if database is not None:
             self._database = database
-        elif client:
+        elif client is not None:
             self._database = client["AUDIT"]
         else:
             raise ValueError("Neither database nor client defined")
