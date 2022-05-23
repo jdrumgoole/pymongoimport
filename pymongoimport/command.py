@@ -13,8 +13,8 @@ import pymongo
 
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.filewriter import FileWriter
-from pymongoimport.linetodictparser import LineToDictParser
-from pymongoimport.linetodictparser import ErrorResponse
+from pymongoimport.csvlinetodictparser import CSVLineToDictParser
+from pymongoimport.csvlinetodictparser import ErrorResponse
 from pymongoimport.filereader import FileReader
 from pymongoimport.doctimestamp import DocTimeStamp
 
@@ -148,10 +148,10 @@ class ImportCommand(Command):
                                   limit=self._limit,
                                   has_header=self._has_header,
                                   delimiter=self._delimiter)
-        self._parser = LineToDictParser(self._fieldinfo,
-                                        locator=self._locator,
-                                        timestamp=self._timestamp,
-                                        onerror=self._onerror)
+        self._parser = CSVLineToDictParser(self._fieldinfo,
+                                           locator=self._locator,
+                                           timestamp=self._timestamp,
+                                           onerror=self._onerror)
         self._writer = FileWriter(self._collection,self._reader,self._parser, batch_size=self._batch_size)
 
     def execute(self, arg):

@@ -5,7 +5,7 @@ Created on 12 Aug 2017
 """
 from pymongoimport.logger import Logger
 from pymongoimport.version import __VERSION__
-from pymongoimport.linetodictparser import ErrorResponse
+from pymongoimport.csvlinetodictparser import ErrorResponse
 from pymongoimport.doctimestamp import DocTimeStamp
 from configargparse import ArgumentParser
 
@@ -17,8 +17,8 @@ def add_standard_args(parser):
     """
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
-    parser.add_argument('--database', default="PYIM", help='specify the database name [default: %(default)s]')
-    parser.add_argument('--collection', default="imported", help='specify the collection name [default: %(default)s]')
+    parser.add_argument('--database', default="PYIM", help='specify the database filename [default: %(default)s]')
+    parser.add_argument('--collection', default="imported", help='specify the collection filename [default: %(default)s]')
     parser.add_argument('--host', default="mongodb://localhost:27017/test",
                         help='mongodb URI. [default: %(default)s]')
     parser.add_argument('--locator', default=False, action="store_true",
@@ -36,7 +36,7 @@ def add_standard_args(parser):
                         help="The delimiter string used to split fields [default: %(default)s]")
     parser.add_argument("filenames", nargs="*", help='list of files')
     parser.add_argument("--filelist", default=None, help="Read files from an input file one per line")
-    parser.add_argument('--addfilename', default=False, action="store_true", help="Add file name field to every entry")
+    parser.add_argument('--addfilename', default=False, action="store_true", help="Add file filename field to every entry")
     parser.add_argument('--addtimestamp', default=DocTimeStamp.NO_TIMESTAMP, type=DocTimeStamp, choices=list(DocTimeStamp),
                         help="Add a timestamp to each doc, either generate per doc('doc'), or per batch {'batch') [default: %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",

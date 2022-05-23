@@ -4,7 +4,6 @@ from typing import Iterator, List
 import _csv
 import requests
 
-
 class FileReader:
     """
     Read CSV lines from a local file or a URL. Provide a generator that returns dicts of the
@@ -12,15 +11,15 @@ class FileReader:
     """
 
     UTF_ENCODING = "utf-8"
-    URL_CHUNK_SIZE = 8192
+    URL_CHUNK_SIZE = 1024 * 1024
 
     def __init__(self,
-                 name: str,
+                 filename: str,
                  has_header: bool = False,
                  delimiter: str = ",",
                  limit: int = 0):
 
-        self._name: str = name
+        self._name: str = filename
         self._limit = limit
         self._has_header = has_header
         self._header_line = None

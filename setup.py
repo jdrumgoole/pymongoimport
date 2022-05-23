@@ -4,11 +4,20 @@ from setuptools import setup, find_packages
 import os
 import glob
 
+VERSIONFILE="pymongoimport/_version.py"
+with open(VERSIONFILE, "rt") as vfile:
+    for line in vfile:
+        line = line.strip()
+        (lhs, equals, rhs) = line.partition("=")
+        if lhs.strip() == "__version__":
+            rhs = rhs.strip()
+            version_string = rhs.strip('"')
+
 pyfiles = [f for f in os.listdir(".") if f.endswith(".py")]
 
 setup(
     name="pymongoimport",
-    version="1.6b0",
+    version=version_string,
 
     author="Joe Drumgoole",
     author_email="joe@joedrumgoole.com",

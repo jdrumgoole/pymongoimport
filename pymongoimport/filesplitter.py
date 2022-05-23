@@ -17,7 +17,7 @@ the file may be split automatically into a number of pieces specified by as a pa
 **autosplit**. Autosplitting is achieved by by guessing the average line os_size by looking at
 the first ten lines and taking an average of those lines.
 
-The output files have the same name as the input file with a number appended ( .1, .2, .3 etc.).
+The output files have the same filename as the input file with a number appended ( .1, .2, .3 etc.).
 
 There is also a **count_lines** function to count the lines in a file.
 
@@ -119,30 +119,30 @@ class LineCounter(object):
 
         with open(count_filename, "r") as input_file:
             for count,line in enumerate(input_file, 1):
-                #print(f"{filename}:{line}:{self._line_count}")
+                #print(f"{filename}:{line}:{cls._line_count}")
                 pass
 
         self._line_count = count
         return os.path.getsize(filename), self._line_count
 
-    # def count_now(self, filename):
-    #     self._file_size = 0
-    #     self._line_count = 0
+    # def count_now(cls, filename):
+    #     cls._file_size = 0
+    #     cls._line_count = 0
     #     block = None
-    #     self._reader = Block_Reader(self._blocksize)
+    #     cls._reader = Block_Reader(cls._blocksize)
     #     # disable universal newlines with "newline=''" so that sizes are correct when
     #     # reading DOS and Linux files.
-    #     for i in self._reader.readline(filename):
+    #     for i in cls._reader.readline(filename):
     #         block = i
-    #         self._line_count = self._line_count + str(block).count("\n")
-    #         self._file_size = self._file_size + len(i)
+    #         cls._line_count = cls._line_count + str(block).count("\n")
+    #         cls._file_size = cls._file_size + len(i)
     #
     #     if block and block[-1:] != '\n':  # file doesn't end with a newline but its still a line
-    #         self._line_count = self._line_count + 1
+    #         cls._line_count = cls._line_count + 1
     #
-    #     # print( "getsize({}}, self._file_size: {}".format( os.path.getsize(filename), self._file_size))
-    #     assert (os.path.getsize(filename) == self._file_size)
-    #     return (self._file_size, self._line_count)
+    #     # print( "getsize({}}, cls._file_size: {}".format( os.path.getsize(filename), cls._file_size))
+    #     assert (os.path.getsize(filename) == cls._file_size)
+    #     return (cls._file_size, cls._line_count)
 
     @staticmethod
     def skipLines(f, skipCount):
@@ -188,7 +188,7 @@ class File_Splitter(object):
         self._header_line = ""  # Not none so len does something sensible when has_header is false
         if self._has_header:
             self._header_line = self.get_header(self._input_filename)
-        # self._data_lines_count = 0
+        # cls._data_lines_count = 0
         self._size_threshold = 1024 * 10
         self._split_size = None
         self._file_type = None
@@ -227,7 +227,7 @@ class File_Splitter(object):
     def new_file(self, filename, ext):
         basename = os.path.basename(filename)
         filename = f"{basename}.{ext}"
-        # self._files[filename] = 0
+        # cls._files[filename] = 0
         newfile = open(filename, "w")
         return (newfile, filename)
 
@@ -271,11 +271,11 @@ class File_Splitter(object):
         # :return:
         # """
         #
-        # if self._has_header:
-        #     if self._file_type == FileType.DOS:
-        #         adjustment = self._line_count + len(self._header_line)  # tryout
+        # if cls._has_header:
+        #     if cls._file_type == FileType.DOS:
+        #         adjustment = cls._line_count + len(cls._header_line)  # tryout
         #     else:
-        #         adjustment = len(self._header_line)
+        #         adjustment = len(cls._header_line)
         # else:
         #     adjustment = 0
 
@@ -284,8 +284,8 @@ class File_Splitter(object):
     def output_files(self):
         return list(self._files.keys())
 
-    # def data_lines_count(self):
-    #     return self._data_lines_count
+    # def data_lines_count(cls):
+    #     return cls._data_lines_count
 
     def splitfile(self, split_size:int =0)-> (str, int) :
         """
@@ -394,5 +394,5 @@ class File_Splitter(object):
                 self._split_size = 0
 
             # print("Splitting '%s' into at least %i pieces of os_size %i" % (
-            # self._input_filename, split_count + 1, self._split_size))
+            # cls._input_filename, split_count + 1, cls._split_size))
             yield from self.splitfile(self._split_size)

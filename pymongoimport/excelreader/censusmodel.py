@@ -105,11 +105,11 @@ class CensusWorkbook:
 
 class CensusSheet:
 
-    # def get_column_values(self, sheet,value_dict, column=2):
+    # def get_column_values(cls, sheet,value_dict, column=2):
     #     response_values = {}
     #     for k, index in enumerate(value_dict.keys(), 16):
     #         value_dict[k] = sheet.cell(row=index, column=column).value
-    #     for i in range(16, 16 + self.question_count() * 2, 2):
+    #     for i in range(16, 16 + cls.question_count() * 2, 2):
     #         response_values[(sheet.cell(row=i, column=column).value).values
     #     return response_values
 
@@ -120,7 +120,7 @@ class CensusSheet:
             self._sheet = self._workbook[self._question_id]
             self._responses = CensusSheet.parse_responses(self._sheet)
         else:
-            raise ValueError(f"Bad name for sheet {name}, must begin with 'Q'")
+            raise ValueError(f"Bad filename for sheet {name}, must begin with 'Q'")
 
     def sheet_name(self):
         return self._sheet.name
@@ -190,7 +190,7 @@ class CensusSheet:
                     top[field_name] = { k: {"response": response,
                                             "value": value }}
 
-                #top[field_name] = dict(list(zip(self.responses, self.column_values(column))))
+                #top[field_name] = dict(list(zip(cls.responses, cls.column_values(column))))
 
         return top
 

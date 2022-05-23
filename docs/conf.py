@@ -76,7 +76,7 @@ language = None
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-# The name of the Pygments (syntax highlighting) style to use.
+# The filename of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
@@ -119,7 +119,7 @@ html_static_path = ['_static']
 
 # -- Options for HTMLHelp output ------------------------------------------
 
-# Output file base name for HTML help builder.
+# Output file base filename for HTML help builder.
 htmlhelp_basename = 'pymongoimportdoc'
 
 
@@ -144,7 +144,7 @@ latex_elements = {
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
-# (source start file, target name, title,
+# (source start file, target filename, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'pymongoimport.tex', u'pymongoimport Documentation',
@@ -155,7 +155,7 @@ latex_documents = [
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
+# (source start file, filename, description, authors, manual section).
 man_pages = [
     (master_doc, 'pymongoimport', u'pymongoimport Documentation',
      [author], 1)
@@ -165,7 +165,7 @@ man_pages = [
 # -- Options for Texinfo output -------------------------------------------
 
 # Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
+# (source start file, target filename, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'pymongoimport', u'pymongoimport Documentation',

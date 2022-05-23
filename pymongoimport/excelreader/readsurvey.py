@@ -63,8 +63,8 @@ question_doc = {
     }
 }
 
-# for name in wb.sheetnames:
-#     ws = wb[name]
+# for filename in wb.sheetnames:
+#     ws = wb[filename]
 #     question = ws["A10"].value
 #     print(f"{question}")
 

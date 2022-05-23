@@ -61,7 +61,7 @@ class FileProcessor(object):
                 self._logger.info("Processing : %s", i)
                 #                 if field_filename :
                 #                     new_name = field_filename
-                #                     self._logger.info( "using field file: '%s'", new_name )
+                #                     cls._logger.info( "using field file: '%s'", new_name )
                 #                 else:
                 #                     new_name = os.path.splitext(os.path.basename( i ))[0] + ".ff"
                 lineCount = self.processOneFile(i, field_filename, hasheader, restart)

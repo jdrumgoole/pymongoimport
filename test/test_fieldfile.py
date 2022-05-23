@@ -17,7 +17,7 @@ from pymongoimport.filereader import FileReader
 from pymongoimport.filesplitter import LineCounter
 from pymongoimport.logger import Logger
 from pymongoimport.type_converter import Converter
-from pymongoimport.linetodictparser import LineToDictParser
+from pymongoimport.csvlinetodictparser import CSVLineToDictParser
 
 path_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -57,7 +57,7 @@ class Test(unittest.TestCase):
     def test_delimiter_no_header(self):
         start_count = self._col.count_documents({})
         fc = FieldFile(f("data/10k.tff"))
-        parser = LineToDictParser(fc)
+        parser = CSVLineToDictParser(fc)
         reader = FileReader(f("data/10k.txt"), has_header=False, delimiter="|")
         bw = FileWriter(self._col, reader=reader, parser=parser)
         bw.write()
@@ -65,7 +65,7 @@ class Test(unittest.TestCase):
 
     def test_fieldfile_nomatch(self):
         fc = FieldFile(f("data/AandE_Data_2011-04-10.tff"))
-        parser = LineToDictParser(fc)
+        parser = CSVLineToDictParser(fc)
         reader = FileReader(f('data/inventory.csv'), has_header=True)
         bw = FileWriter(self._col, reader=reader, parser=parser)
         with self.assertRaises(ValueError):
@@ -74,7 +74,7 @@ class Test(unittest.TestCase):
     def test_new_delimiter_and_timeformat_header(self):
         start_count = self._col.count_documents({})
         fc = FieldFile(f("data/mot.tff"))
-        parser = LineToDictParser(fc)
+        parser = CSVLineToDictParser(fc)
         reader = FileReader(f('data/mot_test_set_small.csv'), has_header=False, delimiter="|")
         self.assertTrue(type(reader.name) == str)
         bw = FileWriter(self._col, reader=reader, parser=parser)
@@ -87,7 +87,7 @@ class Test(unittest.TestCase):
     def test_delimiter_header(self):
         start_count = self._col.count_documents({})
         fc = FieldFile(f("data/AandE_Data_2011-04-10.tff"))
-        parser = LineToDictParser(fc)
+        parser = CSVLineToDictParser(fc)
         reader = FileReader(f('data/AandE_Data_2011-04-10.csv'), has_header=True)
         bw = FileWriter(self._col, reader=reader, parser=parser)
         bw.write()
@@ -137,9 +137,9 @@ class Test(unittest.TestCase):
         fc = FieldFile.generate_field_file(f("data/inventory.csv"), f("data/inventory_test.tff"))
         ff = FieldFile(fc.field_filename)
         reader = FileReader(f("data/inventory.csv"), has_header=True)
-        parser = LineToDictParser(ff)
+        parser = CSVLineToDictParser(ff)
         for i, row in enumerate(reader.readline(), 1):
-            doc = parser.parse_list(row, i)
+            doc = parser.parse_line(row, i)
             for field in ff.fields():
                 self.assertTrue(field in doc, f"'{field}'")
 
@@ -148,9 +148,9 @@ class Test(unittest.TestCase):
         ff = FieldFile(f("data/uk_property_prices.tff"))
         reader = FileReader(f("data/uk_property_prices.csv"), has_header=True)
 
-        parser = LineToDictParser(ff)
+        parser = CSVLineToDictParser(ff)
         for i, row in enumerate(reader.readline(), i):
-            doc = parser.parse_list(row, i)
+            doc = parser.parse_line(row, i)
             for field in ff.fields():
                 if field == "txn":  # converted to _id field
                     continue
@@ -162,7 +162,7 @@ class Test(unittest.TestCase):
         fc = FieldFile.generate_field_file(f("data/inventory.csv"), ext="testff")
         self.assertEqual(fc.field_filename, f("data/inventory.testff"), fc.field_filename)
         self.assertTrue(os.path.isfile(f("data/inventory.testff")), f("data/inventory.testff"))
-        parser = LineToDictParser(fc)
+        parser = CSVLineToDictParser(fc)
         reader = FileReader(f("data/inventory.csv"), has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader=reader, parser=parser)
@@ -175,7 +175,7 @@ class Test(unittest.TestCase):
 
     def test_date(self):
         config = FieldFile(f("data/inventory_dates.tff"))
-        parser = LineToDictParser(config, locator=False)  # screws up comparison later if locator is true
+        parser = CSVLineToDictParser(config, locator=False)  # screws up comparison later if locator is true
         reader = FileReader(f("data/inventory.csv"), has_header=True)
         start_count = self._col.count_documents({})
         writer = FileWriter(self._col, reader=reader, parser=parser)

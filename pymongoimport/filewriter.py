@@ -15,7 +15,7 @@ import pymongo
 from pymongo import errors
 
 from pymongoimport.filereader import FileReader
-from pymongoimport.linetodictparser import LineToDictParser
+from pymongoimport.csvlinetodictparser import CSVLineToDictParser
 
 
 
@@ -24,7 +24,7 @@ class FileWriter(object):
     def __init__(self,
                  doc_collection : pymongo.collection,
                  reader: FileReader,
-                 parser: LineToDictParser,
+                 parser: CSVLineToDictParser,
                  audit_collection : pymongo.collection =None,
                  batch_size: int = 1000):
 
@@ -82,7 +82,7 @@ class FileWriter(object):
         try:
             interval_timer = time_start
             for i, line in enumerate(self._reader.readline(limit=limit), 1):
-                insert_list.append(self._parser.parse_list(line, i))
+                insert_list.append(self._parser.parse_line(line, i))
                 if len(insert_list) % self._batch_size == 0:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)
@@ -112,7 +112,7 @@ class FileWriter(object):
                 self._logger.error(f"pymongo.errors.BulkWriteError: {e.details}")
 
         time_finish = time.time()
-        #self._logger.info("Total elapsed time to upload '%s' : %s", self._reader.name, seconds_to_duration(finish - time_start))
-        #self._logger.info(f"Total elapsed time to upload '{self._reader.name}' : {seconds_to_duration(time_finish - time_start)}")
+        #cls._logger.info("Total elapsed time to upload '%s' : %s", cls._reader.filename, seconds_to_duration(finish - time_start))
+        #cls._logger.info(f"Total elapsed time to upload '{cls._reader.filename}' : {seconds_to_duration(time_finish - time_start)}")
 
         return total_written, time_finish - time_start

@@ -23,6 +23,7 @@ openpyxl = "*"
 coverage = "*"
 mtools = "*"
 psutil = "*"
+build = "*"
 
 [requires]
 python_version = "3"

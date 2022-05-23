@@ -10,7 +10,7 @@ import socket
 class Canonical_Path(object):
     """
     Maintain a path as a canonical path. A canonical path is
-    a path which contains the host name an absolute path for a file.
+    a path which contains the host filename an absolute path for a file.
 
     """
 

@@ -42,7 +42,7 @@ Each file you intend to upload must have a field file defining the
 contents of the CSV file you plan to upload.
 
 If a ``--fieldfile`` arguement is not explicitly passed in the program will look for a
-fieldfile corresponding to the file name with the extension replaced
+fieldfile corresponding to the file filename with the extension replaced
 by `.ff`. So for an input file ``inventory.csv`` the corresponding field
 file would be ``inventory.ff``.
 
@@ -51,7 +51,7 @@ If there is no corresponding field file the upload will fail.
 Field files (normally expected to have the extension ``.ff``) define the names of columns and their
 types for the importer. A field file is formatted line a
 `python config file <https://docs.python.org/2/library/configparser.html>`_
-with each section defined by a name inside square brackets ( ``[`` and ``]`` ) and values for
+with each section defined by a filename inside square brackets ( ``[`` and ``]`` ) and values for
 the section defined by ``key=value`` pairs.
 
 Here is an example CSV file
@@ -145,13 +145,13 @@ Optional arguments
 
 **-h --help**      : Show the help message and exit.
 
-**--database** *name*
+**--database** *filename*
 
-Specify the *name* of the database to use  [default: *test*]
+Specify the *filename* of the database to use  [default: *test*]
 
-**--collection** *name*
+**--collection** *filename*
 
-Specify the *name* of the collection to use [default : *test*]
+Specify the *filename* of the collection to use [default : *test*]
 
 **--host** *mongodb URI*
 Specify the URI for connecting to the database. The full connection
@@ -176,10 +176,10 @@ For larger documents you may find a smaller *batchsize* is more efficient.
     *restartlog*. The restart log record format is
     ::
 
-        { "name"           : <name of file being uploaded>,
+        { "filename"           : <filename of file being uploaded>,
           "timestamp"      : <datetime that this doc was inserted>,
           "batch_size"     : <the batchsize specified by --batchsize>,
-          "count"          : <the total number of documents inserted from <name> file to <timestamp> >,
+          "count"          : <the total number of documents inserted from <filename> file to <timestamp> >,
           "doc_id"         : <The mongodb _id field for the last record inserted in this batch> }
 
     The restart log is keyed of the filename so each filename must be unique otherwise
@@ -203,7 +203,7 @@ For larger documents you may find a smaller *batchsize* is more efficient.
       show program's version number and exit
 
 **--addfilename**
-      Add file name field to every entry. This allows records to be associated with their
+      Add file filename field to every entry. This allows records to be associated with their
       input file. [ default : None ]
 
 **--addtimestamp** *{none,now,gen}*

@@ -74,7 +74,7 @@ class Audit(object):
         '''
 
         updated_doc = self._auditCollection.find_one_and_update({"batchID": 0,
-                                                                 "name": "Current Batch"},
+                                                                 "filename": "Current Batch"},
                                                                 {"$inc": {"currentID": 1}},
                                                                 upsert=True,
                                                                 return_document=pymongo.ReturnDocument.AFTER)
@@ -99,7 +99,7 @@ class Audit(object):
 
     def add_command(self, batchID, cmd_name, args):
 
-        self.add_batch_info(batchID, "command", {"name": cmd_name,
+        self.add_batch_info(batchID, "command", {"filename": cmd_name,
                                                  "args": args})
 
     def end_batch(self, batchID):
@@ -150,7 +150,7 @@ class Audit(object):
         return self._auditCollection
 
     def get_last_batch_id(self):
-        curBatch = self._auditCollection.find_one({"name": 'Current Batch'})
+        curBatch = self._auditCollection.find_one({"filename": 'Current Batch'})
         return curBatch["currentID"]
 
     def get_batches(self):
