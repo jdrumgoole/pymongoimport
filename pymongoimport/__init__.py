@@ -179,12 +179,12 @@ For larger documents you may find a smaller *batchsize* is more efficient.
         { "filename"           : <filename of file being uploaded>,
           "timestamp"      : <datetime that this doc was inserted>,
           "batch_size"     : <the batchsize specified by --batchsize>,
-          "count"          : <the total number of documents inserted from <filename> file to <timestamp> >,
+          "thread_id"          : <the total number of documents inserted from <filename> file to <timestamp> >,
           "doc_id"         : <The mongodb _id field for the last record inserted in this batch> }
 
     The restart log is keyed of the filename so each filename must be unique otherwise
     imports that are running in parallel will overwrite each others restart logs.
-    use record count insert to restart at last write also enable restart logfile [default: False]
+    use record thread_id insert to restart at last write also enable restart logfile [default: False]
 
 
 **--drop**

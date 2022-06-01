@@ -206,3 +206,48 @@ without failing (unless [--onerror fail](#onerror)  is specified).
 
 Each file in the input list must correspond to a field file format that is
 common across all the files.
+
+## Date Fields
+Date fields are special and support processing options. There are three types
+of date field.
+
+* date : A normal date generally without a timestamp
+* datetime : fully qualified date including a timestamp.
+* isodate : A normal date in the standard ISO format YYYY-MM-DD. 
+
+Both date and datetime fields support date formatting strings. This allows
+[strptime](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-behavior)
+to be used to efficient format a date. 
+
+If you do not specify a format string then the program will attempt to parse
+each date field it finds using `dateparse` from the [dateutil](https://pypi.org/project/python-dateutil/) 
+library. 
+
+### Simple date format entry
+```
+["test_date"]
+type="datetime"
+```
+
+This will use `dateparse` to make sense of each field.
+
+```
+["test_date"]
+type="datetime"
+format="%Y-%m-%d"
+```
+
+This will use `strptime` to process each string.
+```
+["test_date"]
+type="isodate"
+```
+
+This will use [datetime.fromisoformat](https://docs.python.org/3/library/datetime.html#datetime.date.fromisoformat)
+to parse the date. This format only supports YYYY-MM-DD. 
+
+format="%Y-%m-%d"
+### Performance
+The `dateparse` mode is slower by several orders of magnitude.For
+large data sets prefer `date` and `datetime` with a `strptime` compatible format
+string. The faster formatting is done with `isodate`.

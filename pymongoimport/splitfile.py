@@ -53,14 +53,16 @@ using **--splitsize** chunks until it is consumed.
     parser = argparse.ArgumentParser(usage=usage_message)
 
     parser.add_argument('-v", ''--version', action='version', version='%(prog)s ' + __VERSION__)
-    parser.add_argument("--autosplit", type=int,
+    parser.add_argument("--autosplit", default=2, type=int,
                         help="split file based on loooking at the first ten lines and overall file os_size [default : %(default)s]")
     parser.add_argument('--hasheader', default=False, action="store_true",
                         help="Ignore header when calculating splits, don't include header in output")
     parser.add_argument('--delimiter', default=",", help="Delimiter for fields[default : %(default)s] ")
-    parser.add_argument("--splitsize", type=int, help="Split file into chunks of this os_size")
+    parser.add_argument("--splitsize", default=0, type=int, help="Split file into chunks of this os_size")
     parser.add_argument('--verbose', default=False, action="store_true",
                         help="Print out what is happening")
+    parser.add_argument('--input', default=False, action="store_true",
+                        help="Generate output for another program (list of args)")
     parser.add_argument("filenames", nargs="*", help='list of files')
     args = parser.parse_args(*argv)
 
@@ -80,13 +82,13 @@ using **--splitsize** chunks until it is consumed.
         # if splitter.has_header:
         #     print(f"{source} has a header line")
 
-        if args.autosplit:
-            if args.verbose:
+        if args.autosplit or args.splitsize == 0:
+            if args.verbose and not args.input:
                 print(f"Autosplitting: '{source}' into approximately {args.autosplit} parts")
             for name, size in splitter.autosplit(args.autosplit):
                 files.append((name, size))
         else:
-            if args.verbose:
+            if args.verbose and not args.input:
                 print("Splitting '%s' using %i splitsize" % (args.filenames[0], args.splitsize))
             for name, size in splitter.splitfile(args.splitsize):
                 files.append((name, size))
@@ -102,20 +104,25 @@ using **--splitsize** chunks until it is consumed.
         results = list(files)
         for name, lines in results:
             total_new_lines = total_new_lines + lines
-            if args.verbose:
-                print(f"{count:4}. '{name:20}'. Lines : {lines:6}")
 
-            count = count + 1
+            if args.input:
+                print(f"{name} ", end="")
+            else:
+                if args.verbose:
+                    print(f"{count:4}. '{name}' Lines: {lines:6}")
+                    count = count + 1
+        if args.input:
+            print("")
+
         if len(files) > 1:
-            if args.verbose:
-                print(f"{source} {original_lines:16}")
+            if args.verbose and not args.input:
+                print(f"Original file: '{source}' Lines: {original_lines}")
 
         # if len(files) > 1:
         #     if args.verbose:
         #         print("{} {:16} {:17}".format(" " * (len(i) + 7), total_lines, total_size))
 
         if splitter.has_header:
-            print("Has_header")
             original_lines = original_lines - 1
         if files and (total_new_lines != original_lines):
             raise ValueError(f"Lines of '{source}' and total lines of pieces"\
@@ -123,8 +130,6 @@ using **--splitsize** chunks until it is consumed.
                              f"\ndo not match:"
                              f"\noriginal_lines : {original_lines}"
                              f"\npieces lines   : {total_new_lines}")
-
-
 
     return results
 

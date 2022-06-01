@@ -6,7 +6,7 @@ def count_lines_enumerate(filename):
     count = 0
     with open(filename, "r") as input_file:
         for (count, _) in enumerate(input_file, 1):
-            # print( "%i\t%s" % ( count,  l.rstrip()))
+            # print( "%i\t%s" % ( thread_id,  l.rstrip()))
             pass
     return count
 

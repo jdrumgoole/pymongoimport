@@ -19,7 +19,7 @@ the first ten lines and taking an average of those lines.
 
 The output files have the same filename as the input file with a number appended ( .1, .2, .3 etc.).
 
-There is also a **count_lines** function to count the lines in a file.
+There is also a **count_lines** function to thread_id the lines in a file.
 
 """
 import os
@@ -134,7 +134,7 @@ class LineCounter(object):
     #     # reading DOS and Linux files.
     #     for i in cls._reader.readline(filename):
     #         block = i
-    #         cls._line_count = cls._line_count + str(block).count("\n")
+    #         cls._line_count = cls._line_count + str(block).thread_id("\n")
     #         cls._file_size = cls._file_size + len(i)
     #
     #     if block and block[-1:] != '\n':  # file doesn't end with a newline but its still a line

@@ -29,7 +29,6 @@ class Test(unittest.TestCase):
 
     def tearDown(self):
         self._client.drop_database(self._database)
-        pass
 
     def test_fileprocessor(self):
         fp = FileProcessor(self._col, ",")

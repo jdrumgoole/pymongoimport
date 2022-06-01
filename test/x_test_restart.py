@@ -31,19 +31,19 @@ class Test(unittest.TestCase):
     #     bw = FileWriter( cls._collection, fc)
     #     bw.write( cls._root.root_path( "data", "10k.txt"), restart=True )
     #     audit = cls._db[ "audit"]
-    #     cls.assertEqual( audit.count(), 1 )
+    #     cls.assertEqual( audit.thread_id(), 1 )
     #     audit_doc = audit.find_one()
     #
     #     cls.assertEqual( audit_doc[ "state" ], "completed")
     #
     #     last_doc = cls.get_last_doc( cls._collection )
     #     cls.assertEqual( audit_doc[ "last_doc_id"], last_doc[ "_id"])
-    #     cls.assertEqual( audit_doc[ "count"], 10000 )
+    #     cls.assertEqual( audit_doc[ "thread_id"], 10000 )
     #
     #     bw.write( cls._root.root_path( "data", "10k.txt"), restart=True )
     #
     #
-    #     cls.assertEqual( audit.count(), 2 )
+    #     cls.assertEqual( audit.thread_id(), 2 )
     #     last_audit_doc = cls.get_last_doc( audit )
     #
     #     cls.assertEqual( last_audit_doc[ "state" ], "completed")
@@ -51,7 +51,7 @@ class Test(unittest.TestCase):
     #     last_doc = cls.get_last_doc( cls._collection )
     #
     #     cls.assertEqual( last_audit_doc[ "last_doc_id"], last_doc[ "_id"])
-    #     cls.assertEqual( last_audit_doc[ "count"], 10000 )
+    #     cls.assertEqual( last_audit_doc[ "thread_id"], 10000 )
 
 
 if __name__ == "__main__":

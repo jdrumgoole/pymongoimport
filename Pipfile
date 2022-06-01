@@ -24,6 +24,7 @@ coverage = "*"
 mtools = "*"
 psutil = "*"
 build = "*"
+csvkit = "*"
 
 [requires]
 python_version = "3"

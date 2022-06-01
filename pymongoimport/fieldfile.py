@@ -144,6 +144,11 @@ class FieldFile(object):
             # ff_file.write(f"type={t}\n")
             # ff_file.write(f"filename={filename}")
 
+        # with open("mongoimport.ff", "w") as ff_file:
+        #     #print(toml_dict)
+        #     for k,v in toml_dict.items():
+        #         ff_file.write(f"{k}.{v['type']}()\n")
+
         with open(ff_filename, "w") as ff_file:
             #print(toml_dict)
             ff_file.write("#\n")
@@ -157,7 +162,6 @@ class FieldFile(object):
             toml_string = toml.dumps(toml_dict)
             ff_file.write(toml_string)
             ff_file.write(f"#end\n")
-
         return FieldFile(ff_filename)
 
     def read(self, filename):

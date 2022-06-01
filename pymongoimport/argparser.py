@@ -24,10 +24,10 @@ def add_standard_args(parser):
     parser.add_argument('--locator', default=False, action="store_true",
                         help="add a locator field consisting of filename and \
                         input record line to each doc [default: %(default)s]")
-    parser.add_argument('--batchsize', type=int, default=10000,
+    parser.add_argument('--batchsize', type=int, default=1000,
                         help='set mongodb batch size for bulk inserts [default: %(default)s]')
     parser.add_argument('--restart', default=False, action="store_true",
-                        help="use record count insert to restart at last write also enable restart logfile [default: %(default)s]")
+                        help="use record thread_id insert to restart at last write also enable restart logfile [default: %(default)s]")
     parser.add_argument('--drop', default=False, action="store_true",
                         help="drop collection before loading [default: %(default)s]")
     #parser.add_argument('--ordered', default=False, action="store_true", help="forced ordered inserts")

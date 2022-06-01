@@ -10,19 +10,27 @@ from datetime import datetime
 import os
 import logging
 import stat
+from enum import Enum
 
 import pymongo
 from pymongo import errors
 
 from pymongoimport.filereader import FileReader
 from pymongoimport.csvlinetodictparser import CSVLineToDictParser
+from pymongoimport.poolwriter import PoolWriter
+from pymongoimport.timer import Timer
 
+
+class WriterType(Enum):
+    direct = 1
+    threaded = 2
+    pool = 3
 
 
 class FileWriter(object):
 
     def __init__(self,
-                 doc_collection : pymongo.collection,
+                 doc_collection: pymongo.collection,
                  reader: FileReader,
                  parser: CSVLineToDictParser,
                  audit_collection : pymongo.collection =None,
@@ -54,7 +62,7 @@ class FileWriter(object):
         self._batch_size = size
 
     @staticmethod
-    def skipLines(f, skip_count:int):
+    def skipLines(f, skip_count: int):
         """
         >>> f = open( "test_set_small.txt", "r" )
         >>> skipLines( f , 20 )
@@ -71,30 +79,113 @@ class FileWriter(object):
                     break
                 dummy = f.readline()
         return line_count
-
-    def write(self, limit=0, restart=False):
+    #
+    # def locked_write(self, limit=0, restart=False):
+    #
+    #     timer = Timer()
+    #     thread_writer = ThreadWriter(self._collection, timeout=0.01)
+    #     total_read = 0
+    #
+    #     thread_writer.start()
+    #     try:
+    #         time_start = timer.start()
+    #         previous_count = 0
+    #         for i, line in enumerate(self._reader.readline(limit=limit), 1):
+    #             thread_writer.put(self._parser.parse_line(line, i))
+    #             elapsed = timer.elapsed()
+    #             if elapsed >= 1.0:
+    #                 inserted_to_date = thread_writer.thread_id
+    #                 this_insert = inserted_to_date - previous_count
+    #                 previous_count = inserted_to_date
+    #                 docs_per_second = this_insert / elapsed
+    #                 timer.reset()
+    #                 self._logger.info(
+    #                         f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, total docs:{inserted_to_date:>10}")
+    #         thread_writer.stop()
+    #     except UnicodeDecodeError as exp:
+    #         if self._logger:
+    #             self._logger.error(exp)
+    #             self._logger.error("Error on line:%i", total_read + 1)
+    #             thread_writer.stop()
+    #         raise;
+    #
+    #     except KeyboardInterrupt:
+    #         thread_writer.stop()
+    #         raise KeyboardInterrupt
+    #
+    #     time_finish = time.time()
+    #
+    #     return thread_writer.thread_id, time_finish - time_start
+    #
+    def pool_write(self, limit=0, restart=False, worker_count=4):
 
         total_written = 0
-        time_start = time.time()
+        timer = Timer()
+        pool_writer = PoolWriter(self._collection, worker_count=worker_count,  timeout=0.1)
+        total_read = 0
+        insert_list = []
+
+        pool_writer.start()
+        try:
+            time_start = timer.start()
+            previous_count = 0
+            for i, line in enumerate(self._reader.readline(limit=limit), 1):
+                pool_writer.put(self._parser.parse_line(line, i))
+                elapsed = timer.elapsed()
+                if elapsed >= 1.0:
+                    inserted_to_date = pool_writer.count
+                    this_insert = inserted_to_date - previous_count
+                    previous_count = inserted_to_date
+                    docs_per_second = this_insert / elapsed
+                    timer.reset()
+                    self._logger.info(
+                            f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, total docs:{inserted_to_date:>10}")
+            pool_writer.stop()
+        except UnicodeDecodeError as exp:
+            if self._logger:
+                self._logger.error(exp)
+                self._logger.error("Error on line:%i", total_read + 1)
+                pool_writer.stop()
+            raise;
+
+        except KeyboardInterrupt:
+            pool_writer.stop()
+            raise KeyboardInterrupt;
+
+        time_finish = time.time()
+
+        return pool_writer.count, time_finish - time_start
+
+    def write(self, limit=0, restart=False, writer=WriterType.direct, worker_count=2):
+        if writer is WriterType.direct:
+            return self.direct_write(limit, restart)
+        elif writer is WriterType.pool:
+            return self.pool_write(limit=limit, restart=restart, worker_count=worker_count)
+
+    def direct_write(self, limit=0, restart=False):
+
+        total_written = 0
+        timer = Timer()
         inserted_this_quantum = 0
         total_read = 0
         insert_list = []
+        time_period = 1.0
         try:
-            interval_timer = time_start
+            time_start = timer.start()
             for i, line in enumerate(self._reader.readline(limit=limit), 1):
                 insert_list.append(self._parser.parse_line(line, i))
-                if len(insert_list) % self._batch_size == 0:
+                if len(insert_list) >= self._batch_size:
                     results = self._collection.insert_many(insert_list)
                     total_written = total_written + len(results.inserted_ids)
                     inserted_this_quantum = inserted_this_quantum + len(results.inserted_ids)
-
-                    time_now = time.time()
-                    elapsed = time_now - interval_timer
-                    docs_per_second = len(insert_list) / elapsed
-                    interval_timer = time_now
                     insert_list = []
-                    self._logger.info(
-                            f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
+                    elapsed = timer.elapsed()
+                    if elapsed >= time_period:
+                        docs_per_second = inserted_this_quantum / elapsed
+                        timer.reset()
+                        inserted_this_quantum = 0
+                        self._logger.info(
+                                f"Input:'{self._reader.name}': docs per sec:{docs_per_second:7.0f}, total docs:{total_written:>10}")
 
         except UnicodeDecodeError as exp:
             if self._logger:

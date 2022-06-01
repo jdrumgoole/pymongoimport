@@ -190,15 +190,15 @@ The default is `mongodb://localhost:27017/test`
 **--has_header**
       The input file has a header line. We can use header line for column names [default: False]
 
-  **--genfieldfile**        
+**--genfieldfile**
 
       Generate a fieldfile from the data file, we set
       has_header to true [default: False]
 
---id {mongodb,gen}    
+**--id** *{mongodb,gen}*
       Autogenerate ID default [ mongodb ]
 
-  **--onerror** *{fail,warn,ignore}*
+**--onerror** *{fail,warn,ignore}*
       What to do when we hit an error parsing a csv file
       [default: warn]
       

@@ -3,7 +3,7 @@ from datetime   import datetime
 import csv
 from enum import Enum
 import logging
-from typing import List
+from typing import List, Callable
 
 from pymongoimport.fieldfile import FieldFile
 from pymongoimport.type_converter import Converter
@@ -24,7 +24,7 @@ class CSVLineToDictParser:
     def __init__(self,
                  field_file: FieldFile,
                  locator: bool = True,
-                 timestamp : DocTimeStamp = DocTimeStamp.DOC_TIMESTAMP,
+                 timestamp_func: Callable = None,
                  onerror: ErrorResponse = ErrorResponse.Warn):
 
         self._logger = logging.getLogger(__name__)
@@ -38,8 +38,10 @@ class CSVLineToDictParser:
         self._converter = Converter(self._log)
         self._field_file = field_file
         self._locator = locator
-        if timestamp == DocTimeStamp.BATCH_TIMESTAMP:
-            self._batch_timestamp = datetime.utcnow()
+        if timestamp_func is None:
+            self._timestamp_func = lambda d : d
+        else:
+            self._timestamp_func = timestamp_func
 
     def parse_line(self, csv_line: List[str], line_number: int) -> dict:
         """
@@ -53,7 +55,7 @@ class CSVLineToDictParser:
         Do we make gen id generate a compound key or another field instead of ID
         """
 
-        doc = {}
+        fields = self._field_file.fields()
 
         if len(csv_line) == 1:
             self._logger.warning("Warning: only one field in "
@@ -61,22 +63,25 @@ class CSVLineToDictParser:
                                  "right delimiter set ?")
             self._logger.warning(f"input line : {csv_line}")
 
-        if len(csv_line) != len(self._field_file.fields()):
+        if len(csv_line) != len(fields):
             raise ValueError(f"\nrecord: at line {line_number}:{csv_line}(len={len(csv_line)}) and fields required\n"
-                             f"{self._field_file.fields()}(len={len(self._field_file.fields())})"
+                             f"{self._field_file.fields()}(len={len(fields)})"
                              f"don't match in length")
+
+        doc = dict(zip(fields, csv_line))
 
         # print( "dictEntry: %s" % dictEntry )
         field_count = 0
 
-        for i, k in enumerate(self._field_file.fields()):
+        new_doc = {}
+
+        for k, v in doc.items():
             # print( "field: %s" % k )
             # print( "value: %s" % dictEntry[ k ])
             field_count = field_count + 1
 
-            if csv_line[i] is None:
-
-                msg = f"Value for field '{k}' at line {line_number} is '{csv_line[i]}' which is not valid\n"
+            if v is None:
+                msg = f"Value for field '{k}' at line {line_number} is '{v}' which is not valid\n"
                 # print(dictEntry)
                 msg = msg + f"\t\t\tline:{line_number}:'{csv_line}'"
                 if self._onerror == ErrorResponse.Fail:
@@ -92,7 +97,7 @@ class CSVLineToDictParser:
 
             if k.startswith("blank-") and self._onerror == ErrorResponse.Warn:  # ignore blank- columns
                 if self._log:
-                    self._log.info("Field %i is blank [blank-] : ignoring", field_count)
+                    self._log.info(f"Field {field_count} is blank [blank-] : ignoring")
                 continue
 
             # try:
@@ -100,39 +105,34 @@ class CSVLineToDictParser:
                 type_field = self._field_file.type_value(k)
                 if type_field in ["date", "datetime"]:
                     fmt = self._field_file.format_value(k)
-                    v = self._converter.convert_time(type_field, csv_line[i], fmt, line_number, ','.join(csv_line))
+                    new_doc[k] = self._converter.convert_time(type_field, v, fmt, line_number, ','.join(csv_line))
+                elif type_field == "isodate":
+                    new_doc[k] = self._converter.convert_time(type_field, v, None, line_number, ','.join(csv_line))
                 else:
-                    v = self._converter.convert(type_field, csv_line[i])
+                    new_doc[k] = self._converter.convert(type_field, v)
 
             except ValueError:
                 if self._onerror == ErrorResponse.Fail:
                     if self._log:
-                        self._log.error("Error at line %i at field '%s'", self._record_count, k)
-                        self._log.error("type conversion error: Cannot convert '%s' to type %s", csv_line[i],
-                                        type_field)
+                        self._log.error(f"Error at line {self._record_count} at field '{k}'"
+                                        f"type conversion error: Cannot convert '{v}' to type {type_field}")
                     raise
                 elif self._onerror == ErrorResponse.Warn:
-                    msg = "Parse failure at line {} at field '{}'".format(self._record_count, k)
-                    msg = msg + " type conversion error: Cannot convert '{}' to type {} using string type instead".format(
-                        csv_line[i], type_field)
-                    v = str(csv_line[i])
+                    self._log.warning(f"Parse failure at line {self._record_count} at field '{k}' type conversion "
+                                      f"error: Cannot convert '{v}' to type {type_field} using string type instead")
+                    new_doc[k] = str(v)
                 elif self._onerror == ErrorResponse.Ignore:
-                    v = str(csv_line[i])
+                    new_doc[k] = str(v)
                 else:
-                    raise ValueError("Invalid value for onerror: %s" % self._onerror)
+                    raise ValueError(f"Invalid value for onerror: {self._onerror}")
 
             if self._field_file.has_new_name(k):
-                assert (self._field_file.name_value(k) is not None)
-                doc[self._field_file.name_value(k)] = v
-            else:
-                doc[k] = v
+                #assert (self._field_file.name_value(k) is not None)
+                new_doc[self._field_file.name_value(k)] = new_doc.pop(k)
 
             if self._locator:
-                doc['locator'] = {"line": line_number}
+                new_doc['locator'] = {"line": line_number}
 
-            if self._timestamp == DocTimeStamp.DOC_TIMESTAMP:
-                doc['timestamp'] = datetime.utcnow()
-            elif self._timestamp == DocTimeStamp.BATCH_TIMESTAMP:
-                doc['timestamp'] = self._batch_timestamp
+            new_doc = self._timestamp_func(new_doc)
 
-        return doc
+        return new_doc

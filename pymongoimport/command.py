@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 import pymongo
 
 from pymongoimport.fieldfile import FieldFile
-from pymongoimport.filewriter import FileWriter
+from pymongoimport.filewriter import FileWriter, WriterType
 from pymongoimport.csvlinetodictparser import CSVLineToDictParser
 from pymongoimport.csvlinetodictparser import ErrorResponse
 from pymongoimport.filereader import FileReader
@@ -23,9 +23,9 @@ def seconds_to_duration(seconds):
     result=""
     delta = timedelta(seconds=seconds)
     d = datetime(1, 1, 1) + delta
-    if d.day - 1 > 0 :
+    if d.day - 1 > 0:
         result =f"{d.day -1} day(s)"
-    result = result + "%02d:%02d:%02d" % (d.hour, d.minute, d.second)
+    result = result + "%02d:%02d:%02d.%02d" % (d.hour, d.minute, d.second, d.microsecond)
     return result
 
 class Command:
@@ -128,6 +128,15 @@ class ImportCommand(Command):
         self._timestamp = timestamp
         self._total_written = 0
         self._elapsed_time = 0
+        self._batch_timestamp = datetime.utcnow()
+    @staticmethod
+    def time_stamp(d):
+        d["timestamp"] = datetime.utcnow()
+        return d
+
+    def batch_time_stamp(self, d):
+        d["timestamp"] = self._batch_timestamp
+        return d
 
     def pre_execute(self, arg):
         # print(f"'{arg}'")
@@ -144,19 +153,25 @@ class ImportCommand(Command):
 
         self._fieldinfo = FieldFile(self._field_filename)
 
+        ts_func = None
+        if self._timestamp == DocTimeStamp.DOC_TIMESTAMP:
+            ts_func = self.time_stamp
+        elif self._timestamp == DocTimeStamp.BATCH_TIMESTAMP:
+            ts_func = self.batch_time_stamp
+
         self._reader = FileReader(arg,
                                   limit=self._limit,
                                   has_header=self._has_header,
                                   delimiter=self._delimiter)
         self._parser = CSVLineToDictParser(self._fieldinfo,
                                            locator=self._locator,
-                                           timestamp=self._timestamp,
+                                           timestamp_func=ts_func,
                                            onerror=self._onerror)
-        self._writer = FileWriter(self._collection,self._reader,self._parser, batch_size=self._batch_size)
+        self._writer = FileWriter(self._collection, self._reader, self._parser, batch_size=self._batch_size)
 
     def execute(self, arg):
 
-        self._total_written, self._elapsed_time = self._writer.write()
+        self._total_written, self._elapsed_time = self._writer.write(writer=WriterType.direct) #locked_write()
 
         return self._total_written
 
@@ -172,6 +187,6 @@ class ImportCommand(Command):
         if self._audit:
             self._audit.add_command(self._id, self.name(), {"filename": arg})
 
-        self._log.info(f"imported file: '{arg}'")
+        self._log.info(f"imported file: '{arg}' ({self._total_written} rows)")
         self._log.info(f"Total elapsed time to upload '{arg}' : {seconds_to_duration(self._elapsed_time)}")
-
+        self._log.info(f"Average upload rate per second: {round(self._total_written/self._elapsed_time)}")

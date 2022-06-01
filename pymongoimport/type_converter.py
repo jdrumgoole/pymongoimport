@@ -18,6 +18,7 @@ class Converter(object):
             "str": Converter.to_str,
             "datetime": self.to_datetime,
             "date": self.to_datetime,
+            "isodate" : self.iso_to_datetime,
             "timestamp": Converter.to_timestamp
         }
 
@@ -41,13 +42,24 @@ class Converter(object):
     def to_str(v):
         return str(v)
 
+    def iso_to_datetime(self, v, format=None, line_number=0, line=""):
+        #print("isodate")
+        if v == "NULL":
+            return None
+        if v == "":
+            return None
+        try:
+            return datetime.datetime.fromisoformat(v)
+        except ValueError:
+            if self._log:
+                self._log.warning(f"Using isoformat() for value '{v}' has failed at line: {line_number}. '{line}'")
+            return date_parse(v)
+
     def to_datetime(self, v, format=None, line_number=0, line=""):
         if v == "NULL":
             return None
-
         if v == "":
             return None
-
         if format is None:
             return date_parse(v)  # much slower than strptime, avoid for large jobs
         else:
