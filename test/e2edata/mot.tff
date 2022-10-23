@@ -1,6 +1,6 @@
 #
 # Created '/Users/jdrumgoole/GIT/pymongoimport/test/e2edata/mot.tff'
-# at UTC: 2022-05-31 13:53:52.264164 by class pymongoimport.fieldfile
+# at UTC: 2022-06-01 22:22:31.934644 by class pymongoimport.fieldfile
 # Parameters:
 #    csv        : '/Users/jdrumgoole/GIT/pymongoimport/test/e2edata/mot.txt'
 #    delimiter  : '|'

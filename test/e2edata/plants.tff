@@ -1,6 +1,6 @@
 #
 # Created '/Users/jdrumgoole/GIT/pymongoimport/test/e2edata/plants.tff'
-# at UTC: 2022-05-31 13:53:52.271180 by class pymongoimport.fieldfile
+# at UTC: 2022-06-01 22:22:31.941196 by class pymongoimport.fieldfile
 # Parameters:
 #    csv        : '/Users/jdrumgoole/GIT/pymongoimport/test/e2edata/plants.txt'
 #    delimiter  : 'tab'
